@@ -263,6 +263,24 @@ textarea:focus{border-color:var(--a1)}
 .interacao .coracao{font-size:18px;line-height:1;display:inline-block}
 .interacao{position:relative}
 .interacao.pop .coracao{animation:pulo .4s ease}
+/* coração desenhado: contorno quando solto, gradiente da marca quando curtido */
+.interacao .coracao svg{width:22px;height:22px;display:block;overflow:visible}
+.cor-f{fill:transparent;stroke:currentColor;stroke-width:1.9;stroke-linejoin:round;transform-box:fill-box;transform-origin:center;transition:fill .2s,stroke .2s}
+.interacao.on .cor-f{fill:url(#g-coracao);stroke:transparent}
+.cor-anel{fill:none;stroke:var(--a1);opacity:0;transform-box:fill-box;transform-origin:center}
+.interacao.pop .coracao{animation:none}
+.interacao.pop .cor-f{animation:enche .5s cubic-bezier(.2,1.5,.4,1)}
+.interacao.pop .cor-anel{animation:anel .55s ease-out}
+.interacao.solta .cor-f{animation:solta .28s ease}
+@keyframes enche{0%{transform:scale(.15)}55%{transform:scale(1.25)}100%{transform:scale(1)}}
+@keyframes anel{0%{opacity:.9;transform:scale(.25);stroke-width:7}100%{opacity:0;transform:scale(1.55);stroke-width:0}}
+@keyframes solta{40%{transform:scale(.78)}100%{transform:scale(1)}}
+.interacao .n{display:inline-block;min-width:1ch;font-variant-numeric:tabular-nums}
+.interacao.sobe .n{animation:sobe .3s ease}
+.interacao.desce .n{animation:desce-n .3s ease}
+@keyframes sobe{from{transform:translateY(70%);opacity:0}}
+@keyframes desce-n{from{transform:translateY(-70%);opacity:0}}
+.coracao-grande svg{width:110px;height:110px;display:block}
 .interacao.info{color:var(--muted);font-size:13px;font-weight:600;margin-left:auto}
 @keyframes pulo{40%{transform:scale(1.5)}100%{transform:scale(1)}}
 .seg{display:flex;gap:4px;margin:0 16px 10px;padding:4px;background:var(--card);border:1px solid var(--line);border-radius:14px}
@@ -383,7 +401,7 @@ img.fade.ok{opacity:1}
 .topo-fixo .btn{margin-left:auto;flex:none}
 /* curtida: coração gigante no toque duplo + faíscas */
 .foto-wrap{position:relative}
-.coracao-grande{position:absolute;left:50%;top:50%;font-size:104px;line-height:1;transform:translate(-50%,-50%) scale(0);z-index:3;pointer-events:none;filter:drop-shadow(0 10px 30px rgba(255,46,126,.55));animation:coracao 1s cubic-bezier(.2,1.3,.4,1) forwards}
+.coracao-grande{position:absolute;left:50%;top:50%;line-height:0;transform:translate(-50%,-50%) scale(0);z-index:3;pointer-events:none;filter:drop-shadow(0 10px 30px rgba(255,46,126,.55));animation:coracao 1s cubic-bezier(.2,1.3,.4,1) forwards}
 @keyframes coracao{15%{transform:translate(-50%,-50%) scale(1.25)}30%{transform:translate(-50%,-50%) scale(.92)}45%,70%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-110%) scale(.55);opacity:0}}
 .faisca{position:absolute;left:24px;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;pointer-events:none;animation:faisca .65s cubic-bezier(.2,.8,.3,1) forwards}
 @keyframes faisca{to{transform:translate(var(--x),var(--y)) scale(.2);opacity:0}}
@@ -507,6 +525,10 @@ img.fade.ok{opacity:1}
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <linearGradient id="g-coracao" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--a1)"/><stop offset="1" style="stop-color:var(--a2)"/></linearGradient>
+  <linearGradient id="g-brilho" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/></linearGradient>
+</defs></svg>
 <main id="app">
   <div class="capa"><span class="bolha b1"></span><span class="bolha b2"></span><span class="bolha b3"></span></div>
   <div class="perfil"><div class="sk" style="width:96px;height:96px;border-radius:50%;border:4px solid var(--bg)"></div>
@@ -735,11 +757,14 @@ function cabPost(menu){
     <div><b>${esc(D.criadora.nome)}</b><small>${menu.data}</small></div>
     ${criadora() && menu.acao ? `<button class="menu-post" data-menu="${menu.acao}">⋯</button>` : ""}</div>`;
 }
+const PATH_CORACAO = "M12 20.6s-7.4-4.5-9.6-9.1C.9 8.4 2.6 4.6 6.2 4.2c2.2-.3 4.2.9 5.8 2.9 1.6-2 3.6-3.2 5.8-2.9 3.6.4 5.3 4.2 3.8 7.3-2.2 4.6-9.6 9.1-9.6 9.1z";
+const CORACAO = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle class="cor-anel" cx="12" cy="12" r="11"/><path class="cor-f" d="${PATH_CORACAO}"/></svg>`;
+const CORACAO_GRANDE = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${PATH_CORACAO}" fill="url(#g-coracao)"/><path d="${PATH_CORACAO}" fill="url(#g-brilho)"/></svg>`;
 function interacoes(alvo){
   const c = (D.curtidas || {})[alvo] || {n:0, eu:false};
   const m = (D.mimos || {})[alvo];
   return `<div class="interacoes">
-    <button class="interacao ${c.eu ? "on" : ""}" data-curtir="${alvo}"><span class="coracao">${c.eu ? "❤️" : "🤍"}</span><span class="n">${c.n || ""}</span></button>
+    <button class="interacao ${c.eu ? "on" : ""}" data-curtir="${alvo}" aria-pressed="${c.eu}" aria-label="Curtir"><span class="coracao">${CORACAO}</span><span class="n">${c.n || ""}</span></button>
     ${criadora()
       ? `<span class="interacao info">💝 ${m ? `${m.qtd} mimo(s) · ${esc(m.total_fmt)}` : "nenhum mimo ainda"}</span>`
       : `<button class="interacao" data-mimo="${alvo}"><span class="coracao">💝</span><span>Mimo</span></button>`}
@@ -1056,9 +1081,13 @@ async function curtir(el){
   const alvo = el.dataset.curtir;
   const c = D.curtidas[alvo] = D.curtidas[alvo] || {n:0, eu:false};
   c.eu = !c.eu; c.n += c.eu ? 1 : -1;
-  const pintar = () => { el.classList.toggle("on", c.eu); el.querySelector(".coracao").textContent = c.eu ? "❤️" : "🤍"; el.querySelector(".n").textContent = c.n || "" };
+  const pintar = () => { el.classList.toggle("on", c.eu); el.setAttribute("aria-pressed", c.eu); el.querySelector(".n").textContent = c.n || "" };
   pintar(); vibrar("leve");
-  if(c.eu){ el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); faiscas(el) }
+  if(!SEM_MOVIMENTO){
+    el.classList.remove("pop", "solta", "sobe", "desce"); void el.offsetWidth;
+    el.classList.add(c.eu ? "pop" : "solta", c.eu ? "sobe" : "desce");
+    if(c.eu) faiscas(el);
+  }
   const r = await api("/api/loja/curtir", {alvo});
   if(r.ok){ c.eu = r.curtido; c.n = r.total; pintar() }
 }
@@ -1412,7 +1441,7 @@ function novoCupom(){
 
 function curtirDuplo(alvoEl){
   const alvo = alvoEl.dataset.duplo;
-  if(!SEM_MOVIMENTO){ const h = document.createElement("span"); h.className = "coracao-grande"; h.textContent = "❤️"; alvoEl.appendChild(h); setTimeout(() => h.remove(), 1000) }
+  if(!SEM_MOVIMENTO){ const h = document.createElement("span"); h.className = "coracao-grande"; h.innerHTML = CORACAO_GRANDE; alvoEl.appendChild(h); setTimeout(() => h.remove(), 1000) }
   vibrar("leve");
   const btn = document.querySelector(`[data-curtir="${alvo}"]`);
   if(btn && !(D.curtidas[alvo] || {}).eu) curtir(btn);
