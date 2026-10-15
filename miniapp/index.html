@@ -108,7 +108,7 @@ h2{margin:0;font-size:19px;letter-spacing:-.01em}
 
 /* ── VIP ───────────────────────────────────────────────────────────────── */
 .hero-vip{margin:16px;border-radius:var(--r);padding:22px 18px;background:var(--grad);color:#fff;position:relative;overflow:hidden}
-.hero-vip::after{content:"⭐";position:absolute;right:-10px;bottom:-24px;font-size:120px;opacity:.15;transform:rotate(-15deg)}
+.hero-vip::after{content:"";position:absolute;right:-10px;bottom:-24px;width:130px;height:130px;opacity:.16;transform:rotate(-15deg);background:#fff;-webkit-mask:var(--estrela) center/contain no-repeat;mask:var(--estrela) center/contain no-repeat}
 .hero-vip h2{font-size:24px;color:#fff}
 .hero-vip p{margin:6px 0 0;opacity:.92;font-size:14px}
 .beneficios{margin:0 16px 14px;display:grid;gap:8px}
@@ -337,6 +337,8 @@ textarea:focus{border-color:var(--a1)}
 .slide img,.slide video{max-width:100%;max-height:100%;object-fit:contain;-webkit-user-drag:none;pointer-events:auto}
 .slide img{pointer-events:none}
 .slide .carregando{position:absolute;inset:0;display:grid;place-items:center}
+.slide .carregando.preparo{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;pointer-events:none}
+.slide .carregando.preparo small{color:rgba(255,255,255,.75);font-size:13px}
 .slide .carregando i{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.18);border-top-color:#fff;animation:gira .8s linear infinite}
 @keyframes gira{to{transform:rotate(360deg)}}
 .slide .grande{color:#fff;text-align:center;padding:24px;display:grid;gap:12px;justify-items:center}
@@ -605,6 +607,16 @@ input[type=datetime-local]{width:100%;background:var(--card);border:1.5px solid 
 .bloqueio-vip b{display:block;font-size:16.5px;margin-top:8px}
 .bloqueio-vip p{color:var(--muted);margin:6px auto 14px;font-size:14px;max-width:320px}
 .bloqueio-vip .btn{width:auto;margin:0 auto;padding:12px 22px}
+.bloqueio-vip.tela{padding:30px 20px 24px;margin-top:6px}
+.bloqueio-vip.tela .ico{width:64px;height:64px;margin:0 auto;border-radius:50%;display:grid;place-items:center;background:var(--grad);color:#fff}
+.bloqueio-vip.tela .ico svg{width:30px;height:30px}
+.bloqueio-vip.tela b{font-size:18px;margin-top:14px}
+.bloq-lista{list-style:none;margin:4px auto 18px;padding:0;display:grid;gap:8px;max-width:260px;text-align:left}
+.bloq-lista li{display:flex;align-items:center;gap:10px;font-size:14.5px;font-weight:600}
+.bloq-lista .li-ico{width:30px;height:30px;border-radius:10px;flex:none;display:grid;place-items:center;background:color-mix(in srgb,var(--a1) 14%,transparent);color:var(--a1)}
+.bloq-lista .li-ico svg{width:17px;height:17px}
+.bloqueio-vip.tela .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;max-width:300px}
+.bloqueio-vip.tela .btn + .btn{margin-top:10px}
 
 /* ── Meta de mimos ─────────────────────────────────────────────────────── */
 .meta{margin:0 16px 14px;padding:14px 16px;border-radius:var(--r);background:var(--card);border:1px solid var(--line);cursor:pointer}
@@ -673,6 +685,23 @@ body.tem-carrinho .toast{bottom:calc(var(--nav-h) + 92px)}
 .selo-rank .ico{font-size:28px}
 .selo-rank b{display:block}
 .selo-rank small{color:var(--muted)}
+
+/* ── Ícones SVG ──────────────────────────────────────────────────────── */
+:root{--estrela:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 2.6l2.9 5.88 6.5.94-4.7 4.58 1.11 6.47L12 17.42l-5.81 3.05 1.11-6.47-4.7-4.58 6.5-.94z'/%3E%3C/svg%3E")}
+svg.i{width:1.15em;height:1.15em;display:inline-block;vertical-align:-.22em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none;overflow:visible}
+svg.i.ouro{color:#f5b301}
+svg.i.rosa{color:var(--a1)}
+svg.i.verde{color:#2fbf71}
+svg.i.laranja{color:#ff8a3d}
+.btn svg.i,.chip svg.i,.toast svg.i{margin-right:2px}
+.acao .ico,.linha-c .ico,.beneficio .ico,.vazio .ico,.ok-grande .emoji,.mimo .emoji,.bloqueio-vip .ico{color:var(--a1)}
+.vazio .ico svg.i,.ok-grande .emoji svg.i,.slide .grande .ico svg.i{stroke-width:1.5}
+.mimo .emoji svg.i{stroke-width:1.7}
+.emoji-voa{color:var(--a1)}
+.emoji-voa svg.i{display:block}
+.slide .grande .ico{color:#fff}
+.verif svg.i{width:.9em;height:.9em;vertical-align:-.1em;stroke-width:3}
+.check svg.i{stroke-width:2.6}
 </style>
 </head>
 <body>
@@ -694,13 +723,108 @@ const tg = window.Telegram?.WebApp;
 const INIT = tg?.initData || new URLSearchParams(location.hash.slice(1)).get("tgWebAppData") || "";
 try{ tg?.ready(); tg?.expand(); tg?.setHeaderColor?.("bg_color"); tg?.setBackgroundColor?.("bg_color") }catch(e){}
 
+// ── Ícones (desenhados à mão em SVG, grade 24x24, cor = currentColor) ──────────
+const ICONES = {
+  "check": "<path d=\"M5 12.6l4.3 4.3L19 7.2\"/>",
+  "fechar": "<path d=\"M6.5 6.5l11 11M17.5 6.5l-11 11\"/>",
+  "mais": "<path d=\"M12 5v14M5 12h14\"/>",
+  "seta": "<path d=\"M5 12h14M13.5 6.5L19 12l-5.5 5.5\"/>",
+  "estrela": "<path d=\"M12 3.4l2.65 5.37 5.93.86-4.29 4.18 1.01 5.9L12 16.93l-5.3 2.78 1.01-5.9-4.29-4.18 5.93-.86z\"/>",
+  "estrela-cheia": "<path fill=\"currentColor\" stroke=\"none\" d=\"M12 2.6l2.9 5.88 6.5.94-4.7 4.58 1.11 6.47L12 17.42l-5.81 3.05 1.11-6.47-4.7-4.58 6.5-.94z\"/>",
+  "cadeado": "<rect x=\"5\" y=\"10.5\" width=\"14\" height=\"10\" rx=\"2.8\"/><path d=\"M8.2 10.5V8a3.8 3.8 0 0 1 7.6 0v2.5\"/><path d=\"M12 14.6v2.2\"/>",
+  "cadeado-aberto": "<rect x=\"5\" y=\"10.5\" width=\"14\" height=\"10\" rx=\"2.8\"/><path d=\"M8.2 10.5V8a3.8 3.8 0 0 1 7.3-1.5\"/><path d=\"M12 14.6v2.2\"/>",
+  "brilho": "<path d=\"M10 3.2l1.7 4.7 4.7 1.7-4.7 1.7L10 16l-1.7-4.7L3.6 9.6l4.7-1.7z\"/><path d=\"M18 13.6l.85 2.35 2.35.85-2.35.85L18 20l-.85-2.35-2.35-.85 2.35-.85z\"/>",
+  "coracao": "<path d=\"M12 20s-7.2-4.4-9.2-8.9C1.4 8 3.1 4.5 6.4 4.1c2.1-.25 4 .85 5.6 2.8 1.6-1.95 3.5-3.05 5.6-2.8 3.3.4 5 3.9 3.6 7C19.2 15.6 12 20 12 20z\"/>",
+  "coracao-cheio": "<path fill=\"currentColor\" stroke=\"none\" d=\"M12 20.4s-7.4-4.5-9.5-9.1C1 8.1 2.8 4.4 6.3 4c2.2-.27 4.1.86 5.7 2.88C13.6 4.86 15.5 3.73 17.7 4c3.5.4 5.3 4.1 3.8 7.3-2.1 4.6-9.5 9.1-9.5 9.1z\"/>",
+  "mimo": "<path d=\"M12 20.2s-6.6-4-8.4-8.1C2.4 9.4 4 6.3 6.9 6c1.9-.2 3.6.8 5.1 2.5 1.5-1.7 3.2-2.7 5.1-2.5 2.9.3 4.5 3.4 3.3 6.1-1.8 4.1-8.4 8.1-8.4 8.1z\"/><path d=\"M12 8.5V5.2M12 5.2c-.9-1.5-2.9-2.1-3.5-1.1-.5.9.9 1.6 3.5 1.1zM12 5.2c.9-1.5 2.9-2.1 3.5-1.1.5.9-.9 1.6-3.5 1.1z\"/>",
+  "video": "<rect x=\"3\" y=\"6\" width=\"12.5\" height=\"12\" rx=\"2.6\"/><path d=\"M15.5 10.4l5-2.8v8.8l-5-2.8z\"/>",
+  "nota": "<path d=\"M14.5 3.5H7A2.5 2.5 0 0 0 4.5 6v12A2.5 2.5 0 0 0 7 20.5h10a2.5 2.5 0 0 0 2.5-2.5V8.5z\"/><path d=\"M14.5 3.5v5h5M8.5 13h7M8.5 16.5h4.5\"/>",
+  "carrinho": "<path d=\"M3 4h2.2l2.3 11.1a1.8 1.8 0 0 0 1.8 1.4h8.2a1.8 1.8 0 0 0 1.7-1.3L21 8.2H6.3\"/><circle cx=\"9.6\" cy=\"20\" r=\"1.3\"/><circle cx=\"17.4\" cy=\"20\" r=\"1.3\"/>",
+  "pix": "<rect x=\"4\" y=\"4\" width=\"6.6\" height=\"6.6\" rx=\"1.5\"/><rect x=\"13.4\" y=\"4\" width=\"6.6\" height=\"6.6\" rx=\"1.5\"/><rect x=\"4\" y=\"13.4\" width=\"6.6\" height=\"6.6\" rx=\"1.5\"/><path d=\"M13.4 13.4h2.8v2.8M20 13.4v.1M16.2 20H20v-3.4M13.4 18.4V20\"/>",
+  "pedido": "<path d=\"M4.5 19.5l.9-3.9 10-10a2 2 0 0 1 2.9 0l.1.1a2 2 0 0 1 0 2.9l-10 10z\"/><path d=\"M13.6 7.4l3 3M12.5 20h7\"/>",
+  "lapis": "<path d=\"M4.5 19.5l.9-3.9 10-10a2 2 0 0 1 2.9 0l.1.1a2 2 0 0 1 0 2.9l-10 10z\"/><path d=\"M13.6 7.4l3 3\"/>",
+  "presente": "<rect x=\"3.5\" y=\"8.6\" width=\"17\" height=\"4.2\" rx=\"1.3\"/><path d=\"M5 12.8v6.1a1.6 1.6 0 0 0 1.6 1.6h10.8a1.6 1.6 0 0 0 1.6-1.6v-6.1M12 8.6v11.9\"/><path d=\"M12 8.6c-1.3-3.6-4.6-4.6-5.2-2.5-.5 1.8 2.6 2.5 5.2 2.5zM12 8.6c1.3-3.6 4.6-4.6 5.2-2.5.5 1.8-2.6 2.5-5.2 2.5z\"/>",
+  "coroa": "<path d=\"M4.2 17.5L3 7.6l5 3.9 4-6.3 4 6.3 5-3.9-1.2 9.9z\"/><path d=\"M5 20.5h14\"/>",
+  "sino": "<path d=\"M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z\"/><path d=\"M10 20.5a2.2 2.2 0 0 0 4 0\"/>",
+  "olho": "<path d=\"M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>",
+  "camera": "<path d=\"M4 8.5a2 2 0 0 1 2-2h1.7l1.5-2h5.6l1.5 2H18a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z\"/><circle cx=\"12\" cy=\"13\" r=\"3.6\"/>",
+  "bloqueio": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M6 6l12 12\"/>",
+  "grafico": "<path d=\"M4 20.2h16\"/><rect x=\"5.4\" y=\"11\" width=\"3.4\" height=\"6.6\" rx=\"1.1\"/><rect x=\"10.3\" y=\"6.2\" width=\"3.4\" height=\"11.4\" rx=\"1.1\"/><rect x=\"15.2\" y=\"13.4\" width=\"3.4\" height=\"4.2\" rx=\"1.1\"/>",
+  "play": "<path fill=\"currentColor\" stroke=\"none\" d=\"M8 5.2c0-.8.9-1.3 1.6-.9l9.6 6c.7.4.7 1.4 0 1.8l-9.6 6c-.7.4-1.6-.1-1.6-.9z\"/>",
+  "envelope": "<rect x=\"3\" y=\"5.5\" width=\"18\" height=\"13\" rx=\"2.6\"/><path d=\"M3.6 7.2l8.4 6 8.4-6\"/>",
+  "carta": "<rect x=\"3\" y=\"5.5\" width=\"18\" height=\"13\" rx=\"2.6\"/><path d=\"M3.6 7.2l8.4 6 8.4-6\"/><path d=\"M12 17.2s-2.3-1.4-2.9-2.7c-.4-.9.2-1.9 1.1-2 .7 0 1.3.3 1.8.9.5-.6 1.1-.9 1.8-.9.9.1 1.5 1.1 1.1 2-.6 1.3-2.9 2.7-2.9 2.7z\" fill=\"currentColor\" stroke=\"none\" opacity=\".9\"/>",
+  "calendario": "<rect x=\"3.5\" y=\"5\" width=\"17\" height=\"15.5\" rx=\"2.6\"/><path d=\"M3.5 10h17M8 3v4M16 3v4\"/><path d=\"M8 14h.1M12 14h.1M16 14h.1M8 17.2h.1M12 17.2h.1\"/>",
+  "pasta": "<path d=\"M3.5 7A2 2 0 0 1 5.5 5h4l2 2.2h7a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z\"/>",
+  "caixa": "<path d=\"M12 3l8 4.3v9.4L12 21l-8-4.3V7.3z\"/><path d=\"M4 7.3l8 4.3 8-4.3M12 11.6V21M8 5.2l8 4.3\"/>",
+  "alvo": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><circle cx=\"12\" cy=\"12\" r=\"5\"/><circle cx=\"12\" cy=\"12\" r=\"1.4\" fill=\"currentColor\"/>",
+  "ampulheta": "<path d=\"M7 3.5h10M7 20.5h10\"/><path d=\"M8.2 3.5v2.4c0 2.3 3.8 3.6 3.8 6.1s-3.8 3.8-3.8 6.1v2.4M15.8 3.5v2.4c0 2.3-3.8 3.6-3.8 6.1s3.8 3.8 3.8 6.1v2.4\"/>",
+  "moeda": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M14.7 9.3c-.5-1-1.5-1.6-2.7-1.6-1.6 0-2.7.9-2.7 2 0 2.8 5.6 1.5 5.6 4.5 0 1.2-1.2 2.1-2.9 2.1-1.4 0-2.4-.6-2.9-1.6M12 6.2v1.5M12 16.3v1.5\"/>",
+  "lixo": "<path d=\"M4.5 7h15M9.5 7V4.8h5V7M6.5 7l.9 12a1.8 1.8 0 0 0 1.8 1.6h5.6a1.8 1.8 0 0 0 1.8-1.6l.9-12\"/><path d=\"M10 11v6M14 11v6\"/>",
+  "enviar": "<path d=\"M12 15V4.2M7.5 8.6L12 4.2l4.5 4.4\"/><path d=\"M4.5 14v4a2.5 2.5 0 0 0 2.5 2.5h10a2.5 2.5 0 0 0 2.5-2.5v-4\"/>",
+  "fogo": "<path d=\"M12 21c-3.9 0-6.5-2.6-6.5-6.1 0-3.4 2.6-5.4 3.6-8.4.4 1.6 1.4 2.7 2.4 3.1.5-2.7 2.1-5.2 4.1-6.6-.5 3 2.9 5.5 2.9 10.2C18.5 17.9 16 21 12 21z\"/><path d=\"M12 21c-1.7 0-2.8-1.2-2.8-2.8 0-1.9 1.8-2.7 2.3-4.3 1.6 1.2 3.3 2.4 3.3 4.4 0 1.5-1.1 2.7-2.8 2.7z\"/>",
+  "casa": "<path d=\"M3.5 11L12 4l8.5 7\"/><path d=\"M5.5 9.5v9.5A1.5 1.5 0 0 0 7 20.5h3.5V15h3v5.5H17a1.5 1.5 0 0 0 1.5-1.5V9.5\"/>",
+  "engrenagem": "<circle cx=\"12\" cy=\"12\" r=\"3.1\"/><path d=\"M10.6 3.3h2.8l.5 2.3 1.6.9 2.2-.8 1.4 2.4-1.7 1.6v1.9l1.7 1.6-1.4 2.4-2.2-.8-1.6.9-.5 2.3h-2.8l-.5-2.3-1.6-.9-2.2.8-1.4-2.4 1.7-1.6v-1.9L5.1 8.1l1.4-2.4 2.2.8 1.6-.9z\"/>",
+  "busca": "<circle cx=\"10.5\" cy=\"10.5\" r=\"6.3\"/><path d=\"M15.3 15.3l5.2 5.2\"/>",
+  "check-circulo": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M8 12.3l2.8 2.8 5.4-5.6\"/>",
+  "festa": "<path d=\"M4 20l4.4-11.6 7.2 7.2z\"/><path d=\"M8.4 8.4l7.2 7.2M13 4.4c.7 1.1.5 2.3-.4 3.1M17.1 7.9c1.2-.5 2.5-.1 3.1.8M15.6 3.5v.1M20.5 5.1v.1M19.6 12.6v.1M10.4 3.9v.1\"/>",
+  "renovar": "<path d=\"M19.5 12a7.5 7.5 0 1 1-2.2-5.3\"/><path d=\"M19.6 4.4v4.3h-4.3\"/>",
+  "desfazer": "<path d=\"M4.5 12a7.5 7.5 0 1 0 2.2-5.3\"/><path d=\"M4.4 4.4v4.3h4.3\"/>",
+  "medalha": "<path d=\"M8.6 11L6 3.5h4.1L12 7.8l1.9-4.3H18L15.4 11\"/><circle cx=\"12\" cy=\"15.4\" r=\"5.3\"/><path d=\"M12 13v4.8M10.6 13.9L12 13\" />",
+  "trofeu": "<path d=\"M8 4h8v5.2a4 4 0 0 1-8 0z\"/><path d=\"M8 5.6H5.2a2.6 2.6 0 0 0 3.1 3.9M16 5.6h2.8a2.6 2.6 0 0 1-3.1 3.9M12 13.2v3.3M8.6 20.5h6.8l-.7-4h-5.4z\"/>",
+  "sol": "<circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4\"/>",
+  "mais18": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><text x=\"12\" y=\"15.3\" text-anchor=\"middle\" font-size=\"8.6\" font-weight=\"800\" font-family=\"system-ui,sans-serif\" fill=\"currentColor\" stroke=\"none\">18+</text>",
+  "etiqueta": "<path d=\"M3.5 12.2V4.6a1.1 1.1 0 0 1 1.1-1.1h7.6l8.3 8.3a1.6 1.6 0 0 1 0 2.3l-6.4 6.4a1.6 1.6 0 0 1-2.3 0z\"/><circle cx=\"8\" cy=\"8\" r=\"1.4\"/>",
+  "alerta": "<path d=\"M10.3 4.4a2 2 0 0 1 3.4 0l7.4 12.8a2 2 0 0 1-1.7 3H4.6a2 2 0 0 1-1.7-3z\"/><path d=\"M12 9.6v4.2M12 16.9v.1\"/>",
+  "imagem": "<rect x=\"3.5\" y=\"4.5\" width=\"17\" height=\"15\" rx=\"2.6\"/><circle cx=\"9\" cy=\"9.5\" r=\"1.7\"/><path d=\"M4 17l5-4.5 3.5 3 3-2.5 4.5 4\"/>",
+  "relogio": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 7.5V12l3 2\"/>",
+  "chat": "<path d=\"M20 11.5a7.5 7.5 0 0 1-11 6.6L4 19.5l1.4-4.3A7.5 7.5 0 1 1 20 11.5z\"/><path d=\"M8.8 11.6h.1M12 11.6h.1M15.2 11.6h.1\"/>",
+  "cafe": "<path d=\"M5 9.5h11v4.8a5 5 0 0 1-5 5h-1a5 5 0 0 1-5-5z\"/><path d=\"M16 11.2h1.4a2.4 2.4 0 0 1 0 4.8H16M8.2 3.6c-.7 1 .6 1.7 0 2.9M11.7 3.6c-.7 1 .6 1.7 0 2.9M4 21h13\"/>",
+  "rosa": "<path d=\"M12 3.8c2.9 0 5.1 1.9 5.1 4.6 0 3-2.2 4.9-5.1 4.9S6.9 11.4 6.9 8.4c0-2.7 2.2-4.6 5.1-4.6z\"/><path d=\"M9.6 7.2c1.2-1 3.3-1 4.6.4M9.2 9.7c1.6 1.2 3.9 1.1 5.6-.3M12 13.3V21M12 18.2c-2.2-.2-3.8-1.3-4.3-3.1 1.9-.4 3.6.5 4.3 1.9M12 16.6c1.6-.9 3.2-.9 4.4-.1-.8 1.4-2.5 2-4.4 1.7\"/>",
+  "diamante": "<path d=\"M6.5 4.5h11l3 4.6L12 20.2 3.5 9.1z\"/><path d=\"M3.5 9.1h17M9.6 4.5L8 9.1l4 11.1 4-11.1-1.6-4.6\"/>",
+  "foguete": "<path d=\"M12 2.8c3.6 2.3 5.1 5.8 4.6 10.4L14.1 16H9.9l-2.5-2.8C6.9 8.6 8.4 5.1 12 2.8z\"/><circle cx=\"12\" cy=\"9.4\" r=\"1.8\"/><path d=\"M8.2 13.3L5 15.4l.9 3.5 3.5-2.2M15.8 13.3l3.2 2.1-.9 3.5-3.5-2.2M10.4 19.2l1.6 2.2 1.6-2.2\"/>",
+  "menu": "<path d=\"M4.5 7h15M4.5 12h15M4.5 17h15\"/>",
+  "grade": "<rect x=\"4\" y=\"4\" width=\"6.6\" height=\"6.6\" rx=\"1.6\"/><rect x=\"13.4\" y=\"4\" width=\"6.6\" height=\"6.6\" rx=\"1.6\"/><rect x=\"4\" y=\"13.4\" width=\"6.6\" height=\"6.6\" rx=\"1.6\"/><rect x=\"13.4\" y=\"13.4\" width=\"6.6\" height=\"6.6\" rx=\"1.6\"/>",
+  "escudo": "<path d=\"M12 3.4l7 2.7v5.4c0 4.4-2.9 7.6-7 9.1-4.1-1.5-7-4.7-7-9.1V6.1z\"/><path d=\"M9 12l2.2 2.2 3.9-4\"/>",
+  "frasco": "<path d=\"M9.4 3.5h5.2M10.4 3.5v6L5.2 18.2a1.6 1.6 0 0 0 1.4 2.3h10.8a1.6 1.6 0 0 0 1.4-2.3L13.6 9.5v-6\"/><path d=\"M7.6 14.6h8.8\"/>",
+  "sacola": "<path d=\"M5.6 8h12.8l-1 12.5H6.6z\"/><path d=\"M9 10.5V6.6a3 3 0 0 1 6 0v3.9\"/>",
+  "tesoura": "<circle cx=\"6.5\" cy=\"7\" r=\"2.6\"/><circle cx=\"6.5\" cy=\"17\" r=\"2.6\"/><path d=\"M8.7 8.5L20 17M8.7 15.5L20 7\"/>",
+  "ajustes": "<path d=\"M4 7h9M17 7h3M4 17h3M11 17h9\"/><circle cx=\"15\" cy=\"7\" r=\"2.2\"/><circle cx=\"9\" cy=\"17\" r=\"2.2\"/>",
+  "espelhar": "<path d=\"M12 3.5v17\" stroke-dasharray=\"2 2.4\"/><path d=\"M9 7.5l-5 9h5zM15 7.5l5 9h-5z\"/>",
+  "livre": "<path d=\"M4.5 8V5.5a1 1 0 0 1 1-1H8M16 4.5h2.5a1 1 0 0 1 1 1V8M19.5 16v2.5a1 1 0 0 1-1 1H16M8 19.5H5.5a1 1 0 0 1-1-1V16\"/>",
+  "quadrado": "<rect x=\"5\" y=\"5\" width=\"14\" height=\"14\" rx=\"2\"/>",
+  "retrato": "<rect x=\"7\" y=\"3.5\" width=\"10\" height=\"17\" rx=\"2\"/>",
+  "paisagem": "<rect x=\"3.5\" y=\"7\" width=\"17\" height=\"10\" rx=\"2\"/>",
+  "contraste": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 3.5a8.5 8.5 0 0 1 0 17z\" fill=\"currentColor\" stroke=\"none\"/>",
+  "paleta": "<path d=\"M12 3.5a8.5 8.5 0 1 0 0 17c1.3 0 1.8-.9 1.8-1.8 0-1.4-1.2-1.6-1.2-2.8 0-1.1.9-1.6 2-1.6h1.8a3.6 3.6 0 0 0 3.6-3.6C20 6.6 16.4 3.5 12 3.5z\"/><circle cx=\"7.8\" cy=\"11\" r=\"1.1\" fill=\"currentColor\"/><circle cx=\"10.5\" cy=\"7.4\" r=\"1.1\" fill=\"currentColor\"/><circle cx=\"15\" cy=\"7.8\" r=\"1.1\" fill=\"currentColor\"/>",
+  "usuario": "<circle cx=\"12\" cy=\"8.4\" r=\"4\"/><path d=\"M4.5 20.5c.8-3.8 3.8-6 7.5-6s6.7 2.2 7.5 6\"/>",
+  "lua": "<path d=\"M19.5 14.6A8 8 0 0 1 9.4 4.5a8 8 0 1 0 10.1 10.1z\"/>",
+  "gota": "<path d=\"M12 3.5c3 4 6 7.2 6 10.6a6 6 0 0 1-12 0C6 10.7 9 7.5 12 3.5z\"/>",
+  "megafone": "<path d=\"M4 10v4a1 1 0 0 0 1 1h2l8 4.5v-15L7 9H5a1 1 0 0 0-1 1z\"/><path d=\"M7.5 15l1.2 4.5h2.4L10.2 15M18.6 9.4a3.6 3.6 0 0 1 0 5.2\"/>",
+  "sorriso": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M8.5 13.8c.8 1.4 2 2.1 3.5 2.1s2.7-.7 3.5-2.1M9 9.6v.1M15 9.6v.1\"/>",
+  "triste": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M8.6 16.2c.9-1.1 2-1.7 3.4-1.7s2.5.6 3.4 1.7M9 9.8v.1M15 9.8v.1\"/>",
+  "mudo": "<path d=\"M4 9.5v5h3.4l4.6 4V5.5l-4.6 4z\"/><path d=\"M16 9.5l5 5M21 9.5l-5 5\"/>",
+  "aceno": "<path d=\"M8.5 13.5V6.8a1.4 1.4 0 0 1 2.8 0v5\"/><path d=\"M11.3 11V4.9a1.4 1.4 0 0 1 2.8 0V11\"/><path d=\"M14.1 11V6.2a1.4 1.4 0 0 1 2.8 0v6.6\"/><path d=\"M16.9 10.2a1.4 1.4 0 0 1 2.8 0V14a7 7 0 0 1-7 7h-.6a6.5 6.5 0 0 1-5.3-2.8l-2.6-3.8a1.5 1.5 0 0 1 2.4-1.8l1.9 2.2\"/><path d=\"M4 5.2c.4-1 1.1-1.8 2-2.3M19.6 3.4c.9.6 1.5 1.4 1.8 2.4\"/>",
+  "bolhas": "<circle cx=\"9\" cy=\"13.5\" r=\"5\"/><circle cx=\"16.8\" cy=\"7.6\" r=\"3.2\"/><circle cx=\"17.6\" cy=\"17.4\" r=\"2\"/><path d=\"M6.9 11.6a2.6 2.6 0 0 1 2-1.3\"/>",
+  "beijo": "<path d=\"M12 9.2c-1.6-2.4-4-3.4-6.2-2.2C3.6 8.2 2.6 11 3.8 12.3c1.6 1.8 4.9 3.3 8.2 3.3s6.6-1.5 8.2-3.3c1.2-1.3.2-4.1-2-5.3-2.2-1.2-4.6-.2-6.2 2.2z\"/><path d=\"M4 12.2c2.6.7 5.3 1 8 1s5.4-.3 8-1\"/>"
+};
+const COR_ICONE = {"estrela-cheia": "ouro", "coracao-cheio": "rosa", "check-circulo": "verde", "alerta": "laranja", "fogo": "laranja"};
+function ic(nome, cls){
+  const c = cls ?? COR_ICONE[nome] ?? "";
+  return `<svg class="i${c ? " " + c : ""}" viewBox="0 0 24 24" aria-hidden="true">${ICONES[nome] || ""}</svg>`;
+}
+const COR_MEDALHA = ["#f5b301", "#a7b1bc", "#cd7f32"];
+function medalha(pos){
+  return `<svg class="i medalha-ic" viewBox="0 0 24 24" aria-label="${pos}º lugar"><path d="M8.4 11.2L5.8 3.5h4.2L12 7.9l2-4.4h4.2l-2.6 7.7" fill="none" stroke="currentColor"/>`
+    + `<circle cx="12" cy="15.3" r="5.9" fill="${COR_MEDALHA[pos - 1]}" stroke="none"/>`
+    + `<text x="12" y="18.2" text-anchor="middle" font-size="8.4" font-weight="800" font-family="system-ui,sans-serif" fill="#fff" stroke="none">${pos}</text></svg>`;
+}
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let PREVIA = false;
 const criadora = () => D && D.sou_criadora && !COMO_FA && !PREVIA;
 const avatarSrc = () => `/api/loja/foto?v=${encodeURIComponent(D.criadora.foto_v || "")}`;
 const reais = c => "R$ " + (c/100).toFixed(2).replace(".", ",");
-const EMOJI_MIMO = ["☕","🌹","💎","👑","🚀","🔥"];
+const ICONE_MIMO = ["cafe","rosa","diamante","coroa","foguete","fogo"];
 let CONFIG = null;
 let PERIODO = "7d", ANIMAR = true, DIR = "", SALTA = false, PILULA = null, TOQUE = {};
 let COMO_FA = false, PAINEL = null, ULTIMO = null, D = null, ABA = "inicio", FILTRO = "todos", VISTA = "feed", PLANO_SEL = null, POLL = null, TIMER = null;
@@ -728,9 +852,19 @@ function enviarForm(caminho, campos, arquivos = [], aoProgresso){
     x.send(fd);
   });
 }
+// Texto com ícones: escapa tudo e devolve só os <svg> exatamente iguais aos que ic() gera.
+function comIcones(t){
+  let h = esc(t);
+  if(!h.includes("&lt;svg")) return h;
+  for(const nome of Object.keys(ICONES)) for(const cls of [undefined, "ouro", "rosa", "verde", "laranja"]){
+    const svg = ic(nome, cls), e = esc(svg);
+    if(h.includes(e)) h = h.split(e).join(svg);
+  }
+  return h;
+}
 function toast(t){
   document.querySelectorAll(".toast").forEach(x => x.remove());
-  const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d);
+  const d = document.createElement("div"); d.className = "toast"; d.innerHTML = comIcones(t); document.body.appendChild(d);
   setTimeout(() => { d.classList.add("sai"); setTimeout(() => d.remove(), 300) }, 2400);
 }
 const SEM_MOVIMENTO = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -773,11 +907,11 @@ function confete(qtd = 70){
     document.body.appendChild(c); setTimeout(() => c.remove(), 3600);
   }
 }
-function voarEmoji(el, emoji){
+function voarIcone(el, nome){
   if(SEM_MOVIMENTO) return;
   const r = el.getBoundingClientRect();
   for(let i = 0; i < 5; i++){
-    const e = document.createElement("span"); e.className = "emoji-voa"; e.textContent = emoji;
+    const e = document.createElement("span"); e.className = "emoji-voa"; e.innerHTML = ic(nome);
     e.style.cssText = `left:${r.left + r.width/2 - 17}px;top:${r.top + r.height/2 - 17}px;--x:${(Math.random()-.5)*140}px;--r:${(Math.random()-.5)*60}deg;animation-delay:${i*70}ms`;
     document.body.appendChild(e); setTimeout(() => e.remove(), 1600);
   }
@@ -802,13 +936,13 @@ const pl = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
 const urlPost = (p, tipo) => `/api/loja/post_${tipo}/${p.id}?${p.q || ""}`;
 const urlStory = (st, parte) => `/api/loja/story/${st.id}/${parte}?${st.q || ""}`;
 function midias(x){
-  const p = []; if(x.fotos) p.push(`📷 ${x.fotos}`); if(x.videos) p.push(`🎬 ${x.videos}`); return p;
+  const p = []; if(x.fotos) p.push(`${ic("camera")} ${x.fotos}`); if(x.videos) p.push(`${ic("video")} ${x.videos}`); return p;
 }
 
 async function carregar(){
   const r = await api("/api/loja/dados");
-  if(r.erro === "bloqueado"){ $("#barra").innerHTML = ""; $("#app").innerHTML = `<div class="bloqueado-tela"><div><div style="font-size:48px">🚫</div><h2 style="color:var(--text);margin:8px 0 6px">Acesso indisponível</h2>Seu acesso a este perfil foi bloqueado.</div></div>`; return }
-  if(!r.ok){ $("#app").innerHTML = `<div class="vazio"><div class="ico">🔒</div>Abra a loja pelo botão do bot no Telegram.</div>`; return }
+  if(r.erro === "bloqueado"){ $("#barra").innerHTML = ""; $("#app").innerHTML = `<div class="bloqueado-tela"><div><div style="font-size:48px">${ic("bloqueio")}</div><h2 style="color:var(--text);margin:8px 0 6px">Acesso indisponível</h2>Seu acesso a este perfil foi bloqueado.</div></div>`; return }
+  if(!r.ok){ $("#app").innerHTML = `<div class="vazio"><div class="ico">${ic("cadeado")}</div>Abra a loja pelo botão do bot no Telegram.</div>`; return }
   const primeira = !D;
   D = r;
   if(primeira && D.sou_criadora) return escolherModo();
@@ -825,12 +959,12 @@ function render(){
       <div class="capa">${c.tem_foto ? `<img src="${avatarSrc()}" alt="">` : `<span class="bolha b1"></span><span class="bolha b2"></span><span class="bolha b3"></span>`}</div>
       <div class="perfil">
         <div class="avatar-wrap" ${criadora() || anel.cls ? 'data-avatar' : 'style="cursor:default"'}>
-          <div class="anel ${anel.cls}">${c.tem_foto ? `<img class="avatar" src="${avatarSrc()}" alt="">` : `<div class="avatar">✨</div>`}</div>
-          ${criadora() ? `<span class="lapis">✎</span>` : ""}${anel.selo}
+          <div class="anel ${anel.cls}">${c.tem_foto ? `<img class="avatar" src="${avatarSrc()}" alt="">` : `<div class="avatar">${ic("brilho")}</div>`}</div>
+          ${criadora() ? `<span class="lapis">${ic("lapis")}</span>` : ""}${anel.selo}
         </div>
-        <div class="nome">${esc(c.nome)} <span class="verif" title="Perfil oficial">✓</span></div>
+        <div class="nome">${esc(c.nome)} <span class="verif" title="Perfil oficial">${ic("check")}</span></div>
         <p class="bio">${esc(c.bio)}</p>
-        ${criadora() ? `<span class="selo-criadora">👑 Modo criadora</span>` : ""}
+        ${criadora() ? `<span class="selo-criadora">${ic("coroa")} Modo criadora</span>` : ""}
         <div class="stats">
           <div><b>${t.conteudos ?? D.packs.length}</b><small>conteúdos</small></div>
           <div><b>${t.fotos ?? 0}</b><small>fotos</small></div>
@@ -846,8 +980,8 @@ function render(){
     <section id="conteudo">${aba()}</section>`;
   if(criadora() && !["inicio","painel","config"].includes(ABA)) ABA = "inicio";
   if(!criadora() && ["painel","config"].includes(ABA)) ABA = "inicio";
-  const abas = criadora() ? [["inicio","🏠","Início"],["painel","📊","Painel"],["config","⚙️","Ajustes"]]
-                          : [["inicio","🏠","Início"],["vip","⭐","VIP"],["minhas","🗂️","Minhas"],["gorjeta","💝","Mimos"]];
+  const abas = criadora() ? [["inicio",`${ic("casa")}`,"Início"],["painel",`${ic("grafico")}`,"Painel"],["config",`${ic("engrenagem")}`,"Ajustes"]]
+                          : [["inicio",`${ic("casa")}`,"Início"],["vip",`${ic("estrela-cheia")}`,"VIP"],["minhas",`${ic("pasta")}`,"Minhas"],["gorjeta",`${ic("mimo")}`,"Mimos"]];
   const idx = Math.max(0, abas.findIndex(a => a[0] === ABA));
   $("#barra").innerHTML = `<nav>
     <span class="pilula" style="width:calc((100% - 12px) / ${abas.length});transform:translateX(${(PILULA ?? idx) * 100}%)"></span>
@@ -858,10 +992,10 @@ function render(){
   // barra do topo que aparece quando rola a página
   $("#topo-fixo")?.remove();
   const acaoTopo = criadora() ? `<button class="btn mini" data-criar="post">＋ Publicar</button>`
-    : D.sou_criadora ? `<button class="btn mini sec" data-volta="1">👑 Criadora</button>`
-    : !D.assinatura && D.planos.length ? `<button class="btn mini brilho" data-aba="vip">⭐ Assinar</button>` : "";
+    : D.sou_criadora ? `<button class="btn mini sec" data-volta="1">${ic("coroa")} Criadora</button>`
+    : !D.assinatura && D.planos.length ? `<button class="btn mini brilho" data-aba="vip">${ic("estrela-cheia")} Assinar</button>` : "";
   const topo = document.createElement("div"); topo.className = "topo-fixo"; topo.id = "topo-fixo";
-  topo.innerHTML = `${c.tem_foto ? `<img class="av" src="${avatarSrc()}" alt="">` : `<div class="av">✨</div>`}<b>${esc(c.nome)} <span class="verif">✓</span></b>${acaoTopo}`;
+  topo.innerHTML = `${c.tem_foto ? `<img class="av" src="${avatarSrc()}" alt="">` : `<div class="av">${ic("brilho")}</div>`}<b>${esc(c.nome)} <span class="verif">${ic("check")}</span></b>${acaoTopo}`;
   topo.querySelector(".av").onclick = () => window.scrollTo({top:0, behavior:"smooth"});
   document.body.appendChild(topo);
   $("#fab")?.remove();
@@ -872,7 +1006,7 @@ function render(){
   if(D.sou_criadora && COMO_FA){
     const v = document.createElement("button"); v.id = "volta-criadora"; v.className = "selo-criadora"; v.dataset.volta = "1";
     v.style.cssText = "position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:12;margin:0;box-shadow:var(--sombra);background:var(--bg)";
-    v.textContent = "👑 Entrar como criadora";
+    v.innerHTML = `${ic("coroa")} Entrar como criadora`;
     document.body.appendChild(v);
   }
   const cont = $("#conteudo");
@@ -893,7 +1027,7 @@ addEventListener("scroll", () => document.body.classList.toggle("rolou", scrollY
 function vipAtivo(){
   const a = D.assinatura, urgente = a.dias <= 3 && a.plano;
   return `<div class="vip-ativo ${urgente ? "urgente" : ""}" data-aba="vip">
-    <div class="ico">⭐</div>
+    <div class="ico">${ic("estrela-cheia")}</div>
     <div style="flex:1;min-width:0"><b>${urgente ? (a.dias <= 1 ? "Seu VIP vence amanhã" : `Seu VIP vence em ${a.dias} dias`) : "Você é VIP"}</b><small>Acesso até ${esc(a.ate)}</small></div>
     ${urgente ? `<button class="btn mini brilho" data-renovar="${a.plano}">Renovar</button>` : `<span class="muted" style="font-size:18px">›</span>`}
   </div>`;
@@ -909,7 +1043,7 @@ function aba(){
 }
 
 function cabPost(menu){
-  return `<div class="cab">${D.criadora.tem_foto ? `<img class="mini-av" src="${avatarSrc()}" alt="">` : `<div class="mini-av">✨</div>`}
+  return `<div class="cab">${D.criadora.tem_foto ? `<img class="mini-av" src="${avatarSrc()}" alt="">` : `<div class="mini-av">${ic("brilho")}</div>`}
     <div><b>${esc(D.criadora.nome)}</b><small>${menu.data}</small></div>
     ${criadora() && menu.acao ? `<button class="menu-post" data-menu="${menu.acao}">⋯</button>` : ""}</div>`;
 }
@@ -922,8 +1056,8 @@ function interacoes(alvo){
   return `<div class="interacoes">
     <button class="interacao ${c.eu ? "on" : ""}" data-curtir="${alvo}" aria-pressed="${c.eu}" aria-label="Curtir"><span class="coracao">${CORACAO}</span><span class="n">${c.n || ""}</span></button>
     ${criadora()
-      ? `<span class="interacao info">💝 ${m ? `${pl(m.qtd, "mimo", "mimos")} · ${esc(m.total_fmt)}` : "nenhum mimo ainda"}</span>`
-      : `<button class="interacao" data-mimo="${alvo}"><span class="coracao">💝</span><span>Mimo</span></button>`}
+      ? `<span class="interacao info">${ic("mimo")} ${m ? `${pl(m.qtd, "mimo", "mimos")} · ${esc(m.total_fmt)}` : "nenhum mimo ainda"}</span>`
+      : `<button class="interacao" data-mimo="${alvo}"><span class="coracao">${ic("mimo")}</span><span>Mimo</span></button>`}
   </div>`;
 }
 function postTexto(p){
@@ -941,9 +1075,9 @@ function enquete(p){
   const total = E.votos.reduce((a, b) => a + b, 0), ver = E.meu != null || criadora() || PREVIA;
   return `<div class="enquete" data-enq="${p.id}">${E.opcoes.map((o, i) => {
     const pct = total ? Math.round(E.votos[i] * 100 / total) : 0;
-    return ver ? `<div class="opc ${E.meu === i ? "meu" : ""}"><i style="width:${pct}%"></i><span>${E.meu === i ? "✓ " : ""}${esc(o)}</span><b>${pct}%</b></div>`
+    return ver ? `<div class="opc ${E.meu === i ? "meu" : ""}"><i style="width:${pct}%"></i><span>${E.meu === i ? `${ic("check")} ` : ""}${esc(o)}</span><b>${pct}%</b></div>`
                : `<button class="opc" data-votar="${p.id}:${i}"><span>${esc(o)}</span></button>`;
-  }).join("")}<small class="muted">📊 ${pl(total, "voto", "votos")}${ver ? "" : " · toque numa opção para votar"}</small></div>`;
+  }).join("")}<small class="muted">${ic("grafico")} ${pl(total, "voto", "votos")}${ver ? "" : " · toque numa opção para votar"}</small></div>`;
 }
 async function votar(ref){
   const [id, op] = ref.split(":").map(Number);
@@ -985,29 +1119,49 @@ function itensFeed(){
   else todos.sort((a, b) => (b.combo ? 1 : 0) - (a.combo ? 1 : 0) || String(b.criado_em || "").localeCompare(String(a.criado_em || "")));
   return todos;
 }
+// Sem VIP não aparece nenhum conteúdo: o servidor nem manda (D.bloqueio traz só as quantidades).
+// A criadora vendo "como fã" enxerga o mesmo que um fã sem assinatura.
+function semAcesso(){ return !criadora() && (!!D.bloqueio || (COMO_FA && !D.assinatura)) }
+function telaBloqueio(){
+  const b = D.bloqueio || {posts: D.posts.length, stories: (D.stories || []).length,
+                           packs: D.packs.length + D.combos.length, lancamentos: (D.lancamentos || []).length};
+  const linhas = [[b.posts, "imagem", "publicação", "publicações"], [b.packs, "caixa", "pack exclusivo", "packs exclusivos"],
+                  [b.stories, "camera", "story no ar", "stories no ar"], [b.lancamentos, "calendario", "lançamento chegando", "lançamentos chegando"]]
+    .filter(([n]) => n > 0)
+    .map(([n, i, um, varios]) => `<li><span class="li-ico">${ic(i)}</span>${pl(n, um, varios)}</li>`).join("");
+  const mensal = D.planos.find(p => p.dias === 30) || D.planos[0];
+  return `<div class="bloqueio-vip tela entra">
+    <div class="ico">${ic("cadeado")}</div>
+    <b>Conteúdo só para assinantes</b>
+    <p>Tudo o que ${esc(D.criadora.nome)} publica fica liberado no VIP: posts, fotos, vídeos, stories e packs.</p>
+    ${linhas ? `<ul class="bloq-lista">${linhas}</ul>` : ""}
+    ${D.planos.length ? `<button class="btn brilho" data-aba="vip">${ic("estrela-cheia")} Assinar VIP${mensal ? ` · ${esc(mensal.preco_fmt)}/mês` : ""}</button>` : ""}
+    ${D.minhas.length ? `<button class="btn fantasma" data-aba="minhas">${ic("pasta")} Ver o que já comprei</button>` : ""}
+  </div>`;
+}
 function cardBloqueioVip(){
   const n = D.posts_bloqueados;
-  return `<div class="bloqueio-vip"><div class="ico">🔒</div>
+  return `<div class="bloqueio-vip"><div class="ico">${ic("cadeado")}</div>
     <b>${n} publicaç${n === 1 ? "ão exclusiva" : "ões exclusivas"} para assinantes</b>
     <p>Posts, fotos, vídeos e stories de ${esc(D.criadora.nome)} ficam liberados no VIP.</p>
-    <button class="btn brilho" data-aba="vip">⭐ Assinar VIP</button></div>`;
+    <button class="btn brilho" data-aba="vip">${ic("estrela-cheia")} Assinar VIP</button></div>`;
 }
 function listaFeed(){
   const todos = itensFeed(), filtrando = BUSCA.trim() || qtdFiltros();
   const topo = filtrando ? `<div class="resultado-busca"><span>${pl(todos.length, "resultado", "resultados")}</span><button data-limpar-busca>Limpar</button></div>` : "";
-  if(!todos.length && filtrando) return topo + `<div class="vazio"><div class="ico">🔎</div>Nada encontrado${BUSCA.trim() ? ` para “${esc(BUSCA.trim())}”` : ""}.</div>`;
+  if(!todos.length && filtrando) return topo + `<div class="vazio"><div class="ico">${ic("busca")}</div>Nada encontrado${BUSCA.trim() ? ` para “${esc(BUSCA.trim())}”` : ""}.</div>`;
   const vazioTotal = !todos.length && !(D.lancamentos || []).length && !D.posts_bloqueados;
   if(vazioTotal) return criadora()
-    ? `<div class="vazio"><div class="ico">✨</div>Seu feed está vazio.<br>Toque no <b>+</b> para publicar o primeiro post ou pack.</div>`
-    : `<div class="vazio"><div class="ico">🫧</div>Nada por aqui ainda.<br>Dá uma olhada no VIP ⭐</div>`;
+    ? `<div class="vazio"><div class="ico">${ic("brilho")}</div>Seu feed está vazio.<br>Toque no <b>+</b> para publicar o primeiro post ou pack.</div>`
+    : `<div class="vazio"><div class="ico">${ic("bolhas")}</div>Nada por aqui ainda.<br>Dá uma olhada no VIP ${ic("estrela-cheia")}</div>`;
   if(VISTA === "grade"){
     const cards = todos.filter(x => !x.texto_post);
     return topo + (cards.length ? `<div class="grade">${cards.map(x => `
     <div class="card" data-item="${x.id}">
       <img src="/api/loja/previa/${x.id}" loading="lazy" alt="">
-      <span class="cad">${x.comprado ? "✅" : "🔒"}</span>
+      <span class="cad">${x.comprado ? `${ic("check-circulo")}` : `${ic("cadeado")}`}</span>
       <div class="veu"><b>${esc(x.titulo)}</b><small>${x.comprado ? "Comprado" : esc(x.preco_fmt)}</small></div>
-    </div>`).join("")}</div>` : `<div class="vazio"><div class="ico">▦</div>A grade mostra só packs e combos.</div>`);
+    </div>`).join("")}</div>` : `<div class="vazio"><div class="ico">${ic("grade")}</div>A grade mostra só packs e combos.</div>`);
   }
   const lanc = !filtrando && ["todos", "packs"].includes(FILTRO) ? (D.lancamentos || []) : [];
   const bloqueio = !filtrando && D.posts_bloqueados && ["todos", "posts"].includes(FILTRO) ? cardBloqueioVip() : "";
@@ -1021,15 +1175,16 @@ function atualizarFeed(){
   const lp = $("#busca-limpar"); if(lp) lp.classList.toggle("ocultar", !BUSCA);
 }
 function inicio(){
+  if(semAcesso()) return telaBloqueio();
   const q = qtdFiltros();
   return `
     <div class="secao-titulo"><h2>Conteúdos</h2>
-      <div class="alt-vista"><button data-vista="feed" class="${VISTA==="feed"?"on":""}" aria-label="Feed">☰</button><button data-vista="grade" class="${VISTA==="grade"?"on":""}" aria-label="Grade">▦</button></div></div>
-    <div class="chips">${[["todos","Todos"],["posts","📝 Posts"],["packs","📦 Packs"],["combos","🎁 Combos"]]
+      <div class="alt-vista"><button data-vista="feed" class="${VISTA==="feed"?"on":""}" aria-label="Feed">${ic("menu")}</button><button data-vista="grade" class="${VISTA==="grade"?"on":""}" aria-label="Grade">${ic("grade")}</button></div></div>
+    <div class="chips">${[["todos","Todos"],["posts",`${ic("nota")} Posts`],["packs",`${ic("caixa")} Packs`],["combos",`${ic("presente")} Combos`]]
       .map(([id,t]) => `<button class="chip ${FILTRO===id?"on":""}" data-filtro="${id}">${t}</button>`).join("")}</div>
     <div class="busca">
-      <div class="campo-b"><span class="lupa">🔎</span><input type="text" id="busca" placeholder="Buscar conteúdo" value="${esc(BUSCA)}" enterkeyhint="search" autocomplete="off">
-        <button class="limpar ${BUSCA ? "" : "ocultar"}" id="busca-limpar" aria-label="Limpar busca">✕</button></div>
+      <div class="campo-b"><span class="lupa">${ic("busca")}</span><input type="text" id="busca" placeholder="Buscar conteúdo" value="${esc(BUSCA)}" enterkeyhint="search" autocomplete="off">
+        <button class="limpar ${BUSCA ? "" : "ocultar"}" id="busca-limpar" aria-label="Limpar busca">${ic("fechar")}</button></div>
       <button class="btn-filtros" data-filtros>Filtros<span class="n ${q ? "" : "ocultar"}" id="filtros-n">${q}</span></button>
     </div>
     ${avisoFila()}<div id="lista-feed">${listaFeed()}</div>`;
@@ -1039,9 +1194,9 @@ function abrirFiltros(){
   const grupo = (k, titulo, ops) => `<div class="grupo-filtro"><span class="rotulo">${titulo}</span><div class="opcoes" data-grupo="${k}">${
     ops.map(([v, t]) => `<button data-v="${v}" class="${f[k] === v ? "on" : ""}">${t}</button>`).join("")}</div></div>`;
   abrirFolha(`<h2>Filtros</h2><p class="sub">Vale para packs e combos. Os posts aparecem quando só a busca está ativa.</p>
-    ${grupo("midia", "Mídia", [["todas","Todas"],["video","🎬 Com vídeo"],["fotos","📷 Só fotos"]])}
-    ${criadora() ? "" : grupo("compra", "Compra", [["todos","Todos"],["nao","🔒 Não comprados"],["sim","✅ Comprados"]])}
-    ${grupo("ordem", "Ordenar por", [["recentes","Mais recentes"],["curtidos","❤️ Mais curtidos"],["menor","Menor preço"],["maior","Maior preço"]])}
+    ${grupo("midia", "Mídia", [["todas","Todas"],["video",`${ic("video")} Com vídeo`],["fotos",`${ic("camera")} Só fotos`]])}
+    ${criadora() ? "" : grupo("compra", "Compra", [["todos","Todos"],["nao",`${ic("cadeado")} Não comprados`],["sim",`${ic("check-circulo")} Comprados`]])}
+    ${grupo("ordem", "Ordenar por", [["recentes","Mais recentes"],["curtidos",`${ic("coracao-cheio")} Mais curtidos`],["menor","Menor preço"],["maior","Maior preço"]])}
     <div class="gap"></div><button class="btn" id="filtros-ok">Ver resultados</button>
     <div class="gap"></div><button class="btn fantasma" id="filtros-limpar">Limpar filtros</button>`);
   document.querySelectorAll(".folha [data-grupo]").forEach(g => g.onclick = e => {
@@ -1059,7 +1214,7 @@ document.addEventListener("input", e => {
 const DATA_HORA = iso => new Date(iso).toLocaleString("pt-BR", {weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"}).replace(".", "");
 function cardLancamento(x){
   return `<article class="post lancamento">
-    ${cabPost({data: "🔥 Lançamento", acao: criadora() ? `ag:pack:${x.id}` : ""})}
+    ${cabPost({data: `${ic("fogo")} Lançamento`, acao: criadora() ? `ag:pack:${x.id}` : ""})}
     ${x.legenda ? `<div class="legenda ${x.legenda.length > 220 ? "mais" : ""}">${esc(x.legenda)}</div>` : ""}
     <div class="midia" style="cursor:default">
       <img src="/api/loja/previa/${x.id}" loading="lazy" alt="">
@@ -1068,8 +1223,8 @@ function cardLancamento(x){
     </div>
     <div class="rodape">
       <div><b>${esc(x.titulo)}</b><small>${esc(x.preco_fmt)} no lançamento</small></div>
-      ${criadora() ? `<span class="btn-aviso on">🔔 ${x.avisos} esperando</span>`
-        : `<button class="btn-aviso ${x.avisar ? "on" : ""}" data-avisar="${x.id}">${x.avisar ? "✓ Vou te avisar" : `<span class="sino">🔔</span> Me avise`}</button>`}
+      ${criadora() ? `<span class="btn-aviso on">${ic("sino")} ${x.avisos} esperando</span>`
+        : `<button class="btn-aviso ${x.avisar ? "on" : ""}" data-avisar="${x.id}">${x.avisar ? `${ic("check")} Vou te avisar` : `<span class="sino">${ic("sino")}</span> Me avise`}</button>`}
     </div>
   </article>`;
 }
@@ -1098,8 +1253,8 @@ async function avisar(id, el){
   const x = D.lancamentos.find(l => l.id === id); if(x) x.avisar = r.avisar;
   vibrar(r.avisar ? "success" : "leve");
   el.classList.toggle("on", r.avisar);
-  el.innerHTML = r.avisar ? "✓ Vou te avisar" : `<span class="sino">🔔</span> Me avise`;
-  if(r.avisar){ faiscas(el); toast("Combinado! Te aviso no chat quando sair 🔔") }
+  el.innerHTML = r.avisar ? `${ic("check")} Vou te avisar` : `<span class="sino">${ic("sino")}</span> Me avise`;
+  if(r.avisar){ faiscas(el); toast(`Combinado! Te aviso no chat quando sair ${ic("sino")}`) }
 }
 function cardPack(x){
   return `
@@ -1108,10 +1263,10 @@ function cardPack(x){
       ${x.legenda ? `<div class="legenda ${x.legenda.length > 220 ? "mais" : ""}" ${x.legenda.length > 220 ? "data-mais" : ""}>${esc(x.legenda)}</div>${x.legenda.length > 220 ? `<span class="ver-mais" data-mais>ver mais</span>` : ""}` : ""}
       <div class="midia" data-item="${x.id}" data-duplo="${x.id}">
         <img src="/api/loja/previa/${x.id}" loading="lazy" alt="">
-        ${criadora() ? `<span class="comprado-selo">${esc(x.preco_fmt)}</span>` : x.comprado ? `<span class="comprado-selo">✓ Comprado</span>` : ""}
-        ${x.combo ? `<span class="tag-combo">🎁 ${x.packs.length} packs</span>` : ""}
+        ${criadora() ? `<span class="comprado-selo">${esc(x.preco_fmt)}</span>` : x.comprado ? `<span class="comprado-selo">${ic("check")} Comprado</span>` : ""}
+        ${x.combo ? `<span class="tag-combo">${ic("presente")} ${x.packs.length} packs</span>` : ""}
         <div class="veu">
-          ${criadora() ? `<span class="desbloq">👁 Ver conteúdo</span>` : x.comprado ? `<span class="desbloq">▶ Ver agora</span>` : `<span class="cadeado">🔒</span><span class="desbloq brilho">Desbloquear por ${esc(x.preco_fmt)}</span>`}
+          ${criadora() ? `<span class="desbloq">${ic("olho")} Ver conteúdo</span>` : x.comprado ? `<span class="desbloq">${ic("play")} Ver agora</span>` : `<span class="cadeado">${ic("cadeado")}</span><span class="desbloq brilho">Desbloquear por ${esc(x.preco_fmt)}</span>`}
         </div>
         <div class="contagem">${midias(x).map(m => `<span class="pill">${m}</span>`).join("")}</div>
       </div>
@@ -1136,7 +1291,7 @@ function podarCarrinho(){        // tira o que saiu da vitrine ou já foi compra
   if(CARRINHO.length !== antes) salvarCarrinho();
 }
 const botaoCarrinho = id => { const on = CARRINHO.includes(id);
-  return `<button class="btn-cart ${on ? "on" : ""}" data-cart="${id}" aria-label="${on ? "Tirar do carrinho" : "Adicionar ao carrinho"}">${on ? "✓" : "🛒"}</button>` };
+  return `<button class="btn-cart ${on ? "on" : ""}" data-cart="${id}" aria-label="${on ? "Tirar do carrinho" : "Adicionar ao carrinho"}">${on ? `${ic("check")}` : `${ic("carrinho")}`}</button>` };
 function totaisCarrinho(){
   const itens = CARRINHO.map(id => D.packs.find(p => p.id === id)).filter(Boolean);
   const cheio = itens.reduce((a, p) => a + p.preco, 0), C = D.carrinho_cfg || {pct: 0, min: 3};
@@ -1149,7 +1304,7 @@ function alternarCarrinho(id, el){
   salvarCarrinho(); vibrar(i >= 0 ? "leve" : "success");
   document.querySelectorAll(`[data-cart="${id}"]`).forEach(b => b.outerHTML = botaoCarrinho(id));
   if(i < 0){ const {itens, C} = totaisCarrinho(); const faltam = C.pct ? C.min - itens.length : 0;
-    toast(faltam > 0 ? `No carrinho 🛒 · mais ${pl(faltam, "pack", "packs")} para ganhar ${C.pct}% OFF` : C.pct && itens.length >= C.min ? `No carrinho 🛒 · ${C.pct}% OFF aplicado` : "Adicionado ao carrinho 🛒") }
+    toast(faltam > 0 ? `No carrinho ${ic("carrinho")} · mais ${pl(faltam, "pack", "packs")} para ganhar ${C.pct}% OFF` : C.pct && itens.length >= C.min ? `No carrinho ${ic("carrinho")} · ${C.pct}% OFF aplicado` : `Adicionado ao carrinho ${ic("carrinho")}`) }
   barraCarrinho();
 }
 function barraCarrinho(){
@@ -1159,7 +1314,7 @@ function barraCarrinho(){
   if(!mostrar) return;
   const {itens, total, desconto} = totaisCarrinho();
   const b = document.createElement("div"); b.className = "carrinho-bar"; b.id = "carrinho-bar";
-  b.innerHTML = `<span class="ico">🛒</span><div><b>${pl(itens.length, "pack", "packs")} · ${reais(total)}</b><small>${desconto ? `você economiza ${reais(desconto)}` : "um PIX só para tudo"}</small></div><button class="btn mini" tabindex="-1">Ver carrinho</button>`;
+  b.innerHTML = `<span class="ico">${ic("carrinho")}</span><div><b>${pl(itens.length, "pack", "packs")} · ${reais(total)}</b><small>${desconto ? `você economiza ${reais(desconto)}` : "um PIX só para tudo"}</small></div><button class="btn mini" tabindex="-1">Ver carrinho</button>`;
   b.onclick = abrirCarrinho;
   document.body.appendChild(b);
 }
@@ -1171,13 +1326,13 @@ function abrirCarrinho(){
   abrirFolha(`<h2>Seu carrinho</h2><p class="sub">Pague tudo com um PIX só. Cada pack chega no chat com o bot.</p>
     <div class="lista" style="padding:0">${itens.map(p => `<div class="item"><img src="/api/loja/previa/${p.id}" alt="">
       <div class="txt"><b>${esc(p.titulo)}</b><small>${esc(p.resumo)}</small></div><b style="flex:none">${esc(p.preco_fmt)}</b>
-      <button class="btn mini sec" data-tirar-cart="${p.id}" aria-label="Tirar">✕</button></div>`).join("")}</div>
-    ${faltam > 0 ? `<div class="aviso ok" style="margin:12px 0 0;text-align:center">🎁 Coloque mais ${pl(faltam, "pack", "packs")} e ganhe ${C.pct}% OFF</div>` : ""}
+      <button class="btn mini sec" data-tirar-cart="${p.id}" aria-label="Tirar">${ic("fechar")}</button></div>`).join("")}</div>
+    ${faltam > 0 ? `<div class="aviso ok" style="margin:12px 0 0;text-align:center">${ic("presente")} Coloque mais ${pl(faltam, "pack", "packs")} e ganhe ${C.pct}% OFF</div>` : ""}
     <div class="gap"></div>
     <div class="linha-total"><span>Subtotal</span><span>${reais(cheio)}</span></div>
     ${desconto ? `<div class="linha-total desc"><span>Desconto do carrinho (${C.pct}%)</span><span>− ${reais(desconto)}</span></div>` : ""}
     <div class="linha-total final"><span>Total</span><span>${reais(total)}</span></div>
-    <div class="gap"></div><button class="btn brilho" id="pagar-cart">💠 Pagar ${reais(total)} com PIX</button>`);
+    <div class="gap"></div><button class="btn brilho" id="pagar-cart">${ic("pix")} Pagar ${reais(total)} com PIX</button>`);
   $("#pagar-cart").onclick = fecharCarrinho;
 }
 async function fecharCarrinho(){
@@ -1186,7 +1341,7 @@ async function fecharCarrinho(){
   const b = $("#pagar-cart"); if(b){ b.disabled = true; b.textContent = "Gerando PIX…" }
   const r = await api("/api/loja/carrinho", {pack_ids: CARRINHO});
   if(r.remover){ CARRINHO = CARRINHO.filter(id => !r.remover.includes(id)); salvarCarrinho(); toast("Tirei do carrinho o que não está mais disponível"); await carregar(); return abrirCarrinho() }
-  if(!r.ok){ if(b){ b.disabled = false; b.textContent = "💠 Pagar com PIX" } return toast(r.erro || "Não consegui fechar o carrinho") }
+  if(!r.ok){ if(b){ b.disabled = false; b.innerHTML = `${ic("pix")} Pagar com PIX` } return toast(r.erro || "Não consegui fechar o carrinho") }
   pagar(r.item_id);
 }
 
@@ -1194,15 +1349,15 @@ async function fecharCarrinho(){
 function metaCard(compacto){
   const M = D.meta; if(!M) return "";
   return `<div class="meta ${M.batida ? "batida" : ""}" ${criadora() ? "" : 'data-aba="gorjeta"'}>
-    <div class="topo-m"><b>🎯 ${esc(M.titulo)}</b><span>${M.pct}%</span></div>
+    <div class="topo-m"><b>${ic("alvo")} ${esc(M.titulo)}</b><span>${M.pct}%</span></div>
     ${!compacto && M.descricao ? `<p>${esc(M.descricao)}</p>` : ""}
     <div class="barra-prog"><i style="width:${M.pct}%"></i></div>
-    <small>${M.batida ? `🎉 Meta batida! ${esc(M.arrecadado_fmt)} de ${esc(M.alvo_fmt)}` : `${esc(M.arrecadado_fmt)} de ${esc(M.alvo_fmt)}`}${M.fas ? ` · ${pl(M.fas, "fã ajudou", "fãs ajudaram")}` : ""}${compacto && !criadora() && !M.batida ? " · toque para ajudar" : ""}</small>
+    <small>${M.batida ? `${ic("festa")} Meta batida! ${esc(M.arrecadado_fmt)} de ${esc(M.alvo_fmt)}` : `${esc(M.arrecadado_fmt)} de ${esc(M.alvo_fmt)}`}${M.fas ? ` · ${pl(M.fas, "fã ajudou", "fãs ajudaram")}` : ""}${compacto && !criadora() && !M.batida ? " · toque para ajudar" : ""}</small>
   </div>`;
 }
 
 function vip(){
-  if(!D.planos.length) return `<div class="vazio"><div class="ico">⭐</div>O VIP ainda não está aberto.</div>`;
+  if(!D.planos.length) return `<div class="vazio"><div class="ico">${ic("estrela-cheia")}</div>O VIP ainda não está aberto.</div>`;
   const sel = D.planos.find(p => p.id === PLANO_SEL) || D.planos[0];
   const melhor = D.planos.reduce((m,p) => (p.economia||0) > (m?.economia||0) ? p : m, null);
   const a = D.assinatura;
@@ -1214,7 +1369,7 @@ function vip(){
       <div class="barra-prog"><i style="width:${Math.min(100, Math.round(a.dias / Math.max(1, a.plano_dias) * 100))}%"></i></div>
       <p class="dica" style="margin-top:10px">Escolha o plano e renove em 1 toque: o PIX sai na hora e os dias são somados ao que você já tem.</p></div>` : ""}
     <div class="beneficios">
-      ${[["🔐","Canal privado com conteúdo exclusivo"],["🎬","Novidades toda semana e pay per view"],["🔄","Sem renovação automática: você escolhe quando renovar"]]
+      ${[[`${ic("cadeado")}`,"Canal privado com conteúdo exclusivo"],[`${ic("video")}`,"Novidades toda semana e pay per view"],[`${ic("renovar")}`,"Sem renovação automática: você escolhe quando renovar"]]
         .map(([i,t]) => `<div class="beneficio"><span class="ico">${i}</span>${t}</div>`).join("")}
     </div>
     <div class="planos">${D.planos.map(p => `
@@ -1225,27 +1380,27 @@ function vip(){
         <div class="valor">${p.promo ? `<s>${esc(p.preco_fmt)}</s><b>${esc(p.promo.preco_fmt)}</b><small class="muted">no 1º mês</small>` : `<b>${esc(p.preco_fmt)}</b><small class="muted">${reais(Math.round(p.preco_fmt.replace(/[^\d,]/g,"").replace(",",".")*100/ p.dias * 30))}/mês</small>`}</div>
       </div>`).join("")}</div>
     <div class="fixo-cta">${a
-      ? `<button class="btn brilho" data-renovar="${sel.id}">🔄 Renovar ${esc(sel.nome)} · ${esc(sel.preco_fmt)}</button>`
+      ? `<button class="btn brilho" data-renovar="${sel.id}">${ic("renovar")} Renovar ${esc(sel.nome)} · ${esc(sel.preco_fmt)}</button>`
       : `<button class="btn brilho" id="assinar" data-item="${sel.id}">Assinar ${esc(sel.nome)} · ${esc(sel.promo ? sel.promo.preco_fmt : sel.preco_fmt)}</button>`}</div>`;
 }
 
-const ST_PEDIDO = {NOVO: ["novo", "⏳ Em produção"], ENTREGUE: ["ok", "✓ Entregue"], RECUSADO: ["rec", "Recusado"]};
+const ST_PEDIDO = {NOVO: ["novo", `${ic("ampulheta")} Em produção`], ENTREGUE: ["ok", `${ic("check")} Entregue`], RECUSADO: ["rec", "Recusado"]};
 const stPedido = st => { const [c, t] = ST_PEDIDO[st] || ["novo", st]; return `<span class="st ${c}">${t}</span>` };
 function minhas(){
   const a = D.assinatura, P = D.meus_pedidos || [];
-  const rank = D.meu_rank ? `<div class="selo-rank"><span class="ico">${["🥇","🥈","🥉"][D.meu_rank.pos - 1] || "🏆"}</span>
+  const rank = D.meu_rank ? `<div class="selo-rank"><span class="ico">${D.meu_rank.pos <= 3 ? medalha(D.meu_rank.pos) : ic("trofeu", "ouro")}</span>
     <div><b>Você é o fã nº ${D.meu_rank.pos} de ${esc(D.criadora.nome)}</b><small>no ranking dos últimos 30 dias</small></div></div>` : "";
-  if(!D.minhas.length && !a && !P.length) return rank + `<div class="vazio"><div class="ico">🗂️</div>Suas compras aparecem aqui.<br>Tudo que você comprar fica salvo no chat com o bot.</div>`;
+  if(!D.minhas.length && !a && !P.length) return rank + `<div class="vazio"><div class="ico">${ic("pasta")}</div>Suas compras aparecem aqui.<br>Tudo que você comprar fica salvo no chat com o bot.</div>`;
   const pedidosFeitos = new Set(P.map(p => p.pack_id).filter(Boolean));
   const packs = D.minhas.filter(p => !pedidosFeitos.has(p.id));
   return rank + `${P.length ? `<div class="secao-titulo"><h2>Meus pedidos</h2><small class="muted">${pl(P.length, "pedido", "pedidos")}</small></div>
     <div class="lista">${P.map(p => `<div class="item" ${p.status === "ENTREGUE" && p.pack_id ? `data-ver="${p.pack_id}"` : `data-meu-pedido="${p.id}"`}>
-      ${p.status === "ENTREGUE" && p.pack_id ? `<img src="/api/loja/previa/${p.pack_id}" alt="">` : `<div class="thumb">✍️</div>`}
+      ${p.status === "ENTREGUE" && p.pack_id ? `<img src="/api/loja/previa/${p.pack_id}" alt="">` : `<div class="thumb">${ic("pedido")}</div>`}
       <div class="txt"><b>Pedido #${p.id} · ${esc(p.valor_fmt)}</b><small class="lim">${esc(p.texto)}</small>${stPedido(p.status)}</div>
       ${p.status === "ENTREGUE" && p.pack_id ? `<button class="btn mini sec" data-reenviar="${p.pack_id}">No chat</button>` : ""}</div>`).join("")}</div>` : ""}
     <div class="secao-titulo"><h2>Minhas compras</h2><small class="muted">${pl(packs.length, "item", "itens")}</small></div>
     <div class="lista">
-      ${a ? `<div class="item"><div class="thumb">⭐</div><div class="txt"><b>Assinatura VIP</b><small>Ativa até ${esc(a.ate)}</small></div><button class="btn mini sec" data-aba="vip">Renovar</button></div>` : ""}
+      ${a ? `<div class="item"><div class="thumb">${ic("estrela-cheia")}</div><div class="txt"><b>Assinatura VIP</b><small>Ativa até ${esc(a.ate)}</small></div><button class="btn mini sec" data-aba="vip">Renovar</button></div>` : ""}
       ${packs.map(p => `<div class="item" data-ver="${p.id}"><img src="/api/loja/previa/${p.id}" alt=""><div class="txt"><b>${esc(p.titulo)}</b><small>Toque para ver · sem desfoque</small></div>
         <button class="btn mini sec" data-reenviar="${p.id}">No chat</button></div>`).join("")}
       ${!packs.length && !a ? `<div class="vazio" style="padding:20px">Nenhum pack comprado ainda.</div>` : ""}
@@ -1263,15 +1418,15 @@ function verMeuPedido(id){
 function mimos(){
   const P = D.pedidos_cfg;
   return `
-    <div class="hero-vip vivo" style="--a1:#7b5cff;--a2:#ff2e7e"><h2>Mande um mimo 💝</h2>
+    <div class="hero-vip vivo" style="--a1:#7b5cff;--a2:#ff2e7e"><h2>Mande um mimo ${ic("mimo")}</h2>
       <p>Um agrado para ${esc(D.criadora.nome)}. Ela recebe na hora e vê que foi você.</p></div>
     ${D.meta ? metaCard(false) : ""}
-    <div class="mimos">${D.gorjetas.map((v,i) => `<button class="mimo" data-item="gorjeta_${v}"><span class="emoji">${EMOJI_MIMO[i % EMOJI_MIMO.length]}</span><b>${reais(v)}</b><small>toque para enviar</small></button>`).join("")}</div>
+    <div class="mimos">${D.gorjetas.map((v,i) => `<button class="mimo" data-item="gorjeta_${v}" data-icone="${ICONE_MIMO[i % ICONE_MIMO.length]}"><span class="emoji">${ic(ICONE_MIMO[i % ICONE_MIMO.length])}</span><b>${reais(v)}</b><small>toque para enviar</small></button>`).join("")}</div>
     <div class="campo"><input type="text" id="gorjeta-outro" inputmode="decimal" placeholder="Outro valor (ex: 15,00)"><button class="btn mini" id="gorjeta-ok" style="padding:0 18px">Enviar</button></div>
-    ${P && P.ativo ? `<div class="card-pedido"><h2>✍️ Pedido personalizado</h2>
+    ${P && P.ativo ? `<div class="card-pedido"><h2>${ic("pedido")} Pedido personalizado</h2>
       <p>Peça um conteúdo feito só para você. ${esc(D.criadora.nome)} produz e entrega no seu chat com o bot.</p>
       ${P.info ? `<p style="color:var(--text);margin-top:10px">${esc(P.info)}</p>` : ""}
-      <div class="detalhes-p"><span>💰 a partir de ${esc(P.min_fmt)}</span>${P.prazo ? `<span>⏳ ${esc(P.prazo)}</span>` : ""}<span>🔒 só você recebe</span></div>
+      <div class="detalhes-p"><span>${ic("moeda")} a partir de ${esc(P.min_fmt)}</span>${P.prazo ? `<span>${ic("ampulheta")} ${esc(P.prazo)}</span>` : ""}<span>${ic("cadeado")} só você recebe</span></div>
       <button class="btn brilho" id="pedido-novo">Fazer um pedido</button></div>` : ""}`;
 }
 function novoPedido(){
@@ -1285,7 +1440,7 @@ function novoPedido(){
     <span class="rotulo">Quanto você oferece?</span>
     <input type="text" id="pd-valor" inputmode="decimal" placeholder="Mínimo ${esc(P.min_fmt)}">
     <p class="dica">Valores maiores costumam ser atendidos mais rápido. Se ${esc(D.criadora.nome)} não puder fazer, o valor é devolvido.</p>
-    <div class="gap"></div><button class="btn brilho" id="pd-enviar">💠 Pagar com PIX e enviar</button>`);
+    <div class="gap"></div><button class="btn brilho" id="pd-enviar">${ic("pix")} Pagar com PIX e enviar</button>`);
   $("#pd-texto").oninput = e => $("#pd-cont").textContent = `${e.target.value.length}/1000`;
   $("#pd-enviar").onclick = enviarPedido;
 }
@@ -1296,7 +1451,7 @@ async function enviarPedido(){
   if(!v || v < D.pedidos_cfg.min) return toast(`O valor mínimo é ${D.pedidos_cfg.min_fmt}`);
   const b = $("#pd-enviar"); b.disabled = true; b.textContent = "Gerando PIX…";
   const r = await api("/api/loja/pedido_personalizado", {texto, valor});
-  if(!r.ok){ b.disabled = false; b.textContent = "💠 Pagar com PIX e enviar"; return toast(r.erro || "Não consegui registrar o pedido") }
+  if(!r.ok){ b.disabled = false; b.innerHTML = `${ic("pix")} Pagar com PIX e enviar`; return toast(r.erro || "Não consegui registrar o pedido") }
   pagar(r.item_id);
 }
 
@@ -1307,7 +1462,7 @@ const DUR_FOTO = 5000;
 function anelStories(){
   const L = D.stories || [];
   if(L.length) return {cls: `story ${L.every(x => x.visto) ? "visto" : ""}`, selo: `<span class="selo-story ${L.every(x => x.visto) ? "cinza" : ""}">STORY</span>`};
-  if(D.stories_bloqueados) return {cls: "story", selo: `<span class="selo-story">🔒 STORY</span>`};
+  if(D.stories_bloqueados) return {cls: "story", selo: `<span class="selo-story">${ic("cadeado")} STORY</span>`};
   return {cls: "", selo: ""};
 }
 function pintarAnel(){
@@ -1319,17 +1474,17 @@ function tocarAvatar(){
   if(criadora()) return menuAvatar();
   if((D.stories || []).length) return abrirStories();
   if(D.stories_bloqueados){ vibrar("leve");
-    abrirFolha(`<div class="ok-grande"><div class="emoji">🔒</div><h2>Stories só para assinantes</h2>
+    abrirFolha(`<div class="ok-grande"><div class="emoji">${ic("cadeado")}</div><h2>Stories só para assinantes</h2>
       <p class="sub">${esc(D.criadora.nome)} tem ${D.stories_bloqueados} stor${D.stories_bloqueados === 1 ? "y" : "ies"} no ar agora. Assine o VIP para ver, junto com todas as publicações.</p></div>
-      <button class="btn brilho" data-aba="vip">⭐ Assinar VIP</button>`); }
+      <button class="btn brilho" data-aba="vip">${ic("estrela-cheia")} Assinar VIP</button>`); }
 }
 function menuAvatar(){
   const n = (D.stories || []).length;
   abrirFolha(`<h2>Seu perfil</h2><p class="sub">${n ? `${pl(n, "story", "stories")} no ar agora.` : "Nenhum story no ar."}</p>
     <div class="acoes" style="padding:0">
-      ${n ? `<button class="acao" id="av-ver"><span class="ico">▶</span><div><b>Ver meus stories</b><small>E quem visualizou cada um</small></div><span class="seta">›</span></button>` : ""}
-      <button class="acao" id="av-novo"><span class="ico">📸</span><div><b>Novo story</b><small>Foto ou vídeo que some em 24h</small></div><span class="seta">›</span></button>
-      <button class="acao" id="av-perfil"><span class="ico">✎</span><div><b>Foto, nome e bio</b><small>Editar o perfil</small></div><span class="seta">›</span></button>
+      ${n ? `<button class="acao" id="av-ver"><span class="ico">${ic("play")}</span><div><b>Ver meus stories</b><small>E quem visualizou cada um</small></div><span class="seta">›</span></button>` : ""}
+      <button class="acao" id="av-novo"><span class="ico">${ic("camera")}</span><div><b>Novo story</b><small>Foto ou vídeo que some em 24h</small></div><span class="seta">›</span></button>
+      <button class="acao" id="av-perfil"><span class="ico">${ic("lapis")}</span><div><b>Foto, nome e bio</b><small>Editar o perfil</small></div><span class="seta">›</span></button>
     </div>`);
   if(n) $("#av-ver").onclick = () => abrirStories(0);
   $("#av-novo").onclick = novoStory;
@@ -1341,9 +1496,9 @@ function abrirStories(inicio){
   fecharFolha(); fecharStories();
   const el = document.createElement("div"); el.className = "stories"; el.id = "stories";
   el.innerHTML = `<div class="barras">${L.map(() => "<span><i></i></span>").join("")}</div>
-    <div class="cab-s">${D.criadora.tem_foto ? `<img class="av" src="${avatarSrc()}" alt="">` : `<div class="av">✨</div>`}
+    <div class="cab-s">${D.criadora.tem_foto ? `<img class="av" src="${avatarSrc()}" alt="">` : `<div class="av">${ic("brilho")}</div>`}
       <div style="min-width:0"><b>${esc(D.criadora.nome)}</b><small id="sv-tempo"></small></div>
-      <div class="acoes-s"><button id="sv-som" class="ocultar" aria-label="Ligar o som">🔇</button>${criadora() ? `<button id="sv-apagar" aria-label="Apagar story">🗑</button>` : ""}<button id="sv-fechar" aria-label="Fechar">✕</button></div></div>
+      <div class="acoes-s"><button id="sv-som" class="ocultar" aria-label="Ligar o som">${ic("mudo")}</button>${criadora() ? `<button id="sv-apagar" aria-label="Apagar story">${ic("lixo")}</button>` : ""}<button id="sv-fechar" aria-label="Fechar">${ic("fechar")}</button></div></div>
     <div class="palco" id="sv-palco"></div>
     <div class="zona esq" id="sv-esq"></div><div class="zona dir" id="sv-dir"></div>
     <div class="legenda-s" id="sv-legenda"></div>
@@ -1401,8 +1556,8 @@ function mostrarStory(i){
   }
   const rod = $("#sv-rodape");
   rod.innerHTML = criadora()
-    ? `<button class="btn sec" id="sv-vistos">👁 ${st.vistos || 0} visualizaç${st.vistos === 1 ? "ão" : "ões"}</button>`
-    : `<button class="btn sec" id="sv-mimo">💝 Mandar um mimo</button>`;
+    ? `<button class="btn sec" id="sv-vistos">${ic("olho")} ${st.vistos || 0} visualizaç${st.vistos === 1 ? "ão" : "ões"}</button>`
+    : `<button class="btn sec" id="sv-mimo">${ic("mimo")} Mandar um mimo</button>`;
   if(criadora()) $("#sv-vistos").onclick = () => quemViu(st.id);
   else $("#sv-mimo").onclick = () => { fecharStories(); irPara("gorjeta") };
   if(!criadora() && !st.visto){ st.visto = true; api(`/api/loja/story/${st.id}/visto`, {}) }
@@ -1455,9 +1610,9 @@ async function quemViu(id){
 function novoStory(){
   let arq = null;
   abrirFolha(`<h2>Novo story</h2><p class="sub">Foto ou vídeo que fica 24h no seu perfil, só para assinantes VIP. Você vê quem visualizou.</p>
-    <label class="escolher" for="st-arq" id="st-escolher">📸 Escolher foto ou vídeo</label>${seletor("st-arq", false, "image/*,video/*")}
+    <label class="escolher" for="st-arq" id="st-escolher">${ic("camera")} Escolher foto ou vídeo</label>${seletor("st-arq", false, "image/*,video/*")}
     <div id="st-prev" style="margin-top:10px"></div>
-    <span class="rotulo">Legenda (opcional)</span><input type="text" id="st-legenda" maxlength="200" placeholder="Ex: bom dia ☀️">
+    <span class="rotulo">Legenda (opcional)</span><input type="text" id="st-legenda" maxlength="200" placeholder="Ex: bom dia">
     <div id="st-prog" class="ocultar"><div class="progresso"><i id="st-barra"></i></div><p class="dica" id="st-etapa">Enviando…</p></div>
     <div class="gap"></div><button class="btn brilho" id="st-publicar">Publicar story</button>`);
   $("#st-arq").onchange = e => {
@@ -1475,8 +1630,8 @@ function novoStory(){
       p => { $("#st-barra").style.width = `${Math.round(p * 100)}%`; $("#st-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : "Quase lá…" });
     if(!r.ok){ b.disabled = false; b.textContent = "Publicar story"; $("#st-prog").classList.add("ocultar"); return toast(r.erro || "Não consegui publicar") }
     vibrar("success"); fecharFolha(true);
-    if(r.processando) toast("Enviado! Te aviso no chat quando o story estiver no ar 🎬");
-    else { toast("Story no ar por 24h ✓"); confete(40) }
+    if(r.processando) toast(`Enviado! Te aviso no chat quando o story estiver no ar ${ic("video")}`);
+    else { toast(`Story no ar por 24h ${ic("check")}`); confete(40) }
     carregar();
   };
 }
@@ -1484,7 +1639,7 @@ function novoStory(){
 function abrirFolha(html){
   fecharFolha();
   const f = document.createElement("div"); f.className = "fundo"; f.id = "fundo";
-  f.innerHTML = `<div class="folha"><div class="alca"></div><button class="fechar" id="fechar">✕</button>${html}</div>`;
+  f.innerHTML = `<div class="folha"><div class="alca"></div><button class="fechar" id="fechar">${ic("fechar")}</button>${html}</div>`;
   f.addEventListener("click", e => { if(e.target === f || e.target.id === "fechar") fecharFolha(true) });
   document.body.appendChild(f);
   arrastavel(f.querySelector(".folha"));
@@ -1515,36 +1670,36 @@ function detalhes(id){
   const titulo = p ? p.titulo : plano ? `VIP ${plano.nome}` : "Mimo";
   const preco = p ? p.preco_fmt : plano ? (plano.promo ? plano.promo.preco_fmt : plano.preco_fmt) : "";
   abrirFolha(`
-    ${p ? `<div class="previa-wrap"><img src="/api/loja/previa/${id}" alt=""><div class="veu"><span class="cadeado">🔒</span></div></div>` : `<div class="ok-grande"><div class="emoji">⭐</div></div>`}
+    ${p ? `<div class="previa-wrap"><img src="/api/loja/previa/${id}" alt=""><div class="veu"><span class="cadeado">${ic("cadeado")}</span></div></div>` : `<div class="ok-grande"><div class="emoji">${ic("estrela-cheia")}</div></div>`}
     <h2>${esc(titulo)}</h2>
-    ${p ? `<div class="midia-chips">${midias(p).map(m => `<span>${m}</span>`).join("")}<span>🔓 sem desfoque após o pagamento</span><span>🛡️ conteúdo protegido</span></div>` : ""}
-    ${plano ? `<p class="sub">${plano.dias} dias de acesso ao canal VIP.${plano.promo ? `<br>🎁 Primeiro mês com ${plano.promo.pct}% OFF: de <s>${esc(plano.preco_fmt)}</s> por <b>${esc(plano.promo.preco_fmt)}</b>.` : ""}</p>` : ""}
+    ${p ? `<div class="midia-chips">${midias(p).map(m => `<span>${m}</span>`).join("")}<span>${ic("cadeado-aberto")} sem desfoque após o pagamento</span><span>${ic("escudo")} conteúdo protegido</span></div>` : ""}
+    ${plano ? `<p class="sub">${plano.dias} dias de acesso ao canal VIP.${plano.promo ? `<br>${ic("presente")} Primeiro mês com ${plano.promo.pct}% OFF: de <s>${esc(plano.preco_fmt)}</s> por <b>${esc(plano.promo.preco_fmt)}</b>.` : ""}</p>` : ""}
     ${p && p.packs ? `<p class="sub">Inclui: ${p.packs.map(esc).join(" · ")}<br>Separados: <s>${esc(p.separados_fmt)}</s></p>` : ""}
     <div class="linha-preco"><span class="muted">Total</span><span class="v">${esc(preco)}</span></div>
     <span class="cupom-toggle" id="cupom-toggle">Tenho um cupom</span>
     <div class="cupom-wrap" id="cupom-wrap"><input type="text" id="cupom" placeholder="Código do cupom" autocapitalize="characters"></div>
-    <button class="btn brilho" id="pagar" data-item="${id}">💠 Pagar com PIX</button>
-    ${p && !p.packs && !criadora() ? `<div class="gap"></div><button class="btn sec" data-cart-det="${id}">${CARRINHO.includes(id) ? "✓ No carrinho" : "🛒 Adicionar ao carrinho"}</button>` : ""}
+    <button class="btn brilho" id="pagar" data-item="${id}">${ic("pix")} Pagar com PIX</button>
+    ${p && !p.packs && !criadora() ? `<div class="gap"></div><button class="btn sec" data-cart-det="${id}">${CARRINHO.includes(id) ? `${ic("check")} No carrinho` : `${ic("carrinho")} Adicionar ao carrinho`}</button>` : ""}
     <p class="sub" style="text-align:center;margin:10px 0 0;font-size:12.5px">Aprovação na hora · entregue no seu chat com o bot</p>`);
   $("#cupom-toggle").onclick = () => { $("#cupom-wrap").classList.add("on"); $("#cupom-toggle").classList.add("ocultar"); $("#cupom").focus() };
 }
 
 async function pagar(id, cupom){
-  if(D.idade === "menor"){ abrirFolha(`<div class="ok-grande"><div class="emoji">🔞</div><h2>Conteúdo para maiores de 18</h2><p class="sub">Não é possível comprar com esta conta.</p></div>`); return }
+  if(D.idade === "menor"){ abrirFolha(`<div class="ok-grande"><div class="emoji">${ic("mais18")}</div><h2>Conteúdo para maiores de 18</h2><p class="sub">Não é possível comprar com esta conta.</p></div>`); return }
   if(D.idade !== "ok"){ return pedirIdade(() => pagar(id, cupom)) }
   const btn = $("#pagar") || $("#assinar"); if(btn){ btn.disabled = true; btn.textContent = "Gerando PIX…" }
   vibrar("leve");
   ULTIMO = id;
   const r = await api("/api/loja/comprar", {item_id: id, cupom});
-  if(r.status === "limite"){ if(btn){btn.disabled=false; btn.textContent="💠 Pagar com PIX"} return avisoLimite(id) }
-  if(r.status === "ja_comprou"){ vibrar("success"); return sucesso("Você já tem este conteúdo. Enviei de novo no seu chat com o bot 💌" + textoRestantes(r.restantes)) }
-  if(!r.ok){ toast(r.status === "idade" ? "Confirme sua idade" : "Não consegui gerar o PIX. Tente de novo."); if(btn){btn.disabled=false; btn.textContent="💠 Pagar com PIX"} return }
+  if(r.status === "limite"){ if(btn){btn.disabled=false; btn.innerHTML=`${ic("pix")} Pagar com PIX`} return avisoLimite(id) }
+  if(r.status === "ja_comprou"){ vibrar("success"); return sucesso(`Você já tem este conteúdo. Enviei de novo no seu chat com o bot ${ic("carta")}` + textoRestantes(r.restantes)) }
+  if(!r.ok){ toast(r.status === "idade" ? "Confirme sua idade" : "Não consegui gerar o PIX. Tente de novo."); if(btn){btn.disabled=false; btn.innerHTML=`${ic("pix")} Pagar com PIX`} return }
   mostrarPix(r);
 }
 
 function pedirIdade(continuar){
   abrirFolha(`
-    <div class="ok-grande"><div class="emoji">🔞</div><h2>Conteúdo para maiores de 18 anos</h2>
+    <div class="ok-grande"><div class="emoji">${ic("mais18")}</div><h2>Conteúdo para maiores de 18 anos</h2>
     <p class="sub">Para continuar, confirme que você tem 18 anos ou mais e que não vai compartilhar o conteúdo comprado.</p></div>
     <button class="btn" id="idade-sim">Tenho 18 anos ou mais</button><div class="gap"></div>
     <button class="btn sec" id="idade-nao">Sou menor de 18</button>`);
@@ -1557,9 +1712,9 @@ function mostrarPix(r){
   abrirFolha(`
     <div class="valor-pix"><small>${esc(r.titulo)}</small><div class="v">${esc(r.valor_fmt)}</div>
       ${r.original_fmt ? `<small><s>${esc(r.original_fmt)}</s> · ${r.cupom ? "cupom aplicado" : "desconto aplicado"}</small>` : ""}</div>
-    ${r.cupom ? `<div class="aviso ok" style="text-align:center">🏷️ ${esc(r.cupom.codigo)} (${esc(r.cupom.descricao)})</div>` : ""}
-    ${r.cupom_erro ? `<div class="aviso" style="text-align:center">⚠️ ${esc(r.cupom_erro)}</div>` : ""}
-    ${r.promo ? `<div class="aviso ok" style="text-align:center">🎁 ${esc(r.promo)}</div>` : ""}
+    ${r.cupom ? `<div class="aviso ok" style="text-align:center">${ic("etiqueta")} ${esc(r.cupom.codigo)} (${esc(r.cupom.descricao)})</div>` : ""}
+    ${r.cupom_erro ? `<div class="aviso" style="text-align:center">${ic("alerta")} ${esc(r.cupom_erro)}</div>` : ""}
+    ${r.promo ? `<div class="aviso ok" style="text-align:center">${ic("presente")} ${esc(r.promo)}</div>` : ""}
     <div class="qr-card"><img src="${r.qr}" alt="QR Code PIX"></div>
     <div class="codigo"><code id="codigo">${esc(r.copia_e_cola)}</code><button class="btn mini" id="copiar">Copiar</button></div>
     <div class="passos">
@@ -1569,10 +1724,10 @@ function mostrarPix(r){
     </div>
     <div class="status"><span class="pulso"></span><span id="st">Aguardando pagamento · expira em <span class="timer" id="timer">--:--</span></span></div>
     <button class="btn sec" id="ja-paguei">Já paguei</button>
-    ${D.teste ? `<div class="gap"></div><button class="btn fantasma" id="teste-pagar">🧪 Simular pagamento (teste)</button>` : ""}`);
+    ${D.teste ? `<div class="gap"></div><button class="btn fantasma" id="teste-pagar">${ic("frasco")} Simular pagamento (teste)</button>` : ""}`);
   if(D.teste) $("#teste-pagar").onclick = async () => { await api("/api/loja/teste_pagar", {pix_id: r.pix_id}); verificar(r.pix_id, false) };
   $("#copiar").onclick = async () => {
-    try{ await navigator.clipboard.writeText(r.copia_e_cola); vibrar("leve"); toast("Código PIX copiado ✓") }
+    try{ await navigator.clipboard.writeText(r.copia_e_cola); vibrar("leve"); toast(`Código PIX copiado ${ic("check")}`) }
     catch(e){ const s = getSelection(), rg = document.createRange(); rg.selectNodeContents($("#codigo")); s.removeAllRanges(); s.addRange(rg); toast("Selecione e copie o código") }
   };
   $("#ja-paguei").onclick = () => verificar(r.pix_id, true);
@@ -1588,10 +1743,10 @@ async function verificar(pix, manual){
     const u = ULTIMO || "", nome = D.criadora.nome;
     if(u.startsWith("carrinho_")){ CARRINHO = []; salvarCarrinho() }
     else if(CARRINHO.includes(u)){ CARRINHO = CARRINHO.filter(x => x !== u); salvarCarrinho() }
-    sucesso(u.startsWith("pedido_") ? `Pedido enviado para ${nome}! Quando ficar pronto, chega no seu chat com o bot e em Minhas compras ✍️`
-      : u.startsWith("gorjeta_") ? `Mimo enviado! ${nome} já recebeu 💝`
-      : u.startsWith("carrinho_") ? "Pagamento confirmado! Seus packs já estão no chat com o bot 💌"
-      : "Pagamento confirmado! O conteúdo já está no seu chat com o bot 💌");
+    sucesso(u.startsWith("pedido_") ? `Pedido enviado para ${nome}! Quando ficar pronto, chega no seu chat com o bot e em Minhas compras ${ic("pedido")}`
+      : u.startsWith("gorjeta_") ? `Mimo enviado! ${nome} já recebeu ${ic("mimo")}`
+      : u.startsWith("carrinho_") ? `Pagamento confirmado! Seus packs já estão no chat com o bot ${ic("carta")}`
+      : `Pagamento confirmado! O conteúdo já está no seu chat com o bot ${ic("carta")}`);
     carregar(); return
   }
   if(r.status === "EXPIRADO"){ clearInterval(POLL); clearInterval(TIMER); $("#st").textContent = "PIX expirado. Feche e gere um novo."; return }
@@ -1600,8 +1755,8 @@ async function verificar(pix, manual){
 
 function sucesso(texto){
   const ver = /^(pack|combo|carrinho)_/.test(ULTIMO || "");
-  abrirFolha(`<div class="ok-grande"><div class="check">✓</div><h2>Tudo certo!</h2><p class="sub">${esc(texto)}</p></div>
-    ${ver ? `<button class="btn" id="ver-agora">${(ULTIMO || "").startsWith("carrinho_") ? "🗂️ Ver minhas compras" : "▶ Ver agora"}</button><div class="gap"></div>` : ""}
+  abrirFolha(`<div class="ok-grande"><div class="check">${ic("check")}</div><h2>Tudo certo!</h2><p class="sub">${esc(texto)}</p></div>
+    ${ver ? `<button class="btn" id="ver-agora">${(ULTIMO || "").startsWith("carrinho_") ? `${ic("pasta")} Ver minhas compras` : `${ic("play")} Ver agora`}</button><div class="gap"></div>` : ""}
     <button class="btn ${ver ? "sec" : ""}" id="voltar-chat">Ir para o chat</button><div class="gap"></div>
     <button class="btn sec" id="continuar">Continuar na loja</button>`);
   confete();
@@ -1613,16 +1768,16 @@ function sucesso(texto){
 async function reenviar(packId){
   if(packId.startsWith("combo_")){ return pagar(packId) }   // combo já comprado: a rota de compra reenvia tudo
   const r = await api("/api/loja/reenviar", {pack_id: packId});
-  if(r.ok){ vibrar("success"); toast("Enviado no seu chat com o bot 💌" + textoRestantes(r.restantes)) }
+  if(r.ok){ vibrar("success"); toast(`Enviado no seu chat com o bot ${ic("carta")}` + textoRestantes(r.restantes)) }
   else if(r.erro === "limite") avisoLimite(packId)
   else toast("Não consegui reenviar")
 }
 const textoRestantes = n => n == null ? "" : n === 0 ? " · último reenvio" : ` · restam ${n}`;
 function avisoLimite(id){
   vibrar("warning");
-  abrirFolha(`<div class="ok-grande"><div class="emoji">🔒</div><h2>Limite de reenvios atingido</h2>
+  abrirFolha(`<div class="ok-grande"><div class="emoji">${ic("cadeado")}</div><h2>Limite de reenvios atingido</h2>
     <p class="sub">Você já recebeu este conteúdo de novo no chat o máximo de vezes. Ele continua liberado aqui na loja, sempre que quiser.</p></div>
-    <button class="btn" id="lim-ver">▶ Ver na loja</button>`);
+    <button class="btn" id="lim-ver">${ic("play")} Ver na loja</button>`);
   $("#lim-ver").onclick = () => { fecharFolha(); abrirGaleria(id) };
 }
 
@@ -1631,13 +1786,13 @@ function escolherModo(){
   $("#app").innerHTML = `
     <div class="capa"><span class="bolha b1"></span><span class="bolha b2"></span><span class="bolha b3"></span></div>
     <div class="perfil">
-      <div class="anel">${D.criadora.tem_foto ? `<img class="avatar" src="${avatarSrc()}" alt="">` : `<div class="avatar">✨</div>`}</div>
-      <div class="nome">Olá, ${esc(D.usuario.nome || D.criadora.nome)} 👋</div>
+      <div class="anel">${D.criadora.tem_foto ? `<img class="avatar" src="${avatarSrc()}" alt="">` : `<div class="avatar">${ic("brilho")}</div>`}</div>
+      <div class="nome">Olá, ${esc(D.usuario.nome || D.criadora.nome)} ${ic("aceno")}</div>
       <p class="bio">Como você quer abrir a loja?</p>
     </div>
     <div class="acoes" style="margin-top:22px">
-      <button class="acao" data-modo="criadora"><span class="ico">👑</span><div><b>Criadora</b><small>Publicar, editar, ver vendas e ajustes</small></div><span class="seta">›</span></button>
-      <button class="acao" data-modo="cliente"><span class="ico">🛍️</span><div><b>Cliente</b><small>Ver e comprar como um fã vê</small></div><span class="seta">›</span></button>
+      <button class="acao" data-modo="criadora"><span class="ico">${ic("coroa")}</span><div><b>Criadora</b><small>Publicar, editar, ver vendas e ajustes</small></div><span class="seta">›</span></button>
+      <button class="acao" data-modo="cliente"><span class="ico">${ic("sacola")}</span><div><b>Cliente</b><small>Ver e comprar como um fã vê</small></div><span class="seta">›</span></button>
     </div>
     <p class="dica" style="text-align:center;margin:18px">Dá para trocar depois: no Painel ou pelo botão no topo.</p>`;
   animarEntrada($("#app"));
@@ -1652,8 +1807,8 @@ function painel(){
   if(!PAINEL) return `<div class="kpis" style="margin-top:20px"><div class="sk" style="height:84px"></div><div class="sk" style="height:84px"></div></div>`;
   const R = PAINEL.resumo;
   return `
-    <div class="ola vivo"><span class="deco">✨</span><small>${saudacao()}, ${esc((D.criadora.nome || "").split(" ")[0])}!</small>
-      <b>${esc(R.hoje.valor)}</b><span>${R.hoje.vendas ? `hoje em ${pl(R.hoje.vendas, "venda", "vendas")}` : "hoje, ainda sem vendas. Bora publicar? 💋"}${PAINEL.stats ? ` · ❤️ ${PAINEL.stats.periodos.hoje.curtidas}` : ""}</span></div>
+    <div class="ola vivo"><span class="deco">${ic("brilho")}</span><small>${saudacao()}, ${esc((D.criadora.nome || "").split(" ")[0])}!</small>
+      <b>${esc(R.hoje.valor)}</b><span>${R.hoje.vendas ? `hoje em ${pl(R.hoje.vendas, "venda", "vendas")}` : `hoje, ainda sem vendas. Bora publicar? ${ic("beijo")}`}${PAINEL.stats ? ` · ${ic("coracao-cheio")} ${PAINEL.stats.periodos.hoje.curtidas}` : ""}</span></div>
     <div class="secao-titulo"><h2>Resumo</h2><small class="muted">vendas pagas</small></div>
     <div class="kpis">
       <div class="kpi"><small>Últimos 7 dias</small><b>${esc(R.semana.valor)}</b><span>${pl(R.semana.vendas, "venda", "vendas")}</span></div>
@@ -1668,10 +1823,10 @@ function painel(){
     ${topFas()}
     <div class="secao-titulo"><h2>Criar</h2></div>
     <div class="acoes">
-      <button class="acao" data-criar="post"><span class="ico">✨</span><div><b>Nova publicação</b><small>Post grátis ou pack pago, escolhe na chave</small></div><span class="seta">›</span></button>
-      <button class="acao" data-criar="story"><span class="ico">📸</span><div><b>Novo story</b><small>Foto ou vídeo que some em 24h</small></div><span class="seta">›</span></button>
+      <button class="acao" data-criar="post"><span class="ico">${ic("brilho")}</span><div><b>Nova publicação</b><small>Post grátis ou pack pago, escolhe na chave</small></div><span class="seta">›</span></button>
+      <button class="acao" data-criar="story"><span class="ico">${ic("camera")}</span><div><b>Novo story</b><small>Foto ou vídeo que some em 24h</small></div><span class="seta">›</span></button>
     </div>
-    <div class="acoes" style="margin-top:10px"><button class="acao" data-aba="config"><span class="ico">⚙️</span><div><b>Ajustes</b><small>Perfil, VIP, mimos, cupons, mensagens e publicação</small></div><span class="seta">›</span></button></div>
+    <div class="acoes" style="margin-top:10px"><button class="acao" data-aba="config"><span class="ico">${ic("engrenagem")}</span><div><b>Ajustes</b><small>Perfil, VIP, mimos, cupons, mensagens e publicação</small></div><span class="seta">›</span></button></div>
     <div class="gap"></div>`;
 }
 
@@ -1707,7 +1862,7 @@ function estatisticas(){
     </div>
     ${S.top.length ? `<div class="secao-titulo"><h2>Mais vendidos</h2><small class="muted">30 dias</small></div>
     <div class="ranking">${S.top.map((t, i) => `<div class="linha" data-ver="${t.id}"><span class="pos">${i + 1}</span><img src="/api/loja/previa/${t.id}" alt="">
-      <div class="txt"><b>${esc(t.titulo)}</b><small>${pl(t.vendas, "venda", "vendas")} · ❤️ ${t.curtidas}</small></div><span class="v">${esc(t.total_fmt)}</span></div>`).join("")}</div>` : ""}`;
+      <div class="txt"><b>${esc(t.titulo)}</b><small>${pl(t.vendas, "venda", "vendas")} · ${ic("coracao-cheio")} ${t.curtidas}</small></div><span class="v">${esc(t.total_fmt)}</span></div>`).join("")}</div>` : ""}`;
 }
 
 // ── Painel: pedidos personalizados e ranking ──────────────────────────────
@@ -1715,19 +1870,19 @@ let RANK = "30d";
 function pedidosPainel(){
   const P = PAINEL.pedidos || []; if(!P.length) return "";
   const novos = P.filter(p => p.status === "NOVO").length;
-  return `<div class="secao-titulo"><h2>✍️ Pedidos${novos ? `<span class="contador-fila">${novos}</span>` : ""}</h2><small class="muted">${novos ? `${novos} para fazer` : "todos em dia"}</small></div>
-    <div class="lista">${P.slice(0, 12).map(p => `<div class="item" data-pedido="${p.id}"><div class="thumb">✍️</div>
+  return `<div class="secao-titulo"><h2>${ic("pedido")} Pedidos${novos ? `<span class="contador-fila">${novos}</span>` : ""}</h2><small class="muted">${novos ? `${novos} para fazer` : "todos em dia"}</small></div>
+    <div class="lista">${P.slice(0, 12).map(p => `<div class="item" data-pedido="${p.id}"><div class="thumb">${ic("pedido")}</div>
       <div class="txt"><b>#${p.id} · ${esc(p.valor_fmt)} · ${esc(p.nome || "Fã")}</b><small class="lim">${esc(p.texto)}</small>${stPedido(p.status)}</div>
       <span class="seta muted">›</span></div>`).join("")}</div>`;
 }
 function topFas(){
   const T = (PAINEL.top_fas || {})[RANK] || [];
-  return `<div class="secao-titulo"><h2>🏆 Top fãs</h2><small class="muted">quem mais gastou</small></div>
+  return `<div class="secao-titulo"><h2>${ic("trofeu")} Top fãs</h2><small class="muted">quem mais gastou</small></div>
     <div class="seg">${[["30d","30 dias"],["sempre","Desde o início"]].map(([k, t]) => `<button class="${RANK === k ? "on" : ""}" data-rank="${k}">${t}</button>`).join("")}</div>
     ${T.length ? `<div class="ranking">${T.map((f, i) => `<div class="linha" data-fa="${f.id}">
-      <span class="pos ${i < 3 ? "medalha" : ""}">${["🥇","🥈","🥉"][i] || i + 1}</span>
+      <span class="pos ${i < 3 ? "medalha" : ""}">${i < 3 ? medalha(i + 1) : i + 1}</span>
       <div class="av-r">${esc((f.nome || "?")[0].toUpperCase())}</div>
-      <div class="txt"><b>${esc(f.nome || "Sem nome")}${f.vip ? " ⭐" : ""}</b><small>${f.username ? "@" + esc(f.username) + " · " : ""}${pl(f.compras, "compra", "compras")}</small></div>
+      <div class="txt"><b>${esc(f.nome || "Sem nome")}${f.vip ? ` ${ic("estrela-cheia")}` : ""}</b><small>${f.username ? "@" + esc(f.username) + " · " : ""}${pl(f.compras, "compra", "compras")}</small></div>
       <span class="v">${esc(f.total_fmt)}</span></div>`).join("")}</div>`
       : `<div class="vazio" style="padding:22px">Ainda sem vendas ${RANK === "30d" ? "nos últimos 30 dias" : ""}.</div>`}`;
 }
@@ -1739,20 +1894,20 @@ function abrirPedido(id){
     <span class="rotulo">O que o fã pediu</span><div class="texto-pedido">${esc(p.texto)}</div>
     ${p.resposta ? `<span class="rotulo">Seu recado</span><div class="texto-pedido">${esc(p.resposta)}</div>` : ""}
     <div class="gap"></div>
-    ${p.status === "NOVO" ? `<button class="btn brilho" id="pd-entregar">📤 Entregar o pedido</button><div class="gap"></div>
+    ${p.status === "NOVO" ? `<button class="btn brilho" id="pd-entregar">${ic("enviar")} Entregar o pedido</button><div class="gap"></div>
       <button class="btn fantasma perigo" id="pd-recusar">Recusar pedido</button>`
-      : p.status === "ENTREGUE" && p.pack_id ? `<button class="btn sec" data-ver="${p.pack_id}">👁 Ver o que foi entregue</button>` : ""}`);
+      : p.status === "ENTREGUE" && p.pack_id ? `<button class="btn sec" data-ver="${p.pack_id}">${ic("olho")} Ver o que foi entregue</button>` : ""}`);
   if(p.status === "NOVO"){ $("#pd-entregar").onclick = () => entregarPedido(p); $("#pd-recusar").onclick = () => recusarPedido(p) }
 }
 function entregarPedido(p){
   let arqs = [];
   abrirFolha(`<h2>Entregar pedido #${p.id}</h2><p class="sub">As fotos e vídeos vão só para ${esc(p.nome || "o fã")}, no chat com o bot (protegidos) e em Minhas compras na loja.</p>
     <div class="texto-pedido" style="max-height:120px;overflow:auto">${esc(p.texto)}</div>
-    <label class="escolher" for="en-arqs" id="en-escolher">🖼️ Escolher fotos e vídeos</label>${seletor("en-arqs", true, "image/*,video/*")}
+    <label class="escolher" for="en-arqs" id="en-escolher">${ic("imagem")} Escolher fotos e vídeos</label>${seletor("en-arqs", true, "image/*,video/*")}
     <div class="miniaturas" id="en-mini"></div>
-    <span class="rotulo">Recado para o fã (opcional)</span><textarea id="en-msg" maxlength="500" style="min-height:80px" placeholder="Ex: Fiz com carinho, espero que goste 💕"></textarea>
+    <span class="rotulo">Recado para o fã (opcional)</span><textarea id="en-msg" maxlength="500" style="min-height:80px" placeholder="Ex: Fiz com carinho, espero que goste"></textarea>
     <div id="en-prog" class="ocultar"><div class="progresso"><i id="en-barra"></i></div><p class="dica" id="en-etapa">Enviando…</p></div>
-    <div class="gap"></div><button class="btn brilho" id="en-ok">📤 Entregar</button>`);
+    <div class="gap"></div><button class="btn brilho" id="en-ok">${ic("enviar")} Entregar</button>`);
   $("#en-arqs").onchange = e => { arqs = [...arqs, ...e.target.files].slice(0, 30); miniaturas(arqs, "#en-mini"); e.target.value = "" };
   $("#en-mini").onclick = async e => {
     const i = e.target.dataset.tirar, ed = e.target.dataset.editar;
@@ -1765,17 +1920,17 @@ function entregarPedido(p){
     const b = $("#en-ok"); b.disabled = true; b.textContent = "Enviando…"; $("#en-prog").classList.remove("ocultar");
     const r = await enviarForm(`/api/criadora/pedido/${p.id}/entregar`, {mensagem: $("#en-msg").value.trim()}, arqs.map(f => ["arquivos", f]),
       x => { $("#en-barra").style.width = `${Math.round(x * 100)}%`; $("#en-etapa").textContent = x < 1 ? `Enviando ${Math.round(x * 100)}%…` : "Quase lá…" });
-    if(!r.ok){ b.disabled = false; b.textContent = "📤 Entregar"; $("#en-prog").classList.add("ocultar"); return toast(r.erro || "Não consegui entregar") }
+    if(!r.ok){ b.disabled = false; b.innerHTML = `${ic("enviar")} Entregar`; $("#en-prog").classList.add("ocultar"); return toast(r.erro || "Não consegui entregar") }
     vibrar("success"); fecharFolha(true);
-    toast(r.processando ? "Enviado! Te aviso no chat quando o fã receber 🎬" : r.no_chat ? "Pedido entregue ✓" : "Entregue na loja do fã ✓ (não consegui mandar no chat)");
+    toast(r.processando ? `Enviado! Te aviso no chat quando o fã receber ${ic("video")}` : r.no_chat ? `Pedido entregue ${ic("check")}` : `Entregue na loja do fã ${ic("check")} (não consegui mandar no chat)`);
     if(!r.processando) confete(50);
     PAINEL = null; carregarPainel(); carregar();
   };
 }
 function recusarPedido(p){
   abrirFolha(`<h2>Recusar pedido #${p.id}</h2><p class="sub">O fã recebe um aviso no chat de que você não vai fazer e que o valor será devolvido.</p>
-    <div class="aviso" style="margin:0 0 12px">⚠️ O bot não devolve o dinheiro sozinho: devolva <b>${esc(p.valor_fmt)}</b> pelo app da sua conta de pagamento.</div>
-    <span class="rotulo">Recado para o fã (opcional)</span><textarea id="rc-msg" maxlength="500" style="min-height:80px" placeholder="Ex: Esse tipo de conteúdo eu não faço, desculpa 💕"></textarea>
+    <div class="aviso" style="margin:0 0 12px">${ic("alerta")} O bot não devolve o dinheiro sozinho: devolva <b>${esc(p.valor_fmt)}</b> pelo app da sua conta de pagamento.</div>
+    <span class="rotulo">Recado para o fã (opcional)</span><textarea id="rc-msg" maxlength="500" style="min-height:80px" placeholder="Ex: Esse tipo de conteúdo eu não faço, desculpa"></textarea>
     <div class="gap"></div><button class="btn sec perigo" id="rc-ok">Recusar e avisar o fã</button>`);
   $("#rc-ok").onclick = async () => {
     const b = $("#rc-ok"); b.disabled = true;
@@ -1789,9 +1944,9 @@ function recusarPedido(p){
 function mimoPara(alvo){
   const item = D.packs.find(x => x.id === alvo) || D.combos.find(x => x.id === alvo);
   const nome = item ? item.titulo : "esta publicação";
-  abrirFolha(`<div class="ok-grande"><div class="emoji">💝</div><h2>Mandar um mimo</h2>
+  abrirFolha(`<div class="ok-grande"><div class="emoji">${ic("mimo")}</div><h2>Mandar um mimo</h2>
     <p class="sub">Um agrado para ${esc(D.criadora.nome)} por <b>${esc(nome)}</b>. Ela vê que foi você.</p></div>
-    <div class="mimos" style="padding:0">${D.gorjetas.map((v,i) => `<button class="mimo" data-item="gorjeta_${v}_${alvo}"><span class="emoji">${EMOJI_MIMO[i % EMOJI_MIMO.length]}</span><b>${reais(v)}</b><small>toque para enviar</small></button>`).join("")}</div>
+    <div class="mimos" style="padding:0">${D.gorjetas.map((v,i) => `<button class="mimo" data-item="gorjeta_${v}_${alvo}" data-icone="${ICONE_MIMO[i % ICONE_MIMO.length]}"><span class="emoji">${ic(ICONE_MIMO[i % ICONE_MIMO.length])}</span><b>${reais(v)}</b><small>toque para enviar</small></button>`).join("")}</div>
     <div class="campo" style="padding:12px 0 0"><input type="text" id="mimo-outro" inputmode="decimal" placeholder="Outro valor (ex: 15,00)"><button class="btn mini" data-mimo-outro="${alvo}" style="padding:0 18px">Enviar</button></div>`);
 }
 
@@ -1884,7 +2039,7 @@ function editarFoto(file, opc = {}){
     el.innerHTML = `<header><button id="ed-cancelar">Cancelar</button><b>Editar foto</b><button class="pronto" id="ed-pronto">Pronto</button></header>
       <div class="palco" id="ed-palco"><canvas id="ed-cv"></canvas><div class="recorte ${opc.circulo ? "circulo" : ""}" id="ed-rec"><i class="h tl" data-c="tl"></i><i class="h tr" data-c="tr"></i><i class="h bl" data-c="bl"></i><i class="h br" data-c="br"></i></div></div>
       <div class="painel-ed"><div id="ed-corpo"></div>
-        <div class="abas-ed">${[["cortar","✂️ Cortar"],["ajustes","🎚️ Ajustes"],["filtros","✨ Filtros"]].map(([k,t]) => `<button data-aba-ed="${k}" class="${k===aba?"on":""}">${t}</button>`).join("")}</div></div>`;
+        <div class="abas-ed">${[["cortar",`${ic("tesoura")} Cortar`],["ajustes",`${ic("ajustes")} Ajustes`],["filtros",`${ic("brilho")} Filtros`]].map(([k,t]) => `<button data-aba-ed="${k}" class="${k===aba?"on":""}">${t}</button>`).join("")}</div></div>`;
     document.body.appendChild(el);
     const cv = el.querySelector("#ed-cv"), palco = el.querySelector("#ed-palco"), rec = el.querySelector("#ed-rec");
 
@@ -1913,10 +2068,10 @@ function editarFoto(file, opc = {}){
       const c = el.querySelector("#ed-corpo");
       if(aba === "cortar") c.innerHTML = `<div class="linha-ed">
         <button class="bt-ed" data-ed="girar"><span class="i">⟳</span>Girar</button>
-        <button class="bt-ed" data-ed="espelhar"><span class="i">⇋</span>Espelhar</button>
-        ${opc.aspecto ? "" : [["Livre", 0], ["1:1", 1], ["4:5", .8], ["9:16", 9/16], ["16:9", 16/9]].map(([t, a]) => `<button class="bt-ed ${(aspecto || 0) === a ? "on" : ""}" data-asp="${a}"><span class="i">${a === 0 ? "⬚" : a === 1 ? "◻️" : a < 1 ? "▯" : "▭"}</span>${t}</button>`).join("")}
-        <button class="bt-ed" data-ed="resetar"><span class="i">↺</span>Desfazer</button></div>`;
-      if(aba === "ajustes") c.innerHTML = [["brightness","☀️ Brilho"],["contrast","◐ Contraste"],["saturate","🎨 Cor"]].map(([k,t]) =>
+        <button class="bt-ed" data-ed="espelhar"><span class="i">${ic("espelhar")}</span>Espelhar</button>
+        ${opc.aspecto ? "" : [["Livre", 0], ["1:1", 1], ["4:5", .8], ["9:16", 9/16], ["16:9", 16/9]].map(([t, a]) => `<button class="bt-ed ${(aspecto || 0) === a ? "on" : ""}" data-asp="${a}"><span class="i">${a === 0 ? `${ic("livre")}` : a === 1 ? `${ic("quadrado")}` : a < 1 ? `${ic("retrato")}` : `${ic("paisagem")}`}</span>${t}</button>`).join("")}
+        <button class="bt-ed" data-ed="resetar"><span class="i">${ic("desfazer")}</span>Desfazer</button></div>`;
+      if(aba === "ajustes") c.innerHTML = [["brightness",`${ic("sol")} Brilho`],["contrast",`${ic("contraste")} Contraste`],["saturate",`${ic("paleta")} Cor`]].map(([k,t]) =>
         `<label class="ajuste"><span>${t}</span><input type="range" min="50" max="150" value="${Math.round(aj[k]*100)}" data-aj="${k}"><span>${Math.round(aj[k]*100 - 100)}</span></label>`).join("");
       if(aba === "filtros"){
         const mini = document.createElement("canvas"), k = 120 / Math.max(fonte.width, fonte.height);
@@ -2001,7 +2156,7 @@ const qtdFila = () => D.fila ? D.fila.posts.length + D.fila.packs.length : 0;
 const qtdPainel = () => qtdFila() + (D.pedidos_novos || 0);
 function avisoFila(){
   const n = criadora() ? qtdFila() : 0;
-  return n ? `<div class="aviso-fila" data-aba="painel"><span>📝</span><span>${n} publicação(ões) aguardando sua revisão</span><span>Revisar ›</span></div>` : "";
+  return n ? `<div class="aviso-fila" data-aba="painel"><span>${ic("nota")}</span><span>${n} publicação(ões) aguardando sua revisão</span><span>Revisar ›</span></div>` : "";
 }
 function filaRevisao(){
   if(!qtdFila()) return "";
@@ -2011,15 +2166,15 @@ function filaRevisao(){
       const ref = `${x.pack ? "pack" : "post"}:${x.id}`;
       return `<div class="fila-item" id="fila-${x.pack ? "pack" : "post"}-${x.id}">
         <div class="topo-f" data-previa="${ref}">
-          ${x.pack ? `<img src="/api/loja/previa/${x.id}" alt="">` : x.foto ? `<img src="${urlPost(x, "foto")}" alt="">` : `<div class="thumb">📝</div>`}
-          <div class="txt"><small>${x.pack ? `📦 Pack · ${esc(x.preco_fmt)} · ${esc(x.resumo)}` : "📝 Publicação grátis"} · ${esc(relativo(x.criado_em))}</small>
+          ${x.pack ? `<img src="/api/loja/previa/${x.id}" alt="">` : x.foto ? `<img src="${urlPost(x, "foto")}" alt="">` : `<div class="thumb">${ic("nota")}</div>`}
+          <div class="txt"><small>${x.pack ? `${ic("caixa")} Pack · ${esc(x.preco_fmt)} · ${esc(x.resumo)}` : `${ic("nota")} Publicação grátis`} · ${esc(relativo(x.criado_em))}</small>
             <b>${esc(x.pack ? x.titulo : (x.texto || "Foto"))}</b>${x.pack && x.legenda ? `<p>${esc(x.legenda)}</p>` : !x.pack && x.texto.length > 40 ? `<p>${esc(x.texto)}</p>` : ""}</div>
         </div>
         <div class="acoes-f">
-          <button class="btn mini brilho" data-fila="${ref}:aprovar">✓ Publicar</button>
-          <button class="btn mini sec" data-previa="${ref}" aria-label="Ver como fã">👁</button>
-          <button class="btn mini sec" data-menu="${ref}" aria-label="Editar">✎</button>
-          <button class="btn mini sec perigo" data-fila="${ref}:descartar" aria-label="Descartar">🗑</button>
+          <button class="btn mini brilho" data-fila="${ref}:aprovar">${ic("check")} Publicar</button>
+          <button class="btn mini sec" data-previa="${ref}" aria-label="Ver como fã">${ic("olho")}</button>
+          <button class="btn mini sec" data-menu="${ref}" aria-label="Editar">${ic("lapis")}</button>
+          <button class="btn mini sec perigo" data-fila="${ref}:descartar" aria-label="Descartar">${ic("lixo")}</button>
         </div></div>`;
     }).join("")}</div>`;
 }
@@ -2033,8 +2188,8 @@ function previaFa(ref){
   PREVIA = false;
   abrirFolha(`<h2>Como seus fãs vão ver</h2><p class="sub">Confira antes de publicar.</p>
     <div class="previa-fa">${html}</div>
-    <button class="btn brilho" data-fila="${ref}:aprovar">✓ Publicar agora</button><div class="gap"></div>
-    <button class="btn sec" data-menu="${ref}">✎ Editar</button>`);
+    <button class="btn brilho" data-fila="${ref}:aprovar">${ic("check")} Publicar agora</button><div class="gap"></div>
+    <button class="btn sec" data-menu="${ref}">${ic("lapis")} Editar</button>`);
 }
 async function acaoFila(ref, acao){
   const [tipo, id] = ref.split(":");
@@ -2044,7 +2199,7 @@ async function acaoFila(ref, acao){
     fecharFolha(true);
     const card = $(`#fila-${tipo}-${id}`);
     if(card && !SEM_MOVIMENTO){ card.classList.add("some"); await new Promise(ok => setTimeout(ok, 330)) }
-    if(acao === "aprovar"){ vibrar("success"); confete(40); toast(r.no_canal ? "Publicado e postado no canal ✓" : "Publicado ✓") }
+    if(acao === "aprovar"){ vibrar("success"); confete(40); toast(r.no_canal ? `Publicado e postado no canal ${ic("check")}` : `Publicado ${ic("check")}`) }
     else toast("Descartado");
     PAINEL = null; carregar();
   };
@@ -2062,15 +2217,15 @@ function agendadosPainel(){
       const ref = `${x.pack ? "pack" : "post"}:${x.id}`;
       return `<div class="fila-item ag-item">
         <div class="topo-f">
-          ${x.pack ? `<img src="/api/loja/previa/${x.id}" alt="">` : x.foto ? `<img src="${urlPost(x, "foto")}" alt="">` : `<div class="thumb">${x.enquete ? "📊" : "📝"}</div>`}
-          <div class="txt"><small><span class="quando-ag">🗓️ ${esc(DATA_HORA(x.quando))}</span> · <span data-falta="${esc(x.quando)}">${faltaTexto(x.quando)}</span></small>
+          ${x.pack ? `<img src="/api/loja/previa/${x.id}" alt="">` : x.foto ? `<img src="${urlPost(x, "foto")}" alt="">` : `<div class="thumb">${x.enquete ? `${ic("grafico")}` : `${ic("nota")}`}</div>`}
+          <div class="txt"><small><span class="quando-ag">${ic("calendario")} ${esc(DATA_HORA(x.quando))}</span> · <span data-falta="${esc(x.quando)}">${faltaTexto(x.quando)}</span></small>
             <b>${esc(x.pack ? x.titulo : (x.texto || "Foto"))}</b>
-            <p>${x.pack ? `📦 ${esc(x.preco_fmt)} · ${x.contagem ? `contagem regressiva ligada · 🔔 ${pl(x.avisos, "fã esperando", "fãs esperando")}` : "sem contagem regressiva"}${x.canal ? " · vai pro canal" : ""}` : x.enquete ? `Enquete com ${x.enquete.opcoes.length} opções` : "Publicação grátis"}</p></div>
+            <p>${x.pack ? `${ic("caixa")} ${esc(x.preco_fmt)} · ${x.contagem ? `contagem regressiva ligada · ${ic("sino")} ${pl(x.avisos, "fã esperando", "fãs esperando")}` : "sem contagem regressiva"}${x.canal ? " · vai pro canal" : ""}` : x.enquete ? `Enquete com ${x.enquete.opcoes.length} opções` : "Publicação grátis"}</p></div>
         </div>
         <div class="acoes-f">
           <button class="btn mini brilho" data-ag="${ref}:publicar">Publicar agora</button>
-          <button class="btn mini sec" data-ag="${ref}:horario" aria-label="Mudar horário">🕑</button>
-          <button class="btn mini sec perigo" data-ag="${ref}:cancelar" aria-label="Cancelar">🗑</button>
+          <button class="btn mini sec" data-ag="${ref}:horario" aria-label="Mudar horário">${ic("relogio")}</button>
+          <button class="btn mini sec perigo" data-ag="${ref}:cancelar" aria-label="Cancelar">${ic("lixo")}</button>
         </div></div>`;
     }).join("")}</div>`;
 }
@@ -2087,7 +2242,7 @@ async function acaoAgendado(ref, acao){
     const r = await api(`/api/criadora/agendado/${tipo}/${id}/${acao}`, corpo);
     if(!r.ok) return toast(r.erro || "Não consegui concluir");
     fecharFolha(true); vibrar("success");
-    toast(acao === "publicar" ? (r.no_canal ? "Publicado e postado no canal ✓" : "Publicado ✓") : acao === "cancelar" ? "Agendamento cancelado" : `Reagendado para ${r.agendado}`);
+    toast(acao === "publicar" ? (r.no_canal ? `Publicado e postado no canal ${ic("check")}` : `Publicado ${ic("check")}`) : acao === "cancelar" ? "Agendamento cancelado" : `Reagendado para ${r.agendado}`);
     if(acao === "publicar") confete(40);
     PAINEL = null; carregar();
   };
@@ -2112,73 +2267,73 @@ function config(){
   return `
     <div class="secao-titulo"><h2>Perfil</h2></div>
     <div class="grupo">
-      ${linha('id="ed-perfil2"', "👤", "Foto, nome e bio", esc(D.criadora.nome))}
-      ${linha('id="ed-msgs"', "💬", "Mensagens do bot", "Boas-vindas, pós-compra e VIP")}
+      ${linha('id="ed-perfil2"', `${ic("usuario")}`, "Foto, nome e bio", esc(D.criadora.nome))}
+      ${linha('id="ed-msgs"', `${ic("chat")}`, "Mensagens do bot", "Boas-vindas, pós-compra e VIP")}
     </div>
 
     <div class="secao-titulo"><h2>Assinatura VIP</h2><small class="muted">${pl(C.planos.length, "plano", "planos")}</small></div>
     <div class="grupo">
-      ${C.planos.map(p => linha(`data-plano-ed="${p.id}"`, "⭐", esc(p.nome), `${p.dias} dias · ${reais(Math.round(p.preco / p.dias * 30))}/mês`, `<span class="v">${esc(p.preco_fmt)}</span><span class="seta">›</span>`)).join("")}
+      ${C.planos.map(p => linha(`data-plano-ed="${p.id}"`, `${ic("estrela-cheia")}`, esc(p.nome), `${p.dias} dias · ${reais(Math.round(p.preco / p.dias * 30))}/mês`, `<span class="v">${esc(p.preco_fmt)}</span><span class="seta">›</span>`)).join("")}
       <button class="linha-c add" data-plano-ed="novo">＋ Novo plano</button>
     </div>
     <p class="legenda-grupo">Mudar o preço vale para as próximas compras. Quem já assinou continua até o fim do período.</p>
     <div class="gap"></div>
     <div class="grupo">
-      ${linha('id="ed-promo"', "🎁", "Desconto no 1º mês", C.vip_1mes_pct ? `${C.vip_1mes_pct}% OFF para quem nunca assinou` : "Desligado", `${C.vip_1mes_pct ? `<span class="v">-${C.vip_1mes_pct}%</span>` : ""}<span class="seta">›</span>`)}
+      ${linha('id="ed-promo"', `${ic("presente")}`, "Desconto no 1º mês", C.vip_1mes_pct ? `${C.vip_1mes_pct}% OFF para quem nunca assinou` : "Desligado", `${C.vip_1mes_pct ? `<span class="v">-${C.vip_1mes_pct}%</span>` : ""}<span class="seta">›</span>`)}
     </div>
 
     <div class="secao-titulo"><h2>Mimos</h2></div>
     <div class="grupo">
-      ${linha('id="ed-mimos"', "💝", "Valores sugeridos", `<span class="chips-valor" style="margin-top:6px">${C.gorjetas.map(v => `<span>R$ ${v}</span>`).join("")}</span>`)}
+      ${linha('id="ed-mimos"', `${ic("mimo")}`, "Valores sugeridos", `<span class="chips-valor" style="margin-top:6px">${C.gorjetas.map(v => `<span>R$ ${v}</span>`).join("")}</span>`)}
     </div>
 
     <div class="secao-titulo"><h2>Meta de mimos</h2>${C.meta ? `<small class="muted">${C.meta.pct}%</small>` : ""}</div>
     <div class="grupo">
-      ${C.meta ? linha('id="ed-meta"', "🎯", esc(C.meta.titulo), `${esc(C.meta.arrecadado_fmt)} de ${esc(C.meta.alvo_fmt)}${C.meta.batida ? " · batida 🎉" : ""} · ${pl(C.meta.fas, "fã", "fãs")}`)
+      ${C.meta ? linha('id="ed-meta"', `${ic("alvo")}`, esc(C.meta.titulo), `${esc(C.meta.arrecadado_fmt)} de ${esc(C.meta.alvo_fmt)}${C.meta.batida ? ` · batida ${ic("festa")}` : ""} · ${pl(C.meta.fas, "fã", "fãs")}`)
         : `<button class="linha-c add" id="ed-meta">＋ Criar uma meta</button>`}
     </div>
     <p class="legenda-grupo">Uma barra de progresso no feed e na aba Mimos. Todo mimo pago depois que a meta é criada soma.</p>
 
     <div class="secao-titulo"><h2>Pedidos personalizados</h2></div>
     <div class="grupo">
-      <div class="linha-c"><span class="ico">✍️</span><span class="txt"><b>Aceitar pedidos</b><small>O fã descreve o que quer e paga antes</small></span><span class="chave ${C.pedidos.ativo ? "on" : ""}" id="pedidos-chave"></span></div>
-      ${linha('id="ed-pedidos"', "💰", "Preço mínimo, prazo e regras", `A partir de ${esc(C.pedidos.min_fmt)}${C.pedidos.prazo ? ` · ${esc(C.pedidos.prazo)}` : ""}`)}
+      <div class="linha-c"><span class="ico">${ic("pedido")}</span><span class="txt"><b>Aceitar pedidos</b><small>O fã descreve o que quer e paga antes</small></span><span class="chave ${C.pedidos.ativo ? "on" : ""}" id="pedidos-chave"></span></div>
+      ${linha('id="ed-pedidos"', `${ic("moeda")}`, "Preço mínimo, prazo e regras", `A partir de ${esc(C.pedidos.min_fmt)}${C.pedidos.prazo ? ` · ${esc(C.pedidos.prazo)}` : ""}`)}
     </div>
 
     <div class="secao-titulo"><h2>Carrinho</h2></div>
     <div class="grupo">
-      ${linha('id="ed-carrinho"', "🛒", "Desconto levando vários packs", C.carrinho.pct ? `${C.carrinho.pct}% OFF a partir de ${C.carrinho.min} packs` : "Desligado (o carrinho funciona sem desconto)", `${C.carrinho.pct ? `<span class="v">-${C.carrinho.pct}%</span>` : ""}<span class="seta">›</span>`)}
+      ${linha('id="ed-carrinho"', `${ic("carrinho")}`, "Desconto levando vários packs", C.carrinho.pct ? `${C.carrinho.pct}% OFF a partir de ${C.carrinho.min} packs` : "Desligado (o carrinho funciona sem desconto)", `${C.carrinho.pct ? `<span class="v">-${C.carrinho.pct}%</span>` : ""}<span class="seta">›</span>`)}
     </div>
 
     <div class="secao-titulo"><h2>Cupons de desconto</h2><small class="muted">${pl(C.cupons.length, "ativo", "ativos")}</small></div>
     <div class="grupo">
-      ${C.cupons.length ? C.cupons.map(c => linha(`data-cupom-ed="${esc(c.codigo)}"`, "🏷️", esc(c.codigo), `${esc(c.descricao)} · ${c.usos}${c.usos_max ? `/${c.usos_max}` : ""} ${(c.usos_max || c.usos) === 1 ? "uso" : "usos"}${c.expira ? ` · até ${esc(c.expira)}` : ""}`, `<span class="seta perigo">✕</span>`)).join("") : `<div class="vazio-c">Nenhum cupom ativo.</div>`}
+      ${C.cupons.length ? C.cupons.map(c => linha(`data-cupom-ed="${esc(c.codigo)}"`, `${ic("etiqueta")}`, esc(c.codigo), `${esc(c.descricao)} · ${c.usos}${c.usos_max ? `/${c.usos_max}` : ""} ${(c.usos_max || c.usos) === 1 ? "uso" : "usos"}${c.expira ? ` · até ${esc(c.expira)}` : ""}`, `<span class="seta perigo">${ic("fechar")}</span>`)).join("") : `<div class="vazio-c">Nenhum cupom ativo.</div>`}
       <button class="linha-c add" id="cupom-novo">＋ Novo cupom</button>
     </div>
 
     <div class="secao-titulo"><h2>Notificações</h2><small class="muted">no chat com o bot</small></div>
     <div class="grupo">
-      <div class="linha-c"><span class="ico">💰</span><span class="txt"><b>Avisar a cada venda</b><small>Quem comprou, o quê e quanto, com botão de bloquear</small></span><span class="chave ${C.notif_vendas ? "on" : ""}" id="notif-chave"></span></div>
-      <div class="linha-c"><span class="ico">🌙</span><span class="txt"><b>Resumo do dia às ${C.resumo_hora}h</b><small>Faturamento, novos fãs, VIP e o mais vendido</small></span><span class="chave ${C.resumo_diario ? "on" : ""}" id="resumo-chave"></span></div>
+      <div class="linha-c"><span class="ico">${ic("moeda")}</span><span class="txt"><b>Avisar a cada venda</b><small>Quem comprou, o quê e quanto, com botão de bloquear</small></span><span class="chave ${C.notif_vendas ? "on" : ""}" id="notif-chave"></span></div>
+      <div class="linha-c"><span class="ico">${ic("lua")}</span><span class="txt"><b>Resumo do dia às ${C.resumo_hora}h</b><small>Faturamento, novos fãs, VIP e o mais vendido</small></span><span class="chave ${C.resumo_diario ? "on" : ""}" id="resumo-chave"></span></div>
     </div>
 
     <div class="secao-titulo"><h2>Proteção</h2></div>
     <div class="grupo">
-      ${linha('id="ed-limite"', "📩", "Reenvios no chat", C.limite_reenvio ? `Cada compra pode ser reenviada ${C.limite_reenvio}x` : "Sem limite", `<span class="v">${C.limite_reenvio || "∞"}</span><span class="seta">›</span>`)}
-      <div class="linha-c"><span class="ico">💧</span><span class="txt"><b>Marca d'água</b><small>O @ e o ID de quem comprou nas fotos abertas na loja</small></span><span class="chave ${C.marca_dagua ? "on" : ""}" id="marca-chave"></span></div>
-      ${linha('id="ed-bloq"', "🚫", "Fãs bloqueados", C.bloqueados.length ? pl(C.bloqueados.length, "bloqueado", "bloqueados") : "Ninguém bloqueado", `<span class="seta">›</span>`)}
+      ${linha('id="ed-limite"', `${ic("envelope")}`, "Reenvios no chat", C.limite_reenvio ? `Cada compra pode ser reenviada ${C.limite_reenvio}x` : "Sem limite", `<span class="v">${C.limite_reenvio || "∞"}</span><span class="seta">›</span>`)}
+      <div class="linha-c"><span class="ico">${ic("gota")}</span><span class="txt"><b>Marca d'água</b><small>O @ e o ID de quem comprou nas fotos e vídeos abertos na loja</small></span><span class="chave ${C.marca_dagua ? "on" : ""}" id="marca-chave"></span></div>
+      ${linha('id="ed-bloq"', `${ic("bloqueio")}`, "Fãs bloqueados", C.bloqueados.length ? pl(C.bloqueados.length, "bloqueado", "bloqueados") : "Ninguém bloqueado", `<span class="seta">›</span>`)}
     </div>
     <p class="legenda-grupo">${C.marca_dagua ? "Se uma foto vazar, a marca mostra quem comprou." : "Sem a marca, fica difícil saber quem vazou uma foto."} No chat do bot o conteúdo vai protegido contra encaminhar e salvar.</p>
 
     <div class="secao-titulo"><h2>Publicação</h2></div>
     <div class="grupo">
-      <div class="linha-c"><span class="ico">📝</span><span class="txt"><b>Revisar antes de publicar</b><small>Tudo entra numa fila e só aparece quando você aprovar</small></span><span class="chave ${C.revisao ? "on" : ""}" id="rev-chave"></span></div>
-      ${C.canal ? `<div class="linha-c"><span class="ico">📣</span><span class="txt"><b>Postar prévia no canal</b><small>Já vem ligado ao criar um pack</small></span><span class="chave ${C.canal_padrao ? "on" : ""}" id="canal-chave"></span></div>` : ""}
+      <div class="linha-c"><span class="ico">${ic("nota")}</span><span class="txt"><b>Revisar antes de publicar</b><small>Tudo entra numa fila e só aparece quando você aprovar</small></span><span class="chave ${C.revisao ? "on" : ""}" id="rev-chave"></span></div>
+      ${C.canal ? `<div class="linha-c"><span class="ico">${ic("megafone")}</span><span class="txt"><b>Postar prévia no canal</b><small>Já vem ligado ao criar um pack</small></span><span class="chave ${C.canal_padrao ? "on" : ""}" id="canal-chave"></span></div>` : ""}
     </div>
 
     <div class="secao-titulo"><h2>Visualização</h2></div>
     <div class="grupo">
-      <div class="linha-c"><span class="ico">👀</span><span class="txt"><b>Ver a loja como fã</b><small>Esconde as ferramentas de criadora</small></span><span class="chave" id="como-fa"></span></div>
+      <div class="linha-c"><span class="ico">${ic("olho")}</span><span class="txt"><b>Ver a loja como fã</b><small>Esconde as ferramentas de criadora</small></span><span class="chave" id="como-fa"></span></div>
     </div>
     <p class="dica" style="text-align:center;margin:18px 16px">O bot continua com todos os comandos (/admin) como plano B.</p>`;
 }
@@ -2200,19 +2355,19 @@ function editarPromo(){
     ${mensais.length ? "" : `<p class="aviso">Você não tem plano de até 31 dias. Crie um plano mensal para o desconto aparecer.</p>`}
     <div class="gap"></div><button class="btn" id="pr-salvar">Salvar</button>`);
   const prev = () => { const v = Math.min(90, +($("#pr-pct").value.replace(/\D/g, "")) || 0);
-    $("#pr-prev").innerHTML = v ? mensais.map(p => `<div class="item"><div class="thumb">⭐</div><div class="txt"><b>${esc(p.nome)}</b><small><s>${esc(p.preco_fmt)}</s> → ${reais(Math.max(100, p.preco - Math.floor(p.preco * v / 100)))} no 1º mês</small></div></div>`).join("") : "" };
+    $("#pr-prev").innerHTML = v ? mensais.map(p => `<div class="item"><div class="thumb">${ic("estrela-cheia")}</div><div class="txt"><b>${esc(p.nome)}</b><small><s>${esc(p.preco_fmt)}</s> ${ic("seta")} ${reais(Math.max(100, p.preco - Math.floor(p.preco * v / 100)))} no 1º mês</small></div></div>`).join("") : "" };
   $("#pr-pct").oninput = prev; prev();
   $("#pr-chave").onclick = e => { ligado = !ligado; e.currentTarget.classList.toggle("on", ligado); $("#pr-campos").classList.toggle("ocultar", !ligado); vibrar("leve"); if(ligado) $("#pr-pct").focus() };
   $("#pr-salvar").onclick = async () => {
     const pct = ligado ? +($("#pr-pct").value.replace(/\D/g, "")) || 0 : 0;
     if(ligado && !pct) return toast("Informe o desconto, ex: 50");
-    if(await salvarAjuste({vip_1mes_pct: pct}, pct ? `1º mês com ${pct}% OFF ativado ✓` : "Desconto desligado")){ vibrar("success"); fecharFolha(true); await recarregarConfig(); carregar() }
+    if(await salvarAjuste({vip_1mes_pct: pct}, pct ? `1º mês com ${pct}% OFF ativado ${ic("check")}` : "Desconto desligado")){ vibrar("success"); fecharFolha(true); await recarregarConfig(); carregar() }
   };
 }
 function editarMeta(){
   const M = CONFIG.meta;
   abrirFolha(`<h2>${M ? "Meta de mimos" : "Nova meta"}</h2><p class="sub">Os fãs veem a barra enchendo a cada mimo. Quando bater, você e quem ajudou recebem um aviso.</p>
-    <span class="rotulo">Para que é a meta?</span><input type="text" id="mt-titulo" maxlength="60" placeholder="Ex: Câmera nova 📸" value="${M ? esc(M.titulo) : ""}">
+    <span class="rotulo">Para que é a meta?</span><input type="text" id="mt-titulo" maxlength="60" placeholder="Ex: Câmera nova" value="${M ? esc(M.titulo) : ""}">
     <span class="rotulo">Descrição (opcional)</span><input type="text" id="mt-desc" maxlength="200" placeholder="Ex: Pra fotos ainda melhores pra vocês" value="${M ? esc(M.descricao) : ""}">
     <span class="rotulo">Valor da meta</span><input type="text" id="mt-alvo" inputmode="decimal" placeholder="Ex: 2.000,00" value="${M ? esc(M.alvo_fmt.replace("R$ ", "")) : ""}">
     ${M ? `<p class="dica">Arrecadado até agora: <b>${esc(M.arrecadado_fmt)}</b> (${M.pct}%). Editar não zera o progresso.</p>` : ""}
@@ -2221,7 +2376,7 @@ function editarMeta(){
   $("#mt-salvar").onclick = async () => {
     const r = await api("/api/criadora/meta", {titulo: $("#mt-titulo").value, descricao: $("#mt-desc").value, alvo: $("#mt-alvo").value});
     if(!r.ok) return toast(r.erro || "Não consegui salvar");
-    vibrar("success"); toast(M ? "Meta salva ✓" : "Meta criada 🎯"); fecharFolha(true); await recarregarConfig(); carregar();
+    vibrar("success"); toast(M ? `Meta salva ${ic("check")}` : `Meta criada ${ic("alvo")}`); fecharFolha(true); await recarregarConfig(); carregar();
   };
   if(M) $("#mt-encerrar").onclick = () => confirmar("Encerrar a meta? A barra some do feed. O que já foi arrecadado continua no seu faturamento.", async () => {
     const r = await api("/api/criadora/meta/encerrar", {}); if(!r.ok) return toast("Não consegui encerrar");
@@ -2235,7 +2390,7 @@ function editarPedidosCfg(){
     <span class="rotulo">O que você faz e o que não faz (opcional)</span><textarea id="pc-info" maxlength="400" style="min-height:90px" placeholder="Ex: Fotos e vídeos de até 1 minuto. Não faço conteúdo com outras pessoas.">${esc(P.info)}</textarea>
     <div class="gap"></div><button class="btn" id="pc-salvar">Salvar</button>`);
   $("#pc-salvar").onclick = async () => {
-    if(await salvarAjuste({pedidos_min: $("#pc-min").value, pedidos_prazo: $("#pc-prazo").value, pedidos_info: $("#pc-info").value}, "Pedidos salvos ✓")){
+    if(await salvarAjuste({pedidos_min: $("#pc-min").value, pedidos_prazo: $("#pc-prazo").value, pedidos_info: $("#pc-info").value}, `Pedidos salvos ${ic("check")}`)){
       vibrar("success"); fecharFolha(true); await recarregarConfig(); carregar() }
   };
 }
@@ -2250,7 +2405,7 @@ function editarCarrinhoCfg(){
   dica();
   $("#cc-pct").onclick = e => { const b = e.target.closest("[data-v]"); if(!b) return; pct = +b.dataset.v; document.querySelectorAll("#cc-pct button").forEach(x => x.classList.toggle("on", x === b)); dica(); vibrar("leve") };
   $("#cc-min").onclick = e => { const b = e.target.closest("[data-v]"); if(!b) return; min = +b.dataset.v; document.querySelectorAll("#cc-min button").forEach(x => x.classList.toggle("on", x === b)); dica(); vibrar("leve") };
-  $("#cc-salvar").onclick = async () => { if(await salvarAjuste({carrinho_pct: pct, carrinho_min: min}, pct ? `Carrinho com ${pct}% OFF a partir de ${min} packs ✓` : "Desconto do carrinho desligado")){ vibrar("success"); fecharFolha(true); await recarregarConfig(); carregar() } };
+  $("#cc-salvar").onclick = async () => { if(await salvarAjuste({carrinho_pct: pct, carrinho_min: min}, pct ? `Carrinho com ${pct}% OFF a partir de ${min} packs ${ic("check")}` : "Desconto do carrinho desligado")){ vibrar("success"); fecharFolha(true); await recarregarConfig(); carregar() } };
 }
 function editarLimite(){
   let v = CONFIG.limite_reenvio;
@@ -2261,7 +2416,7 @@ function editarLimite(){
   const dica = () => $("#lim-dica").textContent = v ? `Depois de ${pl(v, "reenvio", "reenvios")}, o bot avisa que o limite acabou e mostra o botão da loja.` : "O fã pode pedir quantas vezes quiser.";
   dica();
   $("#lim-op").onclick = e => { const b = e.target.closest("[data-lim]"); if(!b) return; v = +b.dataset.lim; document.querySelectorAll("#lim-op button").forEach(x => x.classList.toggle("on", x === b)); dica(); vibrar("leve") };
-  $("#lim-salvar").onclick = async () => { if(await salvarAjuste({limite_reenvio: v}, "Limite salvo ✓")){ vibrar("success"); fecharFolha(true); recarregarConfig() } };
+  $("#lim-salvar").onclick = async () => { if(await salvarAjuste({limite_reenvio: v}, `Limite salvo ${ic("check")}`)){ vibrar("success"); fecharFolha(true); recarregarConfig() } };
 }
 function nomeFa(u){ return (u.nome || "Sem nome") + (u.username ? ` · @${u.username}` : "") }
 function gerenciarBloqueados(){
@@ -2271,7 +2426,7 @@ function gerenciarBloqueados(){
     <div class="campo" style="padding:0"><input type="text" id="bl-id" inputmode="numeric" placeholder="Ex: 123456789"><button class="btn mini" id="bl-ok" style="padding:0 18px">Bloquear</button></div>
     <p class="dica">O ID aparece nos avisos de venda e na marca d'água das fotos.</p>
     <div class="gap"></div>
-    <div class="lista" style="padding:0">${B.length ? B.map(u => `<div class="item"><div class="thumb">🚫</div><div class="txt"><b>${esc(nomeFa(u))}</b><small>ID ${u.id}${u.desde ? ` · desde ${esc(u.desde)}` : ""}</small></div><button class="btn mini sec" data-desbloq="${u.id}">Desbloquear</button></div>`).join("") : `<div class="vazio" style="padding:20px">Ninguém bloqueado 🙂</div>`}</div>`);
+    <div class="lista" style="padding:0">${B.length ? B.map(u => `<div class="item"><div class="thumb">${ic("bloqueio")}</div><div class="txt"><b>${esc(nomeFa(u))}</b><small>ID ${u.id}${u.desde ? ` · desde ${esc(u.desde)}` : ""}</small></div><button class="btn mini sec" data-desbloq="${u.id}">Desbloquear</button></div>`).join("") : `<div class="vazio" style="padding:20px">Ninguém bloqueado ${ic("sorriso")}</div>`}</div>`);
   $("#bl-ok").onclick = () => {
     const id = $("#bl-id").value.replace(/\D/g, ""); if(!id) return toast("Digite o ID (só números)");
     confirmar(`Bloquear o ID ${id}? Ele perde o acesso à loja, ao bot e ao VIP.`, () => bloquearFa(id, true));
@@ -2291,7 +2446,7 @@ async function abrirFa(id){
       <div class="kpi"><small>VIP</small><b style="font-size:16px">${r.vip ? "Ativo" : "Não"}</b><span>${r.vip ? "até " + esc(r.vip) : "sem assinatura"}</span></div></div>
     ${r.desde ? `<p class="dica">Fã desde ${esc(r.desde)}</p>` : ""}
     <div class="gap"></div>
-    <button class="btn ${r.bloqueado ? "" : "sec perigo"}" id="fa-bloq">${r.bloqueado ? "Desbloquear" : "🚫 Bloquear fã"}</button>`);
+    <button class="btn ${r.bloqueado ? "" : "sec perigo"}" id="fa-bloq">${r.bloqueado ? "Desbloquear" : `${ic("bloqueio")} Bloquear fã`}</button>`);
   $("#fa-bloq").onclick = () => r.bloqueado ? bloquearFa(r.id, false).then(() => fecharFolha(true))
     : confirmar(`Bloquear ${r.nome || "este fã"}? Ele perde o acesso à loja, ao bot e ao VIP.`, () => bloquearFa(r.id, true).then(() => fecharFolha(true)));
 }
@@ -2312,7 +2467,7 @@ function editarPlano(id){
   $("#pl-salvar").onclick = async () => {
     const r = await api("/api/criadora/plano", {id: p?.id, nome: $("#pl-nome").value, dias: $("#pl-dias").value, preco: $("#pl-preco").value});
     if(!r.ok) return toast(r.erro || "Não consegui salvar");
-    vibrar("success"); toast("Plano salvo ✓"); fecharFolha(true); await recarregarConfig(); carregar();
+    vibrar("success"); toast(`Plano salvo ${ic("check")}`); fecharFolha(true); await recarregarConfig(); carregar();
   };
   p && ($("#pl-apagar").onclick = () => confirmar(`Remover o plano ${p.nome}? Quem já assinou continua com acesso.`, async () => {
     const r = await api(`/api/criadora/plano/${p.id}/apagar`, {}); if(!r.ok) return toast(r.erro || "Não consegui remover");
@@ -2328,7 +2483,7 @@ function editarMimos(){
   $("#mi-salvar").onclick = async () => {
     const r = await api("/api/criadora/ajustes", {gorjetas: ($("#mi-valores").value.match(/\d+/g) || []).join(",")});
     if(!r.ok) return toast(r.erro || "Não consegui salvar");
-    vibrar("success"); toast("Valores salvos ✓"); fecharFolha(true); await recarregarConfig(); carregar();
+    vibrar("success"); toast(`Valores salvos ${ic("check")}`); fecharFolha(true); await recarregarConfig(); carregar();
   };
 }
 function novoCupom(){
@@ -2348,7 +2503,7 @@ function novoCupom(){
   $("#cp-salvar").onclick = async () => {
     const r = await api("/api/criadora/cupom", {codigo: $("#cp-codigo").value, tipo, valor: $("#cp-valor").value, usos_max: $("#cp-usos").value, dias: $("#cp-dias").value});
     if(!r.ok) return toast(r.erro || "Não consegui criar");
-    vibrar("success"); toast(`Cupom ${r.codigo} criado ✓`); fecharFolha(true); recarregarConfig();
+    vibrar("success"); toast(`Cupom ${r.codigo} criado ${ic("check")}`); fecharFolha(true); recarregarConfig();
   };
 }
 
@@ -2366,14 +2521,14 @@ function seletor(id, multiplo, aceitar){
 function miniaturas(lista, alvo){
   $(alvo).innerHTML = lista.map((f, i) => {
     const url = URL.createObjectURL(f), video = f.type.startsWith("video");
-    return `<div>${video ? `<video src="${url}#t=0.1" muted playsinline preload="metadata"></video><span class="v">VÍDEO</span>` : `<img src="${url}" alt="" data-editar="${i}"><button class="lapis-m" data-editar="${i}" aria-label="Editar">✎</button>`}<button class="x" data-tirar="${i}">✕</button></div>`;
+    return `<div>${video ? `<video src="${url}#t=0.1" muted playsinline preload="metadata"></video><span class="v">VÍDEO</span>` : `<img src="${url}" alt="" data-editar="${i}"><button class="lapis-m" data-editar="${i}" aria-label="Editar">${ic("lapis")}</button>`}<button class="x" data-tirar="${i}">${ic("fechar")}</button></div>`;
   }).join("");
 }
 
 function editarPerfil(){
   const c = D.criadora; let nova = null;
   abrirFolha(`<h2>Editar perfil</h2>
-    <label for="perfil-foto">${c.tem_foto ? `<img class="foto-perfil-ed" id="prev-av" src="${avatarSrc()}" alt="">` : `<div class="foto-perfil-ed" id="prev-av">✨</div>`}</label>
+    <label for="perfil-foto">${c.tem_foto ? `<img class="foto-perfil-ed" id="prev-av" src="${avatarSrc()}" alt="">` : `<div class="foto-perfil-ed" id="prev-av">${ic("brilho")}</div>`}</label>
     ${seletor("perfil-foto", false, "image/*")}
     <p class="dica" style="text-align:center;margin-top:0">Toque na foto para trocar</p>
     <span class="rotulo">Nome</span><input type="text" id="perfil-nome" maxlength="60" value="${esc(c.nome)}">
@@ -2388,7 +2543,7 @@ function editarPerfil(){
     const b = $("#perfil-salvar"); b.disabled = true; b.textContent = "Salvando…";
     const r = await enviarForm("/api/criadora/perfil", {nome: $("#perfil-nome").value.trim(), bio: $("#perfil-bio").value.trim()}, nova ? [["foto", nova]] : []);
     if(!r.ok){ b.disabled = false; b.textContent = "Salvar"; return toast(r.erro || "Não consegui salvar") }
-    vibrar("success"); toast("Perfil atualizado ✓"); fecharFolha(); PAINEL = null; carregar();
+    vibrar("success"); toast(`Perfil atualizado ${ic("check")}`); fecharFolha(); PAINEL = null; carregar();
   };
 }
 
@@ -2396,10 +2551,10 @@ function novaPublicacao(pago){
   let arqs = [];
   const canal = PAINEL?.canal !== false;
   abrirFolha(`<h2>Nova publicação</h2>
-    <div class="troca" style="margin:12px 0 0"><div><b>🔒 Conteúdo pago</b><br><small class="muted" id="pub-dica"></small></div><span class="chave" id="pub-pago"></span></div>
+    <div class="troca" style="margin:12px 0 0"><div><b>${ic("cadeado")} Conteúdo pago</b><br><small class="muted" id="pub-dica"></small></div><span class="chave" id="pub-pago"></span></div>
     <span class="rotulo" id="pub-rot-texto"></span><textarea id="pub-texto" maxlength="4000"></textarea>
     <div class="gap"></div>
-    <div id="pub-enq-wrap"><button class="btn sec" id="pub-enq-bt" style="padding:11px">📊 Adicionar enquete</button>
+    <div id="pub-enq-wrap"><button class="btn sec" id="pub-enq-bt" style="padding:11px">${ic("grafico")} Adicionar enquete</button>
       <div class="ed-enq ocultar" id="pub-enq">${[1,2,3,4].map(i => `<input type="text" class="pub-op" maxlength="60" placeholder="Opção ${i}${i > 2 ? " (opcional)" : ""}">`).join("")}
         <p class="dica" style="margin:0">O texto acima vira a pergunta. Cada fã vota uma vez.</p></div><div class="gap"></div></div>
     <label class="escolher" for="pub-arqs" id="pub-escolher"></label><input type="file" id="pub-arqs" hidden>
@@ -2409,9 +2564,9 @@ function novaPublicacao(pago){
       <span class="rotulo">Preço</span><input type="text" id="pub-preco" inputmode="decimal" placeholder="29,90">
       ${canal ? `<div class="troca" style="margin:14px 0 0"><div><b>Postar prévia no canal</b><br><small class="muted">Canal de amostras, com botão de compra</small></div><span class="chave ${CONFIG && !CONFIG.canal_padrao ? "" : "on"}" id="pub-canal"></span></div>` : ""}
     </div>
-    <div class="troca" style="margin:14px 0 0"><div><b>🗓️ Agendar</b><br><small class="muted">Vai ao ar sozinho no dia e hora</small></div><span class="chave" id="pub-agendar"></span></div>
+    <div class="troca" style="margin:14px 0 0"><div><b>${ic("calendario")} Agendar</b><br><small class="muted">Vai ao ar sozinho no dia e hora</small></div><span class="chave" id="pub-agendar"></span></div>
     <div id="pub-ag" class="ocultar"><div class="gap"></div>${inputQuando("pub-quando")}
-      <div class="troca ocultar" id="pub-cd-linha" style="margin:10px 0 0"><div><b>⏳ Contagem regressiva</b><br><small class="muted">Fãs veem o lançamento e pedem para ser avisados</small></div><span class="chave on" id="pub-contagem"></span></div></div>
+      <div class="troca ocultar" id="pub-cd-linha" style="margin:10px 0 0"><div><b>${ic("ampulheta")} Contagem regressiva</b><br><small class="muted">Fãs veem o lançamento e pedem para ser avisados</small></div><span class="chave on" id="pub-contagem"></span></div></div>
     <div id="pub-prog" class="ocultar"><div class="progresso"><i id="pub-barra"></i></div><p class="dica" id="pub-etapa">Enviando…</p></div>
     <div class="gap"></div><button class="btn" id="pub-publicar"></button>`);
   const modo = () => {
@@ -2420,7 +2575,7 @@ function novaPublicacao(pago){
     $("#pub-dica").textContent = pago ? "Prévia embaçada até o fã pagar" : "Grátis no feed, visível para todos";
     $("#pub-rot-texto").textContent = pago ? "Legenda" : "Texto";
     $("#pub-texto").placeholder = pago ? "Conte o que tem nesse pack…" : "Escreva algo para seus fãs…";
-    $("#pub-escolher").textContent = pago ? "🖼️ Escolher fotos e vídeos" : "📷 Adicionar foto ou vídeo (opcional)";
+    $("#pub-escolher").innerHTML = pago ? `${ic("imagem")} Escolher fotos e vídeos` : `${ic("camera")} Adicionar foto ou vídeo (opcional)`;
     const inp = $("#pub-arqs"); inp.multiple = pago; inp.accept = "image/*,video/*";
     if(!pago) arqs = arqs.slice(0, 1);
     miniaturas(arqs, "#pub-mini");
@@ -2458,9 +2613,9 @@ function novaPublicacao(pago){
         vid ? p => { $("#pub-barra").style.width = `${Math.round(p * 100)}%`; $("#pub-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : "Quase lá…" } : undefined);
       if(!r.ok){ b.disabled = false; b.textContent = agendar ? "Agendar" : "Publicar"; $("#pub-prog").classList.add("ocultar"); return toast(r.erro || "Não consegui publicar") }
       vibrar("success"); fecharFolha(true); PAINEL = null; ANIMAR = true;
-      if(r.processando){ toast("Vídeo enviado! Estou preparando e te aviso no chat quando estiver no ar 🎬") }
-      else if(r.agendado){ toast(`Agendado para ${r.agendado} 🗓️`); ABA = "painel" }
-      else if(r.fila){ toast("Na fila de revisão 📝"); ABA = "painel" } else { toast("Publicado ✓"); confete(40); ABA = "inicio"; FILTRO = "todos" }
+      if(r.processando){ toast(`Vídeo enviado! Estou preparando e te aviso no chat quando estiver no ar ${ic("video")}`) }
+      else if(r.agendado){ toast(`Agendado para ${r.agendado} ${ic("calendario")}`); ABA = "painel" }
+      else if(r.fila){ toast(`Na fila de revisão ${ic("nota")}`); ABA = "painel" } else { toast(`Publicado ${ic("check")}`); confete(40); ABA = "inicio"; FILTRO = "todos" }
       carregar();
       return;
     }
@@ -2478,10 +2633,10 @@ function novaPublicacao(pago){
       p => { $("#pub-barra").style.width = `${Math.round(p * 100)}%`; $("#pub-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : (comprimir ? "Quase lá…" : "Gerando as prévias com desfoque…") });
     if(!r.ok){ b.disabled = false; b.textContent = "Publicar pack"; $("#pub-prog").classList.add("ocultar"); return toast(r.erro || "Não consegui publicar") }
     vibrar("success"); fecharFolha(true); PAINEL = null; ANIMAR = true;
-    if(r.processando){ toast("Enviado! Estou preparando os arquivos e te aviso no chat quando o pack estiver no ar 🎬") }
-    else if(r.agendado){ toast(`Lançamento agendado para ${r.agendado} 🗓️`); ABA = "painel" }
-    else if(r.fila){ toast("Pack na fila de revisão 📝"); ABA = "painel" }
-    else { toast(r.no_canal ? "Pack publicado e postado no canal ✓" : "Pack publicado ✓"); confete(); ABA = "inicio"; FILTRO = "todos" }
+    if(r.processando){ toast(`Enviado! Estou preparando os arquivos e te aviso no chat quando o pack estiver no ar ${ic("video")}`) }
+    else if(r.agendado){ toast(`Lançamento agendado para ${r.agendado} ${ic("calendario")}`); ABA = "painel" }
+    else if(r.fila){ toast(`Pack na fila de revisão ${ic("nota")}`); ABA = "painel" }
+    else { toast(r.no_canal ? `Pack publicado e postado no canal ${ic("check")}` : `Pack publicado ${ic("check")}`); confete(); ABA = "inicio"; FILTRO = "todos" }
     carregar();
   };
 }
@@ -2491,8 +2646,8 @@ function menuItem(alvo){
     const ref = alvo.slice(3);
     return abrirFolha(`<h2>Lançamento agendado</h2><p class="sub">Os fãs estão vendo a contagem regressiva.</p>
       <button class="btn brilho" data-ag="${ref}:publicar">Publicar agora</button><div class="gap"></div>
-      <button class="btn sec" data-ag="${ref}:horario">🕑 Mudar horário</button><div class="gap"></div>
-      <button class="btn sec" data-menu="${ref}">✎ Editar título, preço e legenda</button><div class="gap"></div>
+      <button class="btn sec" data-ag="${ref}:horario">${ic("relogio")} Mudar horário</button><div class="gap"></div>
+      <button class="btn sec" data-menu="${ref}">${ic("lapis")} Editar título, preço e legenda</button><div class="gap"></div>
       <button class="btn fantasma perigo" data-ag="${ref}:cancelar">Cancelar lançamento</button>`);
   }
   const [tipo, id] = alvo.split(":");
@@ -2504,7 +2659,7 @@ function menuItem(alvo){
       <button class="btn fantasma perigo" id="ed-apagar">Apagar publicação</button>`);
     $("#ed-salvar").onclick = async () => {
       const r = await api(`/api/criadora/post/${id}`, {texto: $("#ed-texto").value.trim()});
-      if(!r.ok) return toast(r.erro || "Não consegui salvar"); toast("Salvo ✓"); fecharFolha(); carregar();
+      if(!r.ok) return toast(r.erro || "Não consegui salvar"); toast(`Salvo ${ic("check")}`); fecharFolha(); carregar();
     };
     $("#ed-apagar").onclick = () => confirmar("Apagar esta publicação?", async () => { await api(`/api/criadora/post/${id}/apagar`, {}); toast("Apagada"); fecharFolha(); carregar() });
     return;
@@ -2515,13 +2670,13 @@ function menuItem(alvo){
     <span class="rotulo">Preço</span><input type="text" id="ed-preco" inputmode="decimal" value="${esc(p.preco_fmt.replace("R$ ", ""))}">
     <span class="rotulo">Legenda</span><textarea id="ed-legenda" maxlength="2000">${esc(p.legenda || "")}</textarea>
     <div class="gap"></div><button class="btn" id="ed-salvar">Salvar</button><div class="gap"></div>
-    <button class="btn sec" id="ed-ver">👁 Ver conteúdo</button><div class="gap"></div>
+    <button class="btn sec" id="ed-ver">${ic("olho")} Ver conteúdo</button><div class="gap"></div>
     <button class="btn fantasma perigo" id="ed-apagar">Tirar da vitrine</button>
     <p class="dica" style="text-align:center">Quem já comprou continua com acesso.</p>`);
   $("#ed-ver").onclick = () => abrirGaleria(id);
   $("#ed-salvar").onclick = async () => {
     const r = await api(`/api/criadora/pack/${id}`, {titulo: $("#ed-titulo").value.trim(), preco: $("#ed-preco").value.trim(), legenda: $("#ed-legenda").value.trim()});
-    if(!r.ok) return toast(r.erro || "Não consegui salvar"); toast("Salvo ✓"); fecharFolha(); PAINEL = null; carregar();
+    if(!r.ok) return toast(r.erro || "Não consegui salvar"); toast(`Salvo ${ic("check")}`); fecharFolha(); PAINEL = null; carregar();
   };
   $("#ed-apagar").onclick = () => confirmar(`Tirar "${p.titulo}" da vitrine?`, async () => { await api(`/api/criadora/pack/${id}/apagar`, {}); toast("Removido da vitrine"); fecharFolha(); PAINEL = null; carregar() });
 }
@@ -2534,7 +2689,7 @@ function confirmar(texto, sim){
 function editarMensagens(){
   const M = PAINEL?.mensagens || [];
   abrirFolha(`<h2>Mensagens do bot</h2><p class="sub">Edite o que o bot manda para seus fãs.</p>
-    <div class="acoes" style="padding:0">${M.map(m => `<button class="acao" data-msg="${m.chave}"><span class="ico">💬</span>
+    <div class="acoes" style="padding:0">${M.map(m => `<button class="acao" data-msg="${m.chave}"><span class="ico">${ic("chat")}</span>
       <div style="min-width:0"><b>${esc(m.rotulo)}</b><small style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.texto || "Padrão: " + (m.padrao || "bio do perfil"))}</small></div><span class="seta">›</span></button>`).join("")}</div>`);
 }
 function editarMensagem(chave){
@@ -2544,7 +2699,7 @@ function editarMensagem(chave){
   abrirFolha(`<h2>${esc(m.rotulo)}</h2>
     <textarea id="msg-texto" maxlength="3500" placeholder="${esc(m.padrao || "Vazio: usa a bio e a foto do perfil")}">${esc(m.texto)}</textarea>
     <p class="dica">Marcadores: <code>{nome}</code> nome do fã · <code>{criadora}</code> seu nome${chave !== "boas_vindas" ? ` · <code>{item}</code> o que foi comprado` : ""}</p>
-    ${comFoto ? `<div class="gap"></div><label class="escolher" for="msg-foto">📷 ${m.foto ? "Trocar a foto" : "Adicionar foto"}</label>${seletor("msg-foto", false, "image/*")}
+    ${comFoto ? `<div class="gap"></div><label class="escolher" for="msg-foto">${ic("camera")} ${m.foto ? "Trocar a foto" : "Adicionar foto"}</label>${seletor("msg-foto", false, "image/*")}
       ${m.foto ? `<button class="btn fantasma perigo" id="msg-sem-foto">Remover foto</button>` : ""}` : ""}
     <span class="rotulo">Prévia</span>
     <div class="balao" id="msg-prev"></div>
@@ -2562,7 +2717,7 @@ function editarMensagem(chave){
     const b = $("#msg-salvar"); b.disabled = true; b.textContent = "Salvando…";
     const r = await enviarForm("/api/criadora/mensagem", {chave, texto: $("#msg-texto").value.trim(), remover_foto: remover ? "1" : "0"}, foto ? [["foto", foto]] : []);
     if(!r.ok){ b.disabled = false; b.textContent = "Salvar"; return toast(r.erro || "Não consegui salvar") }
-    vibrar("success"); toast("Mensagem salva ✓"); await carregarPainel(); editarMensagens();
+    vibrar("success"); toast(`Mensagem salva ${ic("check")}`); await carregarPainel(); editarMensagens();
   };
 }
 
@@ -2572,25 +2727,25 @@ async function abrirGaleria(id){
   const p = D.packs.find(x => x.id === id) || D.combos.find(x => x.id === id) || D.minhas.find(x => x.id === id) || {};
   const g = document.createElement("div"); g.className = "galeria"; g.id = "galeria";
   g.innerHTML = `
-    <header>${D.criadora.tem_foto ? `<img class="av" src="/api/loja/foto" alt="">` : `<div class="av">✨</div>`}
+    <header>${D.criadora.tem_foto ? `<img class="av" src="/api/loja/foto" alt="">` : `<div class="av">${ic("brilho")}</div>`}
       <div class="t"><b>${esc(p.titulo || "Conteúdo")}</b><small>${esc(D.criadora.nome)}</small></div>
-      <button id="g-fechar" aria-label="Fechar">✕</button></header>
+      <button id="g-fechar" aria-label="Fechar">${ic("fechar")}</button></header>
     <span class="contador" id="g-cont"></span>
     <button class="seta-g esq" id="g-esq">‹</button><button class="seta-g dir" id="g-dir">›</button>
     <div class="trilho" id="trilho"><div class="slide"><div class="carregando"><i></i></div></div></div>
     <footer><div class="pontos" id="g-pontos"></div>
-      <div class="rodape-g"><button class="btn sec" data-reenviar="${esc(id)}">📩 Receber no chat</button></div></footer>`;
+      <div class="rodape-g"><button class="btn sec" data-reenviar="${esc(id)}">${ic("envelope")} Receber no chat</button></div></footer>`;
   g.addEventListener("contextmenu", e => e.preventDefault());
   document.body.appendChild(g); document.body.style.overflow = "hidden";
   $("#g-fechar").onclick = fecharGaleria;
   try{ tg?.BackButton?.show(); tg?.BackButton?.onClick(fecharGaleria) }catch(e){}
 
   const r = await api(`/api/loja/conteudo/${id}`);
-  if(!r.ok || !r.midias?.length){ $("#trilho").innerHTML = `<div class="slide"><div class="grande"><div class="ico">😕</div>Não consegui abrir agora. Toque em "Receber no chat".</div></div>`; return }
+  if(!r.ok || !r.midias?.length){ $("#trilho").innerHTML = `<div class="slide"><div class="grande"><div class="ico">${ic("triste")}</div>Não consegui abrir agora. Toque em "Receber no chat".</div></div>`; return }
   const M = r.midias;
   $("#trilho").innerHTML = M.map((m, i) => `<div class="slide" data-i="${i}">${
-    m.grande ? `<div class="grande"><div class="ico">🎬</div><b>Vídeo grande demais para abrir aqui</b><button class="btn mini" data-reenviar="${esc(id)}">Assistir no chat</button></div>`
-    : m.tipo === "video" ? `<video src="${m.url}" playsinline controls preload="metadata" controlslist="nodownload noplaybackrate" disablepictureinpicture></video>`
+    m.grande ? `<div class="grande"><div class="ico">${ic("video")}</div><b>Vídeo grande demais para abrir aqui</b><button class="btn mini" data-reenviar="${esc(id)}">Assistir no chat</button></div>`
+    : m.tipo === "video" ? `<div class="carregando preparo"><i></i><small>Preparando o vídeo…</small></div><video src="${m.url}" playsinline controls preload="metadata" controlslist="nodownload noplaybackrate" disablepictureinpicture onloadedmetadata="this.previousElementSibling?.remove()" onerror="videoFalhou(this)"></video>`
     : `<div class="carregando"><i></i></div><img src="${m.url}" alt="" draggable="false" ${i > 1 ? 'loading="lazy"' : ""} onload="this.previousElementSibling?.remove()">`
   }</div>`).join("");
   $("#g-pontos").innerHTML = M.length > 1 ? M.map((_, i) => `<i class="${i ? "" : "on"}"></i>`).join("") : "";
@@ -2606,6 +2761,11 @@ async function abrirGaleria(id){
   const ir = d => { tr.scrollTo({left: (atual() + d) * tr.clientWidth, behavior:"smooth"}); vibrar("leve") };
   $("#g-esq").onclick = () => ir(-1); $("#g-dir").onclick = () => ir(1);
   marcar();
+}
+function videoFalhou(v){
+  const c = v.previousElementSibling; if(c?.classList.contains("carregando")) c.remove();
+  const id = $("#galeria [data-reenviar]")?.dataset.reenviar || "";
+  v.outerHTML = `<div class="grande"><div class="ico">${ic("alerta")}</div><b>Não consegui abrir este vídeo aqui</b><button class="btn mini" data-reenviar="${esc(id)}">Assistir no chat</button></div>`;
 }
 function fecharGaleria(){
   const g = $("#galeria"); if(!g) return;
@@ -2631,7 +2791,7 @@ document.addEventListener("click", e => {
     if(!PLANO_SEL) PLANO_SEL = (D.planos.find(p => p.economia) || D.planos[0])?.id; return render() }
   if(el.dataset.avatar !== undefined){ return tocarAvatar() }
   if(el.dataset.cart){ e.stopPropagation(); return alternarCarrinho(el.dataset.cart) }
-  if(el.dataset.cartDet){ const id = el.dataset.cartDet; alternarCarrinho(id); el.textContent = CARRINHO.includes(id) ? "✓ No carrinho" : "🛒 Adicionar ao carrinho"; return }
+  if(el.dataset.cartDet){ const id = el.dataset.cartDet; alternarCarrinho(id); el.innerHTML = CARRINHO.includes(id) ? `${ic("check")} No carrinho` : `${ic("carrinho")} Adicionar ao carrinho`; return }
   if(el.dataset.tirarCart){
     const id = el.dataset.tirarCart; CARRINHO = CARRINHO.filter(x => x !== id); salvarCarrinho(); vibrar("leve");
     document.querySelectorAll(`[data-cart="${id}"]`).forEach(b => b.outerHTML = botaoCarrinho(id));
@@ -2648,7 +2808,7 @@ document.addEventListener("click", e => {
   if(el.dataset.rank){ RANK = el.dataset.rank; vibrar("leve"); const c = $("#conteudo"); c.innerHTML = painel(); suavizarImagens(c); return }
   if(el.id === "pedidos-chave"){
     const novo = !CONFIG.pedidos.ativo; CONFIG.pedidos.ativo = novo; el.classList.toggle("on", novo); vibrar("leve");
-    salvarAjuste({pedidos_ativo: novo}, novo ? "Pedidos personalizados abertos ✍️" : "Pedidos personalizados fechados").then(ok => ok && carregar());
+    salvarAjuste({pedidos_ativo: novo}, novo ? `Pedidos personalizados abertos ${ic("pedido")}` : "Pedidos personalizados fechados").then(ok => ok && carregar());
     return;
   }
   if(el.id === "ed-pedidos"){ return editarPedidosCfg() }
@@ -2667,7 +2827,7 @@ document.addEventListener("click", e => {
     const novo = !CONFIG.marca_dagua;
     const aplicar = () => { CONFIG.marca_dagua = novo; el.classList.toggle("on", novo); vibrar("leve");
       salvarAjuste({marca_dagua: novo}, novo ? "Marca d'água ligada" : "Marca d'água desligada").then(() => { const c = $("#conteudo"); if(ABA === "config") c.innerHTML = config() }) };
-    return novo ? aplicar() : confirmar("Desligar a marca d'água? As fotos abertas na loja ficam sem o @ e o ID de quem comprou.", aplicar);
+    return novo ? aplicar() : confirmar("Desligar a marca d'água? As fotos e vídeos abertos na loja ficam sem o @ e o ID de quem comprou.", aplicar);
   }
   if(el.id === "notif-chave" || el.id === "resumo-chave"){
     const k = el.id === "notif-chave" ? "notif_vendas" : "resumo_diario";
@@ -2724,7 +2884,7 @@ document.addEventListener("click", e => {
   if(el.dataset.ver){ abrirGaleria(el.dataset.ver); return }
   if(el.dataset.item){
     const id = el.dataset.item;
-    if(id.startsWith("gorjeta_")){ if(el.classList.contains("mimo")) voarEmoji(el, el.querySelector(".emoji")?.textContent || "💝"); return pagar(id) }
+    if(id.startsWith("gorjeta_")){ if(el.classList.contains("mimo")) voarIcone(el, el.dataset.icone || "mimo"); return pagar(id) }
     detalhes(id);
   }
 });

@@ -7,7 +7,10 @@ Rotas:
 
 Proteções (a página não tem o protect_content do Telegram, então compensamos):
   - Só quem comprou recebe a lista; cada link é assinado (HMAC) para AQUELE usuário e expira em 15 min.
-  - Fotos levam uma marca d'água discreta com o @ e o ID do comprador (vazou, dá para saber quem foi).
+  - Fotos e vídeos levam uma marca d'água discreta com o @ e o ID do comprador (vazou, dá para saber quem foi).
+    No vídeo a marca é gravada nos quadros (FFmpeg), não é uma camada por cima: baixar o arquivo não tira.
+    Cada vídeo marcado fica num cache em disco por comprador; o primeiro play espera a marcação
+    (a loja já começa a marcar quando o fã abre o pack).
   - Nada fica em cache no navegador e a página bloqueia o menu de "salvar imagem".
   - Print de tela continua possível, igual em qualquer app.
 Limite: o bot só baixa arquivos de até 20 MB pela Bot API. Vídeos maiores aparecem com o botão
@@ -17,9 +20,14 @@ import asyncio
 import hashlib
 import hmac
 import logging
+import os
+import shutil
+import subprocess
+import tempfile
 import time
 from collections import OrderedDict
 from io import BytesIO
+from pathlib import Path
 
 from aiogram import Bot
 from aiohttp import web
@@ -84,24 +92,131 @@ async def _baixar(bot: Bot, file_id: str) -> bytes:
     return dados
 
 
-def _marca_dagua(dados: bytes, texto: str) -> bytes:
-    img = Image.open(BytesIO(dados)).convert("RGB")
-    img.thumbnail((1600, 1600))
-    camada = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    lado = max(14, img.width // 34)
+def _camada_marca(tamanho: tuple[int, int], texto: str, alfa: int = 34) -> Image.Image:
+    """Camada transparente com o texto repetido em fileiras alternadas (mesmo desenho em fotos e vídeos)."""
+    largura, altura = tamanho
+    camada = Image.new("RGBA", tamanho, (0, 0, 0, 0))
+    lado = max(14, largura // 34)
     try:
         fonte = ImageFont.truetype("DejaVuSans-Bold.ttf", lado)
     except OSError:
         fonte = ImageFont.load_default(size=lado)     # Pillow >= 10.1 traz uma fonte embutida
     d = ImageDraw.Draw(camada)
-    passo_x, passo_y = lado * 16, lado * 7
-    for linha, y in enumerate(range(-passo_y, img.height + passo_y, passo_y)):
-        for x in range(-passo_x + (linha % 2) * passo_x // 2, img.width + passo_x, passo_x):
-            d.text((x, y), texto, font=fonte, fill=(255, 255, 255, 34))
-    img = Image.alpha_composite(img.convert("RGBA"), camada).convert("RGB")
+    passo_x = int(d.textlength(texto, font=fonte)) + lado * 4      # espaço pelo tamanho real do texto
+    passo_y = lado * 7
+    for linha, y in enumerate(range(-passo_y, altura + passo_y, passo_y)):
+        for x in range(-passo_x + (linha % 2) * passo_x // 2, largura + passo_x, passo_x):
+            d.text((x, y), texto, font=fonte, fill=(255, 255, 255, alfa))
+    return camada
+
+
+def _marca_dagua(dados: bytes, texto: str) -> bytes:
+    img = Image.open(BytesIO(dados)).convert("RGB")
+    img.thumbnail((1600, 1600))
+    img = Image.alpha_composite(img.convert("RGBA"), _camada_marca(img.size, texto)).convert("RGB")
     saida = BytesIO()
     img.save(saida, "JPEG", quality=88)
     return saida.getvalue()
+
+
+# ── Vídeo com marca d'água gravada ─────────────────────────────────────────
+DIR_VIDEOS = Path(tempfile.gettempdir()) / "videos-marcados"
+LIMITE_DISCO_VIDEOS = 1536 * 1024 * 1024        # cache em disco; os mais antigos saem primeiro
+LADO_VIDEO = 1280
+_marcando: dict[str, asyncio.Task] = {}
+_vez_ffmpeg: asyncio.Semaphore | None = None     # um vídeo por vez: o servidor tem 1 GB de RAM
+
+
+def _texto_marca(username: str | None, uid: int) -> str:
+    return (f"@{username} · " if username else "") + f"ID {uid}"
+
+
+def _caminho_marcado(uid: int, file_id: str, texto: str) -> Path:
+    nome = hashlib.sha256(f"{uid}:{file_id}:{texto}".encode()).hexdigest()[:32]
+    return DIR_VIDEOS / f"{nome}.mp4"
+
+
+def _podar_disco() -> None:
+    try:
+        arquivos = sorted(DIR_VIDEOS.glob("*.mp4"), key=lambda a: a.stat().st_mtime)
+        total = sum(a.stat().st_size for a in arquivos)
+        while arquivos and total > LIMITE_DISCO_VIDEOS:
+            velho = arquivos.pop(0)
+            total -= velho.stat().st_size
+            velho.unlink(missing_ok=True)
+    except OSError:
+        log.warning("Não consegui limpar o cache de vídeos marcados", exc_info=True)
+
+
+def _gravar_marca_video(dados: bytes, destino: Path, texto: str) -> bool:
+    """Grava a marca d'água nos quadros do vídeo (H.264, até 1280px). True se deu certo."""
+    from blur_service import _frame_ffmpeg
+    frame = _frame_ffmpeg(dados)                      # tamanho já na orientação certa (rotação do celular)
+    if not frame:
+        return False
+    w, h = Image.open(BytesIO(frame)).size
+    escala = min(1.0, LADO_VIDEO / max(w, h))
+    w, h = max(2, int(w * escala) // 2 * 2), max(2, int(h * escala) // 2 * 2)
+    DIR_VIDEOS.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory() as tmp:
+        entrada, marca, saida = Path(tmp, "in.mp4"), Path(tmp, "marca.png"), Path(tmp, "out.mp4")
+        entrada.write_bytes(dados)
+        _camada_marca((w, h), texto, alfa=40).save(marca)
+        for audio in (["-c:a", "copy"], ["-c:a", "aac", "-b:a", "128k"]):   # copiar o áudio é mais rápido
+            proc = subprocess.run(
+                ["ffmpeg", "-y", "-loglevel", "error", "-i", str(entrada), "-i", str(marca),
+                 "-filter_complex", f"[0:v]scale={w}:{h},setsar=1[v];[v][1:v]overlay=0:0,format=yuv420p[s]",
+                 "-map", "[s]", "-map", "0:a?", "-threads", "2", "-c:v", "libx264", "-preset", "superfast",
+                 "-crf", "23", *audio, "-movflags", "+faststart", str(saida)],
+                capture_output=True, timeout=900,
+            )
+            if proc.returncode == 0 and saida.exists() and saida.stat().st_size > 0:
+                temp = destino.with_suffix(".parcial")
+                shutil.move(str(saida), temp)
+                os.replace(temp, destino)             # só aparece no cache quando está completo
+                return True
+            log.warning("ffmpeg falhou ao marcar vídeo (%s): %s", audio[1], proc.stderr[-400:])
+    return False
+
+
+async def video_marcado(bot: Bot, file_id: str, uid: int, texto: str) -> Path | None:
+    """Caminho do vídeo com a marca deste comprador (marca na hora se ainda não existe)."""
+    global _vez_ffmpeg
+    destino = _caminho_marcado(uid, file_id, texto)
+    if destino.exists():
+        os.utime(destino)                             # usado agora: fica mais tempo no cache
+        return destino
+    if not shutil.which("ffmpeg"):
+        return None
+    chave = destino.name
+    tarefa = _marcando.get(chave)
+    if tarefa is None:
+        async def marcar() -> Path | None:
+            global _vez_ffmpeg
+            if _vez_ffmpeg is None:
+                _vez_ffmpeg = asyncio.Semaphore(1)
+            try:
+                async with _vez_ffmpeg:
+                    if destino.exists():
+                        return destino
+                    dados = await _baixar(bot, file_id)
+                    ok = await asyncio.to_thread(_gravar_marca_video, dados, destino, texto)
+                    if ok:
+                        await asyncio.to_thread(_podar_disco)
+                        return destino
+                    return None
+            except Exception:
+                log.exception("Não consegui marcar o vídeo %s", file_id)
+                return None
+            finally:
+                _marcando.pop(chave, None)
+        tarefa = _marcando[chave] = asyncio.create_task(marcar())
+    return await asyncio.shield(tarefa)               # o fã fechar a galeria não cancela a marcação
+
+
+async def _texto_do_usuario(db: Database, uid: int) -> str:
+    usuario = await db._um("SELECT username FROM usuarios WHERE user_id = ?", (uid,))
+    return _texto_marca(usuario["username"] if usuario else None, uid)
 
 
 def _resposta_com_range(request: web.Request, dados: bytes, tipo: str) -> web.Response:
@@ -152,6 +267,11 @@ async def conteudo(request: web.Request) -> web.Response:
         s = _assinar(cfg, user["id"], item_id, n, exp)
         lista.append({"tipo": m["tipo"], "grande": grande,
                       "url": f"/api/loja/midia/{item_id}/{n}?u={user['id']}&e={exp}&s={s}"})
+    if await db.get_ajuste("marca_dagua", "1") == "1":   # já começa a marcar os vídeos (um de cada vez)
+        texto = await _texto_do_usuario(db, user["id"])
+        for m, x in zip(midias, lista):
+            if m["tipo"] == "video" and not x["grande"]:
+                asyncio.create_task(video_marcado(bot, m["file_id"], user["id"], texto))
     item = await db.get_item(item_id)
     return web.json_response({"titulo": item.titulo if item else "", "midias": lista},
                              headers={"Cache-Control": "no-store"})
@@ -175,21 +295,27 @@ async def midia(request: web.Request) -> web.Response:
         raise web.HTTPForbidden()
     m = midias[n]
 
+    marca = await db.get_ajuste("marca_dagua", "1") == "1"      # a criadora pode desligar a marca
+    if m["tipo"] == "video" and marca:
+        caminho = await video_marcado(bot, m["file_id"], uid, await _texto_do_usuario(db, uid))
+        if caminho:
+            return web.FileResponse(caminho, headers={"Cache-Control": "private, no-store",
+                                                      "Content-Type": "video/mp4"})
+        log.warning("Galeria: vídeo %s saiu sem marca (FFmpeg indisponível ou falhou)", m["file_id"])
+
     try:
         dados = await _baixar(bot, m["file_id"])
     except Exception:
         log.exception("Galeria: não consegui baixar %s", m["file_id"])
         raise web.HTTPRequestEntityTooLarge(max_size=LIMITE_BOT_API, actual_size=0)
 
-    if m["tipo"] == "photo" and await db.get_ajuste("marca_dagua", "1") != "1":     # a criadora desligou a marca
+    if m["tipo"] == "photo" and not marca:
         return web.Response(body=dados, content_type="image/jpeg", headers={"Cache-Control": "private, no-store"})
     if m["tipo"] == "photo":
         chave = (uid, m["file_id"])
         marcada = _marcadas.get(chave)
         if marcada is None:
-            usuario = await db._um("SELECT username FROM usuarios WHERE user_id = ?", (uid,))
-            texto = (f"@{usuario['username']} · " if usuario and usuario["username"] else "") + f"ID {uid}"
-            marcada = await asyncio.to_thread(_marca_dagua, dados, texto)
+            marcada = await asyncio.to_thread(_marca_dagua, dados, await _texto_do_usuario(db, uid))
             _marcadas.put(chave, marcada)
         return web.Response(body=marcada, content_type="image/jpeg", headers={"Cache-Control": "private, no-store"})
     return _resposta_com_range(request, dados, "video/mp4")
