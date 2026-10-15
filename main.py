@@ -48,7 +48,7 @@ async def run(cfg: Config) -> None:
     dp.include_router(admin_vendas.get_router(cfg))
     dp.include_router(assinaturas.get_router(cfg))
     dp.include_router(client_handlers.router)
-    dp.include_router(client_handlers.chat_router)       # por último: mensagens livres viram chat com a criadora
+    dp.include_router(client_handlers.fallback_router)   # por último: mensagens livres mostram o menu
 
     me = await bot.get_me()
     await bot.set_my_commands([BotCommand(command="start", description="Perfil e menu"),

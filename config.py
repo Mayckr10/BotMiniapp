@@ -40,7 +40,6 @@ class Config:
     vip_channel_id: int = int(os.getenv("VIP_CHANNEL_ID", "0"))         # canal privado dos assinantes
     planos_padrao: str = os.getenv("PLANOS_PADRAO", "Mensal:30:29,90;Trimestral:90:79,90;Semestral:180:149,90")
     assinatura_aviso_dias: float = float(os.getenv("ASSINATURA_AVISO_DIAS", "3"))
-    chat_somente_assinantes: bool = os.getenv("CHAT_SOMENTE_ASSINANTES", "1") != "0"
     gorjeta_valores: str = os.getenv("GORJETA_VALORES", "10,25,50,100")
 
     # Mini App da loja (abre em PUBLIC_BASE_URL/loja; o Telegram exige HTTPS)

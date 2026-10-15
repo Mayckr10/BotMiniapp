@@ -1,7 +1,7 @@
 # Bot de Vendas de Conteúdo (Telegram + PIX)
 
 Bot em **aiogram 3.x** no estilo **Privacy** para uma criadora: assinatura VIP com canal privado,
-pay per view (PPV), packs avulsos, combos, gorjetas, chat com a criadora e uma **loja Mini App** dentro do Telegram.
+pay per view (PPV), packs avulsos, combos, gorjetas e uma **loja Mini App** dentro do Telegram.
 
 Fluxo dos packs:
 a criadora cria o pack no privado, o bot gera as amostras com **blur (Pillow/FFmpeg)**,
@@ -113,8 +113,8 @@ Tudo que é da criadora fica no `.env` e em comandos do bot, nada no código. Pa
 copie a pasta, troque o `.env` (token do bot dela, `ADMIN_IDS`, canais, `CRIADORA_NOME`) e rode outra instância.
 Cada criadora tem o próprio bot e o próprio banco.
 
-**Perfil.** O `/start` sem link mostra a foto, a bio e os botões: ⭐ Assinar VIP, 📦 Packs, 💝 Mimo, 🗂️ Meus conteúdos,
-💬 Falar comigo e 🛍️ Abrir a loja. A criadora define foto e bio com `/perfil`.
+**Perfil.** O `/start` sem link mostra a foto, a bio e os botões: ⭐ Assinar VIP, 📦 Packs, 💝 Mimo, 🗂️ Meus conteúdos
+e 🛍️ Abrir a loja. A criadora define foto e bio com `/perfil`.
 
 **Assinatura VIP.** Os planos padrão vêm de `PLANOS_PADRAO` (Mensal, Trimestral, Semestral) e aparecem com a % de
 economia em relação ao mensal. Depois do PIX pago, o cliente recebe o botão do canal VIP. O link pede aprovação,
@@ -126,10 +126,9 @@ No vencimento, o bot remove a pessoa do canal e manda os planos de novo.
 dos assinantes (ou de todos os clientes), com o botão **🔓 Desbloquear · R$**. O PPV não aparece no catálogo.
 
 **Gorjetas (mimos).** `/gorjeta` ou o botão 💝 mostram os valores de `GORJETA_VALORES` ou aceitam um valor livre.
-A criadora é avisada e pode responder ao aviso para agradecer.
+A criadora é avisada na hora.
 
-**Chat com a criadora.** O que o fã escreve no bot chega no privado da criadora. Ela **responde à mensagem**
-(arrastar para responder) e o bot entrega ao fã. Com `CHAT_SOMENTE_ASSINANTES=1`, só assinantes conseguem falar.
+**Sem chat.** Mensagens livres que o fã manda para o bot recebem o menu com os botões de compra.
 
 | Comando (criadora) | O que faz |
 |---|---|

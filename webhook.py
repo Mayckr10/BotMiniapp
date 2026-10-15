@@ -94,10 +94,8 @@ async def processar_pagamento(bot: Bot, db: Database, gateway: PixGateway, pix_i
                                               "Muito obrigada pelo carinho! 🥰")
         for admin_id in cfg.admin_ids:
             try:
-                aviso = await bot.send_message(admin_id, f"💝 Gorjeta de {fmt_reais(venda.valor)} de "
-                                                         f"<code>{venda.user_id}</code>.\n"
-                                                         "Responda esta mensagem para agradecer.")
-                await db.salvar_relay(admin_id, aviso.message_id, venda.user_id)
+                await bot.send_message(admin_id, f"💝 Gorjeta de {fmt_reais(venda.valor)} de "
+                                                 f"<code>{venda.user_id}</code>.")
             except Exception:
                 pass
         return "entregue"

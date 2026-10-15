@@ -26,11 +26,11 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from aiogram import Bot, F, Router
-from aiogram.filters import Command, CommandObject, StateFilter
+from aiogram.filters import Command, CommandObject
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import (CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup,
-                           InputMediaPhoto, Message, ReactionTypeEmoji)
+                           InputMediaPhoto, Message)
 from aiogram.utils.deep_linking import create_start_link
 
 from admin_handlers import _resumo_midias, parse_preco
@@ -481,24 +481,6 @@ def get_router(cfg: Config) -> Router:
             await db.set_ajuste("bio", msg.text.strip()[:700])
         await state.clear()
         await msg.answer("✅ Perfil atualizado. Mande /start para ver como os fãs veem.")
-
-    # ── Responder fãs (chat) ───────────────────────────────────────────────
-    @router.message(StateFilter(None), F.reply_to_message, ~F.text.startswith("/"))
-    async def responder_fa(msg: Message, db: Database, bot: Bot):
-        user_id = await db.user_do_relay(msg.chat.id, msg.reply_to_message.message_id)
-        if not user_id:
-            await msg.reply("Para falar com um fã, responda a uma mensagem que ele(a) mandou.")
-            return
-        try:
-            await bot.copy_message(user_id, msg.chat.id, msg.message_id)
-            await msg.react([ReactionTypeEmoji(emoji="👍")])
-        except Exception as e:
-            await msg.reply(f"⚠️ Não consegui entregar: <code>{html.escape(str(e))}</code>")
-
-    @router.message(StateFilter(None), ~F.text.startswith("/"))
-    async def admin_sem_contexto(msg: Message):
-        await msg.reply("Para falar com um fã, <b>responda</b> a uma mensagem que ele(a) mandou. "
-                        "Para falar com todos, use /broadcast. Comandos: /admin")
 
     # ── Backup ─────────────────────────────────────────────────────────────
     @router.message(Command("backup"))

@@ -317,7 +317,7 @@ function render(){
       </div>
       ${D.assinatura ? vipAtivo() : mensal && ABA !== "vip" ? `
       <div class="cta-vip" data-aba="vip">
-        <div><b>Assinar VIP</b><small>Canal privado + chat direto · a partir de ${esc(mensal.preco_fmt)}/mês</small></div>
+        <div><b>Assinar VIP</b><small>Canal privado exclusivo · a partir de ${esc(mensal.preco_fmt)}/mês</small></div>
         <span class="seta">›</span>
       </div>` : ""}
     </header>
@@ -389,7 +389,7 @@ function vip(){
     <div class="hero-vip"><h2>${a ? "Renovar VIP" : "Seja VIP"}</h2>
       <p>${a ? `Você é VIP até ${esc(a.ate)}. Renovando agora, os dias são somados.` : `Todo o conteúdo exclusivo de ${esc(D.criadora.nome)}, sem censura, em um canal só para assinantes.`}</p></div>
     <div class="beneficios">
-      ${[["🔐","Canal privado com conteúdo exclusivo"],["💬","Chat direto comigo pelo bot"],["🎬","Novidades toda semana e pay per view"],["🔄","Sem renovação automática: você escolhe quando renovar"]]
+      ${[["🔐","Canal privado com conteúdo exclusivo"],["🎬","Novidades toda semana e pay per view"],["🔄","Sem renovação automática: você escolhe quando renovar"]]
         .map(([i,t]) => `<div class="beneficio"><span class="ico">${i}</span>${t}</div>`).join("")}
     </div>
     <div class="planos">${D.planos.map(p => `

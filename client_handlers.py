@@ -24,7 +24,7 @@ from aiogram.filters import Command, CommandObject, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import (BufferedInputFile, CallbackQuery, InlineKeyboardButton,
-                           InlineKeyboardMarkup, Message, ReactionTypeEmoji, User, WebAppInfo)
+                           InlineKeyboardMarkup, Message, User, WebAppInfo)
 
 from admin_handlers import _resumo_midias, legenda_canal, parse_preco
 from assinaturas import data_local, teclado_planos
@@ -209,8 +209,7 @@ def teclado_perfil(cfg: Config) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text="⭐ Assinar VIP", callback_data="menu:planos")],
         [InlineKeyboardButton(text="🛍️ Packs", callback_data="menu:packs"),
          InlineKeyboardButton(text="💝 Gorjeta", callback_data="menu:gorjeta")],
-        [InlineKeyboardButton(text="💬 Falar comigo", callback_data="menu:chat"),
-         InlineKeyboardButton(text="🗂️ Minhas compras", callback_data="menu:meus")],
+        [InlineKeyboardButton(text="🗂️ Minhas compras", callback_data="menu:meus")],
     ])
 
 
@@ -254,7 +253,6 @@ async def mostrar_planos(msg: Message, user: User, db: Database, cfg: Config) ->
     await msg.answer(
         f"⭐ <b>VIP de {html.escape(cfg.criadora_nome)}</b>\n\n"
         "🔐 Acesso ao canal privado com todo o conteúdo exclusivo\n"
-        "💬 Chat direto comigo aqui no bot\n"
         "🔄 Sem renovação automática: você renova quando quiser\n\nEscolha seu plano:" + extra,
         reply_markup=teclado_planos(planos),
     )
@@ -311,12 +309,6 @@ async def menu(cb: CallbackQuery, db: Database, cfg: Config):
         await mostrar_gorjetas(cb.message, cfg)
     elif opcao == "meus":
         await meus_packs_de(cb.message, cb.from_user.id, db)
-    elif opcao == "chat":
-        if cfg.chat_somente_assinantes and not await db.assinante_ativo(cb.from_user.id):
-            await cb.message.answer("💬 O chat comigo é exclusivo para assinantes VIP.",
-                                    reply_markup=teclado_planos(await db.listar_planos()))
-        else:
-            await cb.message.answer("💬 É só me mandar uma mensagem aqui (texto, foto, áudio…). Eu respondo por aqui mesmo 💜")
     elif opcao == "packs":
         packs, combos = await db.listar_packs(), await db.listar_combos()
         if not packs and not combos:
@@ -433,36 +425,15 @@ async def ja_paguei(cb: CallbackQuery, bot: Bot, db: Database, gateway: PixGatew
 
 
 # ════════════════════════════════════════════════════════════════════════════
-#  Chat com a criadora (incluído por último: pega o que nenhum outro handler pegou)
+#  Mensagens livres (incluído por último): o bot não tem chat, então mostra o menu
 # ════════════════════════════════════════════════════════════════════════════
-chat_router = Router(name="chat_cliente")
-chat_router.message.filter(F.chat.type == "private")
+fallback_router = Router(name="fallback_cliente")
+fallback_router.message.filter(F.chat.type == "private")
 
 
-@chat_router.message(StateFilter(None), ~F.text.startswith("/"))
-async def mensagem_para_criadora(msg: Message, bot: Bot, db: Database, cfg: Config):
-    user = msg.from_user
-    if user.id in cfg.admin_ids:
+@fallback_router.message(StateFilter(None), ~F.text.startswith("/"))
+async def mensagem_livre(msg: Message, cfg: Config):
+    if msg.from_user.id in cfg.admin_ids:
+        await msg.reply("Comandos da criadora: /admin")
         return
-    await db.registrar_usuario(user.id, user.full_name, user.username)
-    assinante = await db.assinante_ativo(user.id)
-    if cfg.chat_somente_assinantes and not assinante:
-        await msg.answer("💬 O chat comigo é exclusivo para assinantes VIP. Assine para conversar:",
-                         reply_markup=teclado_planos(await db.listar_planos()))
-        return
-    selo = "⭐ assinante" if assinante else "cliente"
-    arroba = f" @{user.username}" if user.username else ""
-    for admin_id in cfg.admin_ids:
-        try:
-            cab = await bot.send_message(admin_id, f"💬 <b>{html.escape(user.full_name)}</b>{arroba} · {selo} · "
-                                                   f"<code>{user.id}</code>\n<i>Responda para falar com ele(a).</i>",
-                                         disable_notification=False)
-            copia = await bot.copy_message(admin_id, msg.chat.id, msg.message_id)
-            await db.salvar_relay(admin_id, cab.message_id, user.id)
-            await db.salvar_relay(admin_id, copia.message_id, user.id)
-        except Exception:
-            log.exception("Falha ao repassar mensagem para a criadora")
-    try:
-        await msg.react([ReactionTypeEmoji(emoji="❤")])   # confirma o recebimento sem poluir o chat
-    except Exception:
-        pass
+    await msg.answer("Use os botões abaixo para ver os conteúdos 👇", reply_markup=teclado_perfil(cfg))
