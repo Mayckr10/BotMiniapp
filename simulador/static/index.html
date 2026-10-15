@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador Telegram</title>
+<style>
+:root{
+  --bg:#0e1621; --panel:#17212b; --header:#17212b; --chatbg:#0e1621; --line:#0b1118;
+  --in:#182533; --out:#2b5278; --text:#f5f5f5; --muted:#7f91a4; --accent:#5eb5f7;
+  --btn:rgba(94,181,247,.16); --green:#4fae4e; --amber:#e3a33b;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+  font:14px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+header.top{display:flex;align-items:center;gap:12px;padding:10px 16px;background:#0b121a;border-bottom:1px solid var(--line)}
+header.top h1{font-size:15px;margin:0;font-weight:600}
+header.top .sub{color:var(--muted);font-size:12px}
+.dot{width:8px;height:8px;border-radius:50%;background:#c0392b;display:inline-block;margin-right:6px}
+.dot.on{background:var(--green)}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) 300px;gap:1px;background:var(--line);height:calc(100% - 49px)}
+.col{display:flex;flex-direction:column;min-height:0;background:var(--chatbg)}
+.chead{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--header);border-bottom:1px solid var(--line)}
+.av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:18px;flex:none}
+.chead b{display:block;font-size:14px}
+.chead small{color:var(--muted);font-size:12px}
+.msgs{flex:1;overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:6px}
+.row{display:flex;flex-direction:column;max-width:88%}
+.row.out{align-self:flex-end;align-items:flex-end}
+.row.in{align-self:flex-start}
+.bubble{background:var(--in);border-radius:12px;padding:6px 10px 4px;word-wrap:break-word;overflow-wrap:anywhere;position:relative;max-width:100%}
+.row.out .bubble{background:var(--out)}
+.bubble.media{padding:3px}
+.bubble.media .cap{padding:4px 7px 2px}
+.bubble img,.bubble video{display:block;max-width:100%;max-height:300px;border-radius:9px;object-fit:cover}
+.album{display:grid;grid-template-columns:repeat(2,1fr);gap:2px;border-radius:9px;overflow:hidden}
+.album.n1{grid-template-columns:1fr}
+.album img,.album video{border-radius:0;width:100%;height:130px;max-height:none}
+.album.n1 img{height:auto;max-height:300px}
+.meta{font-size:11px;color:var(--muted);text-align:right;margin-top:2px;user-select:none}
+.prot{font-size:11px;color:var(--amber);margin:2px 4px}
+.protected img,.protected video{-webkit-user-drag:none;user-select:none;pointer-events:none}
+code{background:rgba(255,255,255,.08);padding:1px 4px;border-radius:4px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;cursor:pointer;word-break:break-all}
+a{color:var(--accent)}
+.kb{display:flex;flex-direction:column;gap:3px;margin-top:3px;width:100%;min-width:220px}
+.kb .krow{display:flex;gap:3px}
+.kb button{flex:1;border:0;border-radius:8px;padding:9px 8px;background:var(--btn);color:#fff;font-weight:500;cursor:pointer;font-size:13.5px}
+.kb button:hover{background:rgba(94,181,247,.3)}
+.kb button.url::after{content:" ↗";opacity:.6}
+.composer{display:flex;gap:6px;padding:8px;background:var(--panel);border-top:1px solid var(--line);align-items:center}
+.composer input[type=text]{flex:1;min-width:0;background:#242f3d;border:0;border-radius:18px;padding:10px 14px;color:var(--text);outline:none;font-size:14px}
+.ibtn{background:none;border:0;color:var(--muted);font-size:20px;cursor:pointer;padding:4px 6px}
+.ibtn:hover{color:var(--accent)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:6px 8px 0;background:var(--panel)}
+.chip{border:1px solid #2c3a49;background:none;color:var(--accent);border-radius:14px;padding:3px 10px;font-size:12px;cursor:pointer}
+.empty{margin:auto;color:var(--muted);text-align:center;font-size:13px;max-width:240px}
+.canal .row{max-width:96%;align-self:stretch}
+.gw{background:var(--panel);overflow-y:auto;padding:14px}
+.gw h3{margin:0 0 4px;font-size:14px}
+.gw p{color:var(--muted);font-size:12px;margin:0 0 12px}
+.card{background:#0e1621;border:1px solid #223041;border-radius:10px;padding:10px;margin-bottom:8px}
+.card .l1{display:flex;justify-content:space-between;align-items:center}
+.badge{font-size:11px;border-radius:10px;padding:2px 8px;font-weight:600}
+.badge.pending{background:rgba(227,163,59,.18);color:var(--amber)}
+.badge.paid{background:rgba(79,174,78,.18);color:var(--green)}
+.card small{color:var(--muted);display:block;margin:4px 0 8px;word-break:break-all}
+.pay{width:100%;border:0;border-radius:8px;padding:8px;background:var(--green);color:#fff;font-weight:600;cursor:pointer}
+.pay:disabled{opacity:.4;cursor:default}
+.steps{font-size:12px;color:var(--muted);padding-left:18px;margin:14px 0 0}
+.steps li{margin-bottom:6px}
+.toast{position:fixed;left:50%;top:60px;transform:translateX(-50%);background:rgba(0,0,0,.85);color:#fff;padding:10px 16px;border-radius:10px;z-index:9;max-width:90%;font-size:13px;box-shadow:0 6px 24px rgba(0,0,0,.4)}
+.doc{display:flex;gap:10px;align-items:center;text-decoration:none;color:var(--text);padding:4px 2px 6px}
+.doc span:first-child{font-size:26px;background:var(--btn);border-radius:50%;width:44px;height:44px;display:grid;place-items:center}
+.doc small{color:var(--muted)}
+.tabs{display:flex;background:#0b121a}
+.tab{flex:1;border:0;background:none;color:var(--muted);padding:9px;cursor:pointer;font-weight:600;border-bottom:2px solid transparent}
+.tab.on{color:var(--accent);border-color:var(--accent)}
+.eventos{max-height:110px;overflow-y:auto;background:#0b121a;border-top:1px solid var(--line);padding:6px 10px;font-size:12px;color:var(--muted)}
+.resp{font-size:11px;color:var(--muted);margin:2px 4px;text-decoration:none}
+.resp:hover{color:var(--accent)}
+.respondendo{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--accent);background:var(--panel);padding:6px 12px 0}
+.menuapp{margin:6px 8px 0;border:0;border-radius:10px;padding:9px;background:var(--btn);color:#fff;font-weight:600;cursor:pointer}
+.modal{position:fixed;top:56px;right:312px;z-index:20;pointer-events:none}
+.modal .phone{pointer-events:auto}
+@media (max-width:1100px){.modal{inset:0;right:auto;display:flex;align-items:center;justify-content:center;width:100%;background:rgba(0,0,0,.6);pointer-events:auto}}
+.phone{width:390px;max-width:94vw;height:760px;max-height:calc(100vh - 72px);background:#0f1419;border-radius:22px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.phone header{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#17212b;font-weight:600}
+.phone header a{color:var(--muted);text-decoration:none;font-size:18px}
+.phone iframe{flex:1;border:0;width:100%;background:#0f1419}
+.reacao{position:absolute;right:-6px;bottom:-10px;background:#242f3d;border-radius:10px;padding:0 5px;font-size:13px}
+.sep{align-self:center;background:rgba(0,0,0,.35);color:#cfd8e2;font-size:12px;border-radius:10px;padding:2px 10px;margin:4px 0}
+@media (max-width:1100px){
+  .grid{grid-template-columns:1fr;height:auto}
+  .col{height:80vh}
+  .gw{height:auto}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div style="font-size:22px">✈️</div>
+  <div>
+    <h1>Simulador Telegram · <span id="botname">bot</span></h1>
+    <div class="sub"><span id="dot" class="dot"></span><span id="status">aguardando o bot…</span></div>
+  </div>
+</header>
+
+<div class="grid">
+  <!-- ADMIN -->
+  <section class="col" id="col-admin">
+    <div class="chead"><div class="av" style="background:#8e44ad">👑</div>
+      <div><b>Bot · visão da Criadora</b><small>chat privado do admin (id 111)</small></div></div>
+    <div class="msgs" id="m-admin"></div>
+    <div class="chips">
+      <button class="chip" data-cmd="/admin">/admin</button>
+      <button class="chip" data-cmd="/novo_pack">/novo_pack</button>
+      <button class="chip" data-cmd="/pronto">/pronto</button>
+      <button class="chip" data-cmd="/ppv">/ppv</button>
+      <button class="chip" data-cmd="/novo_combo">/novo_combo</button>
+      <button class="chip" data-cmd="/planos">/planos</button>
+      <button class="chip" data-cmd="/assinantes">/assinantes</button>
+      <button class="chip" data-cmd="/perfil">/perfil</button>
+      <button class="chip" data-cmd="/cupons">/cupons</button>
+      <button class="chip" data-cmd="/stats">/stats</button>
+      <button class="chip" data-cmd="/broadcast">/broadcast</button>
+      <button class="chip" data-cmd="/cancelar">/cancelar</button>
+    </div>
+    <div class="respondendo" id="respondendo" hidden><span id="resp-txt"></span><a href="#" id="resp-x">✕</a></div>
+    <form class="composer" data-who="admin">
+      <label class="ibtn" title="Enviar fotos/vídeos (selecione vários para álbum)">📎
+        <input type="file" accept="image/*,video/*" multiple hidden></label>
+      <input type="text" placeholder="Mensagem" autocomplete="off">
+      <button class="ibtn" title="Enviar">➤</button>
+    </form>
+  </section>
+
+  <!-- CANAL -->
+  <section class="col canal" id="col-canal">
+    <div class="tabs"><button class="tab on" data-tab="canal">📢 Amostras</button><button class="tab" data-tab="vip">🔒 Canal VIP</button></div>
+    <div class="chead" id="h-canal"><div class="av" style="background:#c0392b">📢</div>
+      <div><b id="canal-nome">Canal de Amostras</b><small>canal público · o bot publica as prévias</small></div></div>
+    <div class="chead" id="h-vip" hidden><div class="av" style="background:#d4a017">🔒</div>
+      <div><b>Canal VIP (privado)</b><small id="vip-status">Cliente: fora do canal</small></div></div>
+    <div class="msgs" id="m-canal"></div>
+    <div class="msgs" id="m-vip" hidden></div>
+    <div class="eventos" id="vip-eventos" hidden></div>
+    <form class="composer" id="vip-composer" hidden>
+      <label class="ibtn" title="Postar fotos/vídeos no VIP">📎<input type="file" accept="image/*,video/*" multiple hidden></label>
+      <input type="text" placeholder="Postar no VIP como a Criadora" autocomplete="off">
+      <button class="ibtn" title="Postar">➤</button>
+    </form>
+  </section>
+
+  <!-- CLIENTE -->
+  <section class="col" id="col-client">
+    <div class="chead"><div class="av" style="background:#16a085">👤</div>
+      <div><b>Bot · visão do Cliente</b><small>chat privado do cliente (id 222)</small></div></div>
+    <div class="msgs" id="m-client"></div>
+    <div class="chips"><button class="chip" data-cmd="/start">/start</button>
+      <button class="chip" data-cmd="/assinar">/assinar</button>
+      <button class="chip" data-cmd="/assinatura">/assinatura</button>
+      <button class="chip" data-cmd="/gorjeta">/gorjeta</button>
+      <button class="chip" data-cmd="/meus_packs">/meus_packs</button></div>
+    <button class="menuapp" id="menu-loja" hidden>🛍️ Loja</button>
+    <form class="composer" data-who="client">
+      <label class="ibtn" title="Enviar mídia">📎<input type="file" accept="image/*,video/*" multiple hidden></label>
+      <input type="text" placeholder="Mensagem" autocomplete="off">
+      <button class="ibtn" title="Enviar">➤</button>
+    </form>
+  </section>
+
+  <!-- GATEWAY -->
+  <aside class="gw">
+    <h3>🏦 Gateway PIX (mock)</h3>
+    <p>Cobranças criadas pelo bot. "Pagar" faz o gateway chamar o webhook <code>/webhook/pix</code> do bot.</p>
+    <div id="cobrancas"><div class="card"><small>Nenhuma cobrança ainda.</small></div></div>
+    <ol class="steps">
+      <li>No chat da Criadora: <b>/novo_pack</b>, envie fotos pelo 📎 e toque em <b>Concluir</b>.</li>
+      <li>Envie título e preço, depois <b>Publicar</b>.</li>
+      <li>No Canal, toque em <b>🔓 Liberar Conteúdo</b> (abre o chat do Cliente, que confirma ter 18+).</li>
+      <li>Aqui, toque em <b>Pagar</b>. O Cliente recebe as fotos originais protegidas.</li>
+      <li>Cupom: <code>/cupom VERAO10 10%</code> e abra o link que o bot devolve.</li>
+      <li>Remarketing: gere um PIX e não pague. No simulador o lembrete chega em ~1 min, o PIX expira em ~2 min (botão "Gerar novo PIX") e o cupom pessoal chega em ~3 min.</li>
+      <li><b>/backup</b> manda o banco como arquivo para a Criadora.</li>
+      <li><b>VIP:</b> no Cliente, /start → Assinar VIP → pague → toque em "Entrar no canal VIP". Veja a aba 🔒 Canal VIP.</li>
+      <li><b>PPV:</b> /ppv na Criadora envia uma prévia paga para os assinantes.</li>
+      <li><b>Chat:</b> assinante escreve no bot; a Criadora <i>responde</i> à mensagem.</li>
+      <li><b>/stats</b> e <b>/broadcast</b> no chat da Criadora.</li>
+    </ol>
+  </aside>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+let V = -1, STATE = null, BOT = null, REPLY = null;
+const CHAT_IDS = {admin:111, client:222};
+
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+
+// Renderiza o HTML do Telegram (parse_mode=HTML) só com tags permitidas
+function tgHtml(s){
+  let h = esc(s);
+  h = h.replace(/&lt;(\/?)(b|strong|i|em|u|s|code|pre)&gt;/g,"<$1$2>");
+  h = h.replace(/&lt;a href=&quot;(https?:[^&"]+)&quot;&gt;(.*?)&lt;\/a&gt;/g,'<a href="$1" data-link="$1">$2</a>');
+  h = h.replace(/(^|[\s>])(https?:\/\/[^\s<]+)/g,'$1<a href="$2" data-link="$2">$2</a>');
+  return h.replace(/\n/g,"<br>");
+}
+
+function hora(ts){const d=new Date(ts*1000);return d.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}
+
+function midiaHtml(m){
+  if(m.photo){const f=m.photo[m.photo.length-1].file_id;return `<img src="/sim/arquivo/${f}" draggable="false" loading="lazy">`}
+  if(m.video){return `<video src="/sim/arquivo/${m.video.file_id}" controls ${m.has_protected_content?'controlslist="nodownload"':''}></video>`}
+  if(m.document){const d=m.document;return `<a class="doc" href="/sim/arquivo/${d.file_id}" download="${esc(d.file_name)}"><span>📄</span><span><b>${esc(d.file_name)}</b><br><small>${(d.file_size/1024).toFixed(1)} KB · baixar</small></span></a>`}
+  return "";
+}
+
+function teclado(m, who){
+  const kb = m.reply_markup && m.reply_markup.inline_keyboard;
+  if(!kb) return "";
+  return `<div class="kb">${kb.map(r=>`<div class="krow">${r.map(b=>
+    b.web_app ? `<button class="url" data-webapp="${esc(b.web_app.url)}" data-who="${who}">${esc(b.text)}</button>`
+    : b.url ? `<button class="url" data-url="${esc(b.url)}" data-who="${who}">${esc(b.text)}</button>`
+          : `<button data-cb="${esc(b.callback_data)}" data-chat="${m.chat.id}" data-mid="${m.message_id}" data-who="${who}">${esc(b.text)}</button>`
+  ).join("")}</div>`).join("")}</div>`;
+}
+
+// Agrupa álbuns (media_group_id) como no Telegram
+function agrupar(lista){
+  const out=[];
+  for(const m of lista){
+    const last=out[out.length-1];
+    if(m.media_group_id && last && last.group===m.media_group_id){last.items.push(m)}
+    else out.push({group:m.media_group_id||null, items:[m]});
+  }
+  return out;
+}
+
+function renderChat(el, lista, who, souEu){
+  const perto = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+  if(!lista.length){
+    el.innerHTML = `<div class="empty">${who==="canal"?"Nenhuma postagem ainda.<br>Crie um pack no chat da Criadora.":
+      who==="admin"?"Comece com <b>/novo_pack</b>":"Toque em 🔓 Liberar Conteúdo em um post do canal."}</div>`;
+    return;
+  }
+  el.innerHTML = agrupar(lista).map(g=>{
+    const m=g.items[0];
+    const out = souEu(m);
+    const prot = g.items.some(x=>x.has_protected_content);
+    const temMidia = g.items.some(x=>x.photo||x.video);
+    const doc = m.document ? midiaHtml(m) : "";
+    const cap = g.items.map(x=>x.caption).filter(Boolean).join("\n") || m.text || "";
+    let corpo = "";
+    if(temMidia){
+      const n=g.items.length;
+      corpo = n>1 ? `<div class="album">${g.items.map(midiaHtml).join("")}</div>` : `<div class="album n1">${midiaHtml(m)}</div>`;
+      if(cap) corpo += `<div class="cap">${out?esc(cap):tgHtml(cap)}</div>`;
+    } else corpo = doc + (cap ? `<div>${out ? esc(cap) : tgHtml(cap)}</div>` : "");
+    const lastItem=g.items[g.items.length-1];
+    return `<div class="row ${out?"out":"in"} ${prot?"protected":""}" ${prot?'oncontextmenu="return false"':''}>
+      <div class="bubble ${temMidia?"media":""}">${corpo}
+        <div class="meta">${lastItem.edit_date?"editada ":""}${hora(m.date)}${out?" ✓✓":""}</div>${m._reacao?`<span class="reacao">${esc(m._reacao)}</span>`:""}</div>
+      ${prot?'<div class="prot">🔒 conteúdo protegido · não pode ser encaminhado/salvo</div>':""}
+      ${teclado(lastItem, who==="canal"?"client":who)}
+      ${!out && who==="admin" ? `<a href="#" class="resp" data-reply="${lastItem.message_id}">↩ responder</a>` : ""}
+    </div>`;
+  }).join("");
+  if(perto || !el.dataset.scrolled){el.scrollTop = el.scrollHeight; el.dataset.scrolled=1}
+}
+
+let ultimoToast = 0;
+function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),3000)}
+
+async function poll(){
+  try{
+    const r = await fetch(`/sim/estado?v=${V}`); const s = await r.json();
+    $("#dot").className = "dot"+(s.online?" on":"");
+    $("#status").textContent = s.online ? "bot conectado ao simulador" : "bot offline: rode python rodar_simulador.py";
+    if(!s.same){
+      V=s.v; STATE=s; BOT=s.bot;
+      $("#botname").textContent="@"+s.bot.username;
+      $("#canal-nome").textContent=s.canal.title;
+      renderChat($("#m-admin"), s.chats.admin, "admin", m=>m.from && !m.from.is_bot);
+      renderChat($("#m-canal"), s.chats.canal, "canal", ()=>false);
+      renderChat($("#m-vip"), s.chats.vip, "canal", ()=>false);
+      $("#menu-loja").hidden = !s.menu_loja; $("#menu-loja").dataset.webapp = s.menu_loja || "";
+      $("#vip-status").textContent = s.cliente_no_vip ? "Cliente: ✅ membro do canal" : "Cliente: ❌ fora do canal";
+      $("#vip-eventos").innerHTML = s.eventos_vip.length ? s.eventos_vip.slice().reverse().map(e=>`<div>${hora(e.t)} · ${esc(e.texto)}</div>`).join("") : "<div>Nenhuma entrada ou saída ainda.</div>";
+      renderChat($("#m-client"), s.chats.client, "client", m=>m.from && !m.from.is_bot);
+      for(const t of s.toasts){ if(t.t>ultimoToast){ultimoToast=t.t; t.alert?alert(t.text):toast(t.text)} }
+    }
+  }catch(e){ $("#dot").className="dot"; $("#status").textContent="simulador offline"; }
+  setTimeout(poll, 700);
+}
+
+async function cobrancas(){
+  try{
+    const lista = await (await fetch("/sim/cobrancas")).json();
+    const el=$("#cobrancas");
+    if(!lista.length){el.innerHTML='<div class="card"><small>Nenhuma cobrança ainda.</small></div>'}
+    else el.innerHTML = lista.slice().reverse().map(c=>`<div class="card">
+      <div class="l1"><b>R$ ${(c.valor/100).toFixed(2).replace(".",",")}</b>
+      <span class="badge ${c.status}">${c.status==="paid"?"PAGO":"PENDENTE"}</span></div>
+      <small>${esc(c.descricao)}<br>${esc(c.pix_id)} · ${esc(c.referencia)}</small>
+      <button class="pay" data-pay="${esc(c.pix_id)}" ${c.status==="paid"?"disabled":""}>💸 Pagar (simular webhook)</button></div>`).join("");
+  }catch(e){}
+  setTimeout(cobrancas, 1500);
+}
+
+const post = (url, body) => fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+
+document.querySelectorAll("form.composer").forEach(f=>{
+  const who=f.dataset.who, input=f.querySelector("input[type=text]"), file=f.querySelector("input[type=file]");
+  f.addEventListener("submit",e=>{e.preventDefault(); if(input.value.trim()){
+    post("/sim/texto",{who,text:input.value,reply_to:who==="admin"?REPLY:null}); input.value="";
+    if(who==="admin"){REPLY=null; $("#respondendo").hidden=true;}}});
+  file.addEventListener("change",async()=>{
+    if(!file.files.length) return;
+    const fd=new FormData(); fd.append("who",who); for(const x of file.files) fd.append("files",x);
+    await fetch("/sim/upload",{method:"POST",body:fd}); file.value="";
+  });
+});
+document.querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{
+  const who=c.closest(".col").id==="col-admin"?"admin":"client"; post("/sim/texto",{who,text:c.dataset.cmd});
+}));
+
+document.addEventListener("click", async e=>{
+  const b=e.target.closest("button,a,code");
+  if(!b) return;
+  if(b.dataset.webapp){ e.preventDefault(); abrirMiniApp(b.dataset.webapp); return }
+  if(b.id==="fechar-app"){ e.preventDefault(); fecharMiniApp(); return }
+  if(b.dataset.reply){ e.preventDefault(); REPLY=b.dataset.reply;
+    const m=STATE.chats.admin.find(x=>String(x.message_id)===REPLY);
+    $("#resp-txt").textContent="↩ Respondendo: "+((m&&(m.text||m.caption))||"mídia").slice(0,60);
+    $("#respondendo").hidden=false; document.querySelector('form[data-who=admin] input[type=text]').focus(); return}
+  if(b.id==="resp-x"){ e.preventDefault(); REPLY=null; $("#respondendo").hidden=true; return}
+  if(b.tagName==="CODE"){navigator.clipboard?.writeText(b.textContent); toast("Copiado ✓"); return}
+  const url=b.dataset.url||b.dataset.link;
+  if(url){
+    e.preventDefault();
+    const m=url.match(/^https?:\/\/t\.me\/([^?\/]+)\?start=(.+)$/);
+    if(/^https?:\/\/t\.me\/\+/.test(url)){
+      const r=await (await post("/sim/entrar",{who:"client",url})).json();
+      toast(r.msg||r.erro); return;
+    }
+    if(m && BOT && m[1].toLowerCase()===BOT.username.toLowerCase()){
+      const who = b.closest("#col-admin") ? "admin" : "client";
+      await post("/sim/deeplink",{who,url});
+      toast(who==="client"?"Abrindo o bot no chat do Cliente…":"Abrindo o bot…");
+    } else window.open(url,"_blank");
+    return;
+  }
+  if(b.dataset.cb){ await post("/sim/callback",{who:b.dataset.who,chat_id:b.dataset.chat,message_id:b.dataset.mid,data:b.dataset.cb}); return}
+  if(b.dataset.pay){ b.disabled=true; b.textContent="Enviando webhook…";
+    const r=await (await fetch(`/sim/pagar/${b.dataset.pay}`,{method:"POST"})).json();
+    toast(r.ok?`Webhook entregue: ${r.webhook_resposta?.resultado||"ok"}`:"Erro: "+(r.erro||"?"));
+  }
+});
+
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+  const vip=t.dataset.tab==="vip";
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===t));
+  $("#h-canal").hidden=$("#m-canal").hidden=vip;
+  $("#h-vip").hidden=$("#m-vip").hidden=$("#vip-eventos").hidden=$("#vip-composer").hidden=!vip;
+  const el=vip?$("#m-vip"):$("#m-canal"); el.scrollTop=el.scrollHeight;
+}));
+(()=>{const f=$("#vip-composer"), input=f.querySelector("input[type=text]"), file=f.querySelector("input[type=file]");
+  const enviar=async()=>{const fd=new FormData(); fd.append("canal","vip"); fd.append("text",input.value);
+    for(const x of file.files) fd.append("files",x); await fetch("/sim/canal",{method:"POST",body:fd}); input.value=""; file.value="";};
+  f.addEventListener("submit",e=>{e.preventDefault(); if(input.value.trim()||file.files.length) enviar();});
+  file.addEventListener("change",()=>{ if(file.files.length) enviar(); });
+})();
+
+// Mini App: abre a URL num "celular" com o initData assinado no #tgWebAppData, como o Telegram faz
+async function abrirMiniApp(url){
+  const {init_data} = await (await fetch("/sim/initdata?who=client")).json();
+  const m=document.createElement("div"); m.className="modal"; m.id="miniapp";
+  m.innerHTML=`<div class="phone"><header><span>🛍️ ${esc(BOT?.first_name||"Loja")} · Mini App</span><a href="#" id="fechar-app">✕</a></header>
+    <iframe src="${esc(url)}#tgWebAppData=${encodeURIComponent(init_data)}&tgWebAppVersion=8.0&tgWebAppPlatform=web&tgWebAppThemeParams=%7B%7D"></iframe></div>`;
+  document.body.appendChild(m);
+}
+function fecharMiniApp(){ $("#miniapp")?.remove() }
+// O script do Telegram dentro do Mini App avisa o "app" via postMessage (ex.: Telegram.WebApp.close())
+window.addEventListener("message",e=>{ try{ const d=JSON.parse(e.data); if(d.eventType==="web_app_close") fecharMiniApp() }catch(_){} });
+
+poll(); cobrancas();
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+# /etc/systemd/system/bot-telegram.service
+# Ativar:  sudo systemctl daemon-reload && sudo systemctl enable --now bot-telegram
+# Logs:    journalctl -u bot-telegram -f
+[Unit]
+Description=Bot de vendas Telegram
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=bot
+WorkingDirectory=/home/bot/bot-telegram
+EnvironmentFile=/home/bot/bot-telegram/.env
+ExecStart=/home/bot/bot-telegram/.venv/bin/python main.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

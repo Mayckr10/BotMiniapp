@@ -1,0 +1,5 @@
+# /etc/caddy/Caddyfile  ->  HTTPS automático (Let's Encrypt) na frente do webhook
+# Troque pelo seu domínio. O DNS (registro A) precisa apontar para o IP da VPS.
+pagamentos.seudominio.com.br {
+    reverse_proxy 127.0.0.1:8080
+}

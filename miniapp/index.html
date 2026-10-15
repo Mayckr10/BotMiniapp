@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Loja</title>
+<!-- Script oficial do Telegram: entrega o initData, o tema e os eventos do Mini App -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+/* ── Tema ─────────────────────────────────────────────────────────────── */
+:root{
+  --bg: var(--tg-theme-bg-color, #0b0d12);
+  --bg2: var(--tg-theme-secondary-bg-color, #141821);
+  --card: color-mix(in srgb, var(--bg2) 85%, white 4%);
+  --text: var(--tg-theme-text-color, #f4f5f8);
+  --muted: var(--tg-theme-hint-color, #8b93a3);
+  --line: color-mix(in srgb, var(--text) 9%, transparent);
+  --a1: #ff2e7e; --a2: #ff7a3d;                 /* gradiente da marca */
+  --accent: var(--a1);
+  --grad: linear-gradient(135deg, var(--a1), var(--a2));
+  --ok: #2fd27a; --warn: #ffb648; --err: #ff5d5d;
+  --r: 20px; --rs: 14px;
+  --sombra: 0 10px 30px rgba(0,0,0,.25);
+  --nav-h: 64px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;overscroll-behavior-y:none}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+img{display:block}
+main{max-width:560px;margin:0 auto;padding:0 0 calc(var(--nav-h) + 24px + env(safe-area-inset-bottom))}
+.pad{padding:0 16px}
+h2{margin:0;font-size:19px;letter-spacing:-.01em}
+.muted{color:var(--muted)}
+.ocultar{display:none !important}
+
+/* ── Topo / perfil ─────────────────────────────────────────────────────── */
+.capa{position:relative;height:150px;overflow:hidden;background:var(--grad)}
+.capa img{width:100%;height:100%;object-fit:cover;filter:blur(18px) saturate(1.4) brightness(.75);transform:scale(1.25)}
+.capa::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 40%,var(--bg) 100%)}
+.capa .bolha{position:absolute;border-radius:50%;filter:blur(30px);opacity:.75;animation:flutua 9s ease-in-out infinite alternate}
+.capa .b1{width:220px;height:220px;left:-60px;top:-80px;background:#ff2e7e}
+.capa .b2{width:200px;height:200px;right:-40px;top:-50px;background:#ff7a3d;animation-delay:-4s}
+.capa .b3{width:160px;height:160px;left:40%;top:40px;background:#7b5cff;animation-delay:-7s}
+@keyframes flutua{to{transform:translate(18px,14px) scale(1.08)}}
+.perfil{position:relative;padding:0 16px;margin-top:-46px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.avatar{width:96px;height:96px;border-radius:50%;object-fit:cover;background:var(--grad);display:grid;place-items:center;font-size:40px;color:#fff;border:4px solid var(--bg);box-shadow:var(--sombra)}
+.nome{display:flex;align-items:center;gap:6px;margin-top:10px;font-size:22px;font-weight:800;letter-spacing:-.02em}
+.verif{width:20px;height:20px;border-radius:50%;background:var(--grad);display:inline-grid;place-items:center;color:#fff;font-size:12px;font-weight:900}
+.bio{color:var(--muted);font-size:14px;margin:4px 0 0;max-width:420px}
+.stats{display:flex;gap:28px;margin:14px 0 4px}
+.stats div{text-align:center}
+.stats b{display:block;font-size:17px;letter-spacing:-.01em}
+.stats small{color:var(--muted);font-size:12px}
+.cta-vip{margin:14px 16px 0;position:relative;overflow:hidden;border-radius:var(--r);padding:16px;background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 14px 34px color-mix(in srgb,var(--a1) 35%,transparent);cursor:pointer}
+.cta-vip::before{content:"";position:absolute;inset:-40%;background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.35),transparent 45%);pointer-events:none}
+.cta-vip b{display:block;font-size:16px}
+.cta-vip small{opacity:.9;font-size:13px}
+.cta-vip .seta{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.22);display:grid;place-items:center;font-size:18px;flex:none}
+.vip-ativo{margin:14px 16px 0;border-radius:var(--r);padding:14px 16px;background:var(--card);border:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.vip-ativo .ico{width:40px;height:40px;border-radius:12px;background:var(--grad);display:grid;place-items:center;color:#fff;font-size:18px;flex:none}
+.vip-ativo b{display:block}
+.vip-ativo small{color:var(--muted)}
+.barra-prog{height:5px;border-radius:5px;background:var(--line);margin-top:8px;overflow:hidden}
+.barra-prog i{display:block;height:100%;background:var(--grad);border-radius:5px}
+
+/* ── Filtros / seções ──────────────────────────────────────────────────── */
+.secao-titulo{display:flex;align-items:center;justify-content:space-between;padding:22px 16px 10px}
+.secao-titulo h2{font-size:17px}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:0 16px 12px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:8px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:13px;font-weight:600;color:var(--muted);transition:.2s}
+.chip.on{background:var(--text);color:var(--bg);border-color:transparent}
+.alt-vista{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:3px}
+.alt-vista button{width:30px;height:26px;border-radius:7px;color:var(--muted);font-size:14px}
+.alt-vista button.on{background:var(--bg);color:var(--text)}
+
+/* ── Feed (posts estilo Privacy) ───────────────────────────────────────── */
+.feed{display:flex;flex-direction:column;gap:14px;padding:0 16px}
+.post{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--sombra)}
+.post .cab{display:flex;align-items:center;gap:10px;padding:12px 14px}
+.post .cab .mini-av{width:34px;height:34px;border-radius:50%;background:var(--grad);display:grid;place-items:center;color:#fff;font-size:15px;object-fit:cover}
+.post .cab b{display:block;font-size:14px}
+.post .cab small{color:var(--muted);font-size:12px}
+.midia{position:relative;aspect-ratio:4/5;background:#1a1f2a;overflow:hidden;cursor:pointer}
+.midia img{width:100%;height:100%;object-fit:cover;transition:transform .6s}
+.post:active .midia img{transform:scale(1.03)}
+.midia .veu{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.45));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#fff}
+.cadeado{width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.14);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.3);display:grid;place-items:center;font-size:26px}
+.desbloq{background:#fff;color:#111;border-radius:999px;padding:10px 18px;font-weight:800;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.comprado-selo{position:absolute;top:12px;left:12px;background:var(--ok);color:#042;font-weight:800;font-size:12px;padding:5px 10px;border-radius:999px}
+.tag-combo{position:absolute;top:12px;right:12px;background:rgba(0,0,0,.55);backdrop-filter:blur(8px);color:#fff;font-weight:700;font-size:12px;padding:5px 10px;border-radius:999px}
+.midia .contagem{position:absolute;bottom:12px;left:12px;display:flex;gap:6px}
+.pill{background:rgba(0,0,0,.55);backdrop-filter:blur(8px);color:#fff;font-size:12px;font-weight:600;padding:4px 9px;border-radius:999px}
+.post .rodape{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px}
+.post .rodape b{font-size:15px}
+.post .rodape small{display:block;color:var(--muted);font-size:12.5px;margin-top:1px}
+.preco-tag{background:var(--grad);color:#fff;font-weight:800;padding:8px 14px;border-radius:999px;font-size:14px;white-space:nowrap}
+.preco-tag.ok{background:var(--card);color:var(--ok);border:1px solid var(--line)}
+
+/* grade compacta */
+.grade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0 16px}
+.grade .card{position:relative;border-radius:var(--rs);overflow:hidden;background:var(--card);cursor:pointer}
+.grade .card img{width:100%;aspect-ratio:3/4;object-fit:cover}
+.grade .card .veu{position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.7));display:flex;flex-direction:column;justify-content:flex-end;padding:10px;color:#fff}
+.grade .card .veu b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.grade .card .veu small{font-size:12px;opacity:.9}
+.grade .card .cad{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.18);backdrop-filter:blur(8px);display:grid;place-items:center;font-size:14px}
+
+/* ── VIP ───────────────────────────────────────────────────────────────── */
+.hero-vip{margin:16px;border-radius:var(--r);padding:22px 18px;background:var(--grad);color:#fff;position:relative;overflow:hidden}
+.hero-vip::after{content:"⭐";position:absolute;right:-10px;bottom:-24px;font-size:120px;opacity:.15;transform:rotate(-15deg)}
+.hero-vip h2{font-size:24px;color:#fff}
+.hero-vip p{margin:6px 0 0;opacity:.92;font-size:14px}
+.beneficios{margin:0 16px 14px;display:grid;gap:8px}
+.beneficio{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:var(--rs);padding:12px 14px;font-size:14px}
+.beneficio .ico{width:36px;height:36px;border-radius:11px;background:color-mix(in srgb,var(--a1) 14%,transparent);display:grid;place-items:center;font-size:17px;flex:none}
+.planos{padding:0 16px;display:grid;gap:10px}
+.plano{position:relative;display:flex;align-items:center;gap:12px;background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);padding:16px;cursor:pointer;transition:.2s}
+.plano.on{border-color:var(--a1);background:color-mix(in srgb,var(--a1) 8%,var(--card));box-shadow:0 0 0 4px color-mix(in srgb,var(--a1) 14%,transparent)}
+.plano .radio{width:22px;height:22px;border-radius:50%;border:2px solid var(--muted);display:grid;place-items:center;flex:none}
+.plano.on .radio{border-color:var(--a1);background:var(--a1)}
+.plano.on .radio::after{content:"";width:8px;height:8px;border-radius:50%;background:#fff}
+.plano .txt{flex:1}
+.plano b{font-size:16px}
+.plano small{display:block;color:var(--muted);font-size:12.5px}
+.plano .valor{text-align:right}
+.plano .valor b{font-size:17px}
+.plano .valor small{font-size:11.5px}
+.eco{display:inline-block;background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok);font-size:11px;font-weight:800;padding:2px 7px;border-radius:999px;margin-left:6px;vertical-align:middle}
+.popular{position:absolute;top:-10px;right:14px;background:var(--grad);color:#fff;font-size:11px;font-weight:800;padding:3px 10px;border-radius:999px;letter-spacing:.02em}
+.fixo-cta{position:sticky;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 10px);padding:12px 16px 0;z-index:4}
+
+/* ── Minhas / Mimos ────────────────────────────────────────────────────── */
+.lista{padding:0 16px;display:grid;gap:10px}
+.item{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:var(--rs);padding:10px 12px}
+.item img,.item .thumb{width:54px;height:54px;border-radius:12px;object-fit:cover;background:var(--grad);display:grid;place-items:center;font-size:22px;color:#fff;flex:none}
+.item .txt{flex:1;min-width:0}
+.item b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14.5px}
+.item small{color:var(--muted);font-size:12.5px}
+.mimos{padding:0 16px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.mimo{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);padding:18px 14px;text-align:left;transition:.2s}
+.mimo:active{transform:scale(.97)}
+.mimo .emoji{font-size:28px}
+.mimo b{display:block;font-size:19px;margin-top:6px;letter-spacing:-.01em}
+.mimo small{color:var(--muted);font-size:12px}
+.campo{display:flex;gap:8px;padding:12px 16px 0}
+.campo input{flex:1}
+input[type=text]{width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;color:var(--text);font-size:15px;outline:none;transition:.2s}
+input:focus{border-color:var(--a1)}
+input::placeholder{color:var(--muted)}
+
+/* ── Botões ────────────────────────────────────────────────────────────── */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border-radius:16px;padding:15px;background:var(--grad);color:#fff;font-weight:800;font-size:15.5px;box-shadow:0 10px 26px color-mix(in srgb,var(--a1) 30%,transparent);transition:.15s}
+.btn:active{transform:scale(.985)}
+.btn:disabled{opacity:.55;box-shadow:none}
+.btn.sec{background:var(--card);color:var(--text);box-shadow:none;border:1px solid var(--line)}
+.btn.fantasma{background:transparent;color:var(--muted);box-shadow:none;padding:10px}
+.btn.mini{width:auto;padding:9px 14px;font-size:13px;border-radius:12px}
+.vazio{text-align:center;padding:48px 24px;color:var(--muted)}
+.vazio .ico{font-size:44px;margin-bottom:8px}
+
+/* ── Barra inferior ────────────────────────────────────────────────────── */
+.barra{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;justify-content:center;padding:0 12px calc(10px + env(safe-area-inset-bottom))}
+.barra nav{display:flex;width:100%;max-width:536px;height:var(--nav-h);background:color-mix(in srgb,var(--bg2) 78%,transparent);backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);border:1px solid var(--line);border-radius:22px;box-shadow:0 12px 40px rgba(0,0,0,.35);padding:6px}
+.barra nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:16px;color:var(--muted);font-size:11px;font-weight:600;transition:.2s}
+.barra nav button .ico{font-size:20px;line-height:1;transition:transform .2s}
+.barra nav button.on{color:var(--text);background:color-mix(in srgb,var(--text) 7%,transparent)}
+.barra nav button.on .ico{transform:translateY(-1px) scale(1.08)}
+.barra nav button .dot{position:absolute}
+
+/* ── Folha (bottom sheet) ──────────────────────────────────────────────── */
+.fundo{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:30;display:flex;align-items:flex-end;justify-content:center;animation:surge .2s}
+@keyframes surge{from{opacity:0}}
+.folha{position:relative;background:var(--bg);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:26px 26px 0 0;padding:10px 18px calc(18px + env(safe-area-inset-bottom));animation:sobe .32s cubic-bezier(.2,.8,.2,1)}
+@keyframes sobe{from{transform:translateY(60px);opacity:.4}}
+.alca{width:42px;height:5px;border-radius:5px;background:var(--line);margin:0 auto 14px}
+.fechar{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;background:var(--card);color:var(--muted);font-size:16px;display:grid;place-items:center}
+.previa-wrap{position:relative;border-radius:var(--r);overflow:hidden;margin-bottom:14px;max-height:48vh}
+.previa-wrap img{width:100%;max-height:48vh;object-fit:cover}
+.previa-wrap .veu{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25)}
+.midia-chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}
+.midia-chips span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:12.5px;color:var(--muted)}
+.linha-preco{display:flex;justify-content:space-between;align-items:baseline;margin:10px 0 14px}
+.linha-preco s{color:var(--muted);margin-right:8px;font-size:15px}
+.linha-preco .v{font-size:26px;font-weight:900;letter-spacing:-.02em;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cupom-toggle{font-size:13.5px;color:var(--muted);text-decoration:underline;text-underline-offset:3px;padding:4px 0 12px;display:inline-block}
+.cupom-wrap{display:none;margin-bottom:12px}
+.cupom-wrap.on{display:block}
+.gap{height:10px}
+.sub{color:var(--muted);font-size:14px;margin:4px 0 12px}
+.aviso{font-size:13px;color:var(--warn);margin:-4px 0 10px}
+.aviso.ok{color:var(--ok)}
+/* PIX */
+.valor-pix{text-align:center;margin:4px 0 14px}
+.valor-pix .v{font-size:34px;font-weight:900;letter-spacing:-.03em}
+.valor-pix small{color:var(--muted)}
+.qr-card{background:#fff;border-radius:22px;padding:14px;width:min(250px,70vw);margin:0 auto 14px;box-shadow:var(--sombra)}
+.qr-card img{width:100%}
+.codigo{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:10px}
+.codigo code{flex:1;font:12px ui-monospace,Menlo,Consolas,monospace;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status{display:flex;align-items:center;gap:8px;justify-content:center;color:var(--muted);font-size:13.5px;margin:12px 0}
+.pulso{width:9px;height:9px;border-radius:50%;background:var(--warn);animation:p 1.2s infinite}
+@keyframes p{50%{opacity:.25;transform:scale(.8)}}
+.timer{font-variant-numeric:tabular-nums;font-weight:700;color:var(--text)}
+.passos{display:grid;gap:6px;margin:4px 0 14px;font-size:13px;color:var(--muted)}
+.passos div{display:flex;gap:8px}
+.passos i{font-style:normal;width:20px;height:20px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;font-size:11px;color:var(--text);flex:none}
+/* sucesso */
+.ok-grande{text-align:center;padding:18px 8px 8px}
+.check{width:92px;height:92px;border-radius:50%;background:var(--grad);margin:0 auto 14px;display:grid;place-items:center;color:#fff;font-size:44px;animation:pop .5s cubic-bezier(.2,1.4,.4,1);box-shadow:0 16px 40px color-mix(in srgb,var(--a1) 40%,transparent)}
+@keyframes pop{from{transform:scale(.3);opacity:0}}
+.ok-grande .emoji{font-size:60px;margin-bottom:6px}
+.toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + 28px);transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:999px;z-index:40;font-size:13.5px;font-weight:600;box-shadow:var(--sombra);animation:sobe .25s}
+
+/* ── Skeleton ──────────────────────────────────────────────────────────── */
+.sk{background:linear-gradient(90deg,var(--card) 25%,color-mix(in srgb,var(--card) 70%,white 6%) 50%,var(--card) 75%);background-size:200% 100%;animation:sk 1.3s infinite;border-radius:14px}
+@keyframes sk{to{background-position:-200% 0}}
+</style>
+</head>
+<body>
+<main id="app">
+  <div class="capa"><span class="bolha b1"></span><span class="bolha b2"></span><span class="bolha b3"></span></div>
+  <div class="perfil"><div class="sk" style="width:96px;height:96px;border-radius:50%;border:4px solid var(--bg)"></div>
+    <div class="sk" style="width:160px;height:22px;margin-top:12px"></div><div class="sk" style="width:220px;height:14px;margin-top:8px"></div></div>
+  <div class="feed" style="margin-top:22px"><div class="sk" style="height:380px"></div><div class="sk" style="height:380px"></div></div>
+</main>
+<div class="barra" id="barra"></div>
+
+<script>
+const tg = window.Telegram?.WebApp;
+// initData assinado pelo Telegram (o simulador passa no #tgWebAppData, igual ao Telegram de verdade)
+const INIT = tg?.initData || new URLSearchParams(location.hash.slice(1)).get("tgWebAppData") || "";
+try{ tg?.ready(); tg?.expand(); tg?.setHeaderColor?.("bg_color"); tg?.setBackgroundColor?.("bg_color") }catch(e){}
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const reais = c => "R$ " + (c/100).toFixed(2).replace(".", ",");
+const EMOJI_MIMO = ["☕","🌹","💎","👑","🚀","🔥"];
+let D = null, ABA = "inicio", FILTRO = "todos", VISTA = "feed", PLANO_SEL = null, POLL = null, TIMER = null;
+
+async function api(caminho, corpo){
+  const r = await fetch(caminho, {
+    method: corpo ? "POST" : "GET",
+    headers: {"X-Telegram-Init-Data": INIT, ...(corpo ? {"Content-Type": "application/json"} : {})},
+    body: corpo ? JSON.stringify(corpo) : undefined,
+  });
+  const j = await r.json().catch(() => ({}));
+  return {ok: r.ok, status: r.status, ...j};
+}
+function toast(t){ const d=document.createElement("div"); d.className="toast"; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(),2600) }
+function vibrar(tipo){ try{ tipo === "leve" ? tg?.HapticFeedback?.impactOccurred("light") : tg?.HapticFeedback?.notificationOccurred(tipo) }catch(e){} }
+function relativo(iso){
+  if(!iso) return "";
+  const d = (Date.now() - new Date(iso).getTime()) / 864e5;
+  if(d < 1) return "hoje"; if(d < 2) return "ontem"; if(d < 30) return `há ${Math.floor(d)} dias`;
+  if(d < 365) return `há ${Math.floor(d/30)} ${d < 60 ? "mês" : "meses"}`; return `há ${Math.floor(d/365)} ano(s)`;
+}
+function midias(x){
+  const p = []; if(x.fotos) p.push(`📷 ${x.fotos}`); if(x.videos) p.push(`🎬 ${x.videos}`); return p;
+}
+
+async function carregar(){
+  const r = await api("/api/loja/dados");
+  if(!r.ok){ $("#app").innerHTML = `<div class="vazio"><div class="ico">🔒</div>Abra a loja pelo botão do bot no Telegram.</div>`; return }
+  D = r;
+  if(!PLANO_SEL) PLANO_SEL = (D.planos.find(p => p.economia) || D.planos[0])?.id;
+  render();
+}
+
+/* ── Render ────────────────────────────────────────────────────────────── */
+function render(){
+  const c = D.criadora, t = c.totais || {};
+  const mensal = D.planos.find(p => p.dias === 30) || D.planos[0];
+  $("#app").innerHTML = `
+    <header>
+      <div class="capa">${c.tem_foto ? `<img src="/api/loja/foto" alt="">` : `<span class="bolha b1"></span><span class="bolha b2"></span><span class="bolha b3"></span>`}</div>
+      <div class="perfil">
+        ${c.tem_foto ? `<img class="avatar" src="/api/loja/foto" alt="">` : `<div class="avatar">✨</div>`}
+        <div class="nome">${esc(c.nome)} <span class="verif" title="Perfil oficial">✓</span></div>
+        <p class="bio">${esc(c.bio)}</p>
+        <div class="stats">
+          <div><b>${t.conteudos ?? D.packs.length}</b><small>conteúdos</small></div>
+          <div><b>${t.fotos ?? 0}</b><small>fotos</small></div>
+          <div><b>${t.videos ?? 0}</b><small>vídeos</small></div>
+        </div>
+      </div>
+      ${D.assinatura ? vipAtivo() : mensal && ABA !== "vip" ? `
+      <div class="cta-vip" data-aba="vip">
+        <div><b>Assinar VIP</b><small>Canal privado + chat direto · a partir de ${esc(mensal.preco_fmt)}/mês</small></div>
+        <span class="seta">›</span>
+      </div>` : ""}
+    </header>
+    <section id="conteudo">${aba()}</section>`;
+  $("#barra").innerHTML = `<nav>
+    ${[["inicio","🏠","Início"],["vip","⭐","VIP"],["minhas","🗂️","Minhas"],["gorjeta","💝","Mimos"]]
+      .map(([id,i,t]) => `<button data-aba="${id}" class="${ABA===id?"on":""}"><span class="ico">${i}</span>${t}</button>`).join("")}
+  </nav>`;
+}
+
+function vipAtivo(){
+  const a = D.assinatura;
+  return `<div class="vip-ativo" data-aba="vip">
+    <div class="ico">⭐</div>
+    <div style="flex:1"><b>Você é VIP</b><small>Acesso até ${esc(a.ate)}</small></div>
+    <span class="muted" style="font-size:18px">›</span>
+  </div>`;
+}
+
+function aba(){
+  if(ABA === "inicio") return inicio();
+  if(ABA === "vip") return vip();
+  if(ABA === "minhas") return minhas();
+  return mimos();
+}
+
+function inicio(){
+  let itens = [...D.combos.map(x => ({...x, combo:true})), ...D.packs];
+  if(FILTRO === "packs") itens = itens.filter(x => !x.combo);
+  if(FILTRO === "combos") itens = itens.filter(x => x.combo);
+  const cab = `
+    <div class="secao-titulo"><h2>Conteúdos</h2>
+      <div class="alt-vista"><button data-vista="feed" class="${VISTA==="feed"?"on":""}">☰</button><button data-vista="grade" class="${VISTA==="grade"?"on":""}">▦</button></div></div>
+    <div class="chips">${[["todos","Todos"],["packs","📦 Packs"],["combos","🎁 Combos"]]
+      .map(([id,t]) => `<button class="chip ${FILTRO===id?"on":""}" data-filtro="${id}">${t}</button>`).join("")}</div>`;
+  if(!itens.length) return cab + `<div class="vazio"><div class="ico">🫧</div>Nada por aqui ainda.<br>Dá uma olhada no VIP ⭐</div>`;
+  if(VISTA === "grade") return cab + `<div class="grade">${itens.map(x => `
+    <div class="card" data-item="${x.id}">
+      <img src="/api/loja/previa/${x.id}" loading="lazy" alt="">
+      <span class="cad">${x.comprado ? "✅" : "🔒"}</span>
+      <div class="veu"><b>${esc(x.titulo)}</b><small>${x.comprado ? "Comprado" : esc(x.preco_fmt)}</small></div>
+    </div>`).join("")}</div>`;
+  return cab + `<div class="feed">${itens.map(x => `
+    <article class="post">
+      <div class="cab">${D.criadora.tem_foto ? `<img class="mini-av" src="/api/loja/foto" alt="">` : `<div class="mini-av">✨</div>`}
+        <div><b>${esc(D.criadora.nome)}</b><small>${x.combo ? "Combo especial" : esc(relativo(x.criado_em)) || "Pack"}</small></div></div>
+      <div class="midia card" data-item="${x.id}">
+        <img src="/api/loja/previa/${x.id}" loading="lazy" alt="">
+        ${x.comprado ? `<span class="comprado-selo">✓ Comprado</span>` : ""}
+        ${x.combo ? `<span class="tag-combo">🎁 ${x.packs.length} packs</span>` : ""}
+        <div class="veu">
+          ${x.comprado ? `<span class="desbloq">Ver no chat</span>` : `<span class="cadeado">🔒</span><span class="desbloq">Desbloquear por ${esc(x.preco_fmt)}</span>`}
+        </div>
+        <div class="contagem">${midias(x).map(m => `<span class="pill">${m}</span>`).join("")}</div>
+      </div>
+      <div class="rodape">
+        <div><b>${esc(x.titulo)}</b><small>${x.combo ? `Separados ${esc(x.separados_fmt)}` : esc(x.resumo)}</small></div>
+        <span class="preco-tag ${x.comprado?"ok":""}" data-item="${x.id}">${x.comprado ? "Receber" : esc(x.preco_fmt)}</span>
+      </div>
+    </article>`).join("")}</div>`;
+}
+
+function vip(){
+  if(!D.planos.length) return `<div class="vazio"><div class="ico">⭐</div>O VIP ainda não está aberto.</div>`;
+  const sel = D.planos.find(p => p.id === PLANO_SEL) || D.planos[0];
+  const melhor = D.planos.reduce((m,p) => (p.economia||0) > (m?.economia||0) ? p : m, null);
+  const a = D.assinatura;
+  return `
+    <div class="hero-vip"><h2>${a ? "Renovar VIP" : "Seja VIP"}</h2>
+      <p>${a ? `Você é VIP até ${esc(a.ate)}. Renovando agora, os dias são somados.` : `Todo o conteúdo exclusivo de ${esc(D.criadora.nome)}, sem censura, em um canal só para assinantes.`}</p></div>
+    <div class="beneficios">
+      ${[["🔐","Canal privado com conteúdo exclusivo"],["💬","Chat direto comigo pelo bot"],["🎬","Novidades toda semana e pay per view"],["🔄","Sem renovação automática: você escolhe quando renovar"]]
+        .map(([i,t]) => `<div class="beneficio"><span class="ico">${i}</span>${t}</div>`).join("")}
+    </div>
+    <div class="planos">${D.planos.map(p => `
+      <div class="plano ${p.id===sel.id?"on":""}" data-plano="${p.id}">
+        ${melhor && p.id === melhor.id && p.economia ? `<span class="popular">MAIS POPULAR</span>` : ""}
+        <span class="radio"></span>
+        <div class="txt"><b>${esc(p.nome)}</b>${p.economia ? `<span class="eco">-${p.economia}%</span>` : ""}<small>${p.dias} dias de acesso</small></div>
+        <div class="valor"><b>${esc(p.preco_fmt)}</b><small class="muted">${reais(Math.round(p.preco_fmt.replace(/[^\d,]/g,"").replace(",",".")*100/ p.dias * 30))}/mês</small></div>
+      </div>`).join("")}</div>
+    <div class="fixo-cta"><button class="btn" id="assinar" data-item="${sel.id}">${a ? "Renovar" : "Assinar"} ${esc(sel.nome)} · ${esc(sel.preco_fmt)}</button></div>`;
+}
+
+function minhas(){
+  const a = D.assinatura;
+  if(!D.minhas.length && !a) return `<div class="vazio"><div class="ico">🗂️</div>Suas compras aparecem aqui.<br>Tudo que você comprar fica salvo no chat com o bot.</div>`;
+  return `<div class="secao-titulo"><h2>Minhas compras</h2><small class="muted">${D.minhas.length} item(ns)</small></div>
+    <div class="lista">
+      ${a ? `<div class="item"><div class="thumb">⭐</div><div class="txt"><b>Assinatura VIP</b><small>Ativa até ${esc(a.ate)}</small></div><button class="btn mini sec" data-aba="vip">Renovar</button></div>` : ""}
+      ${D.minhas.map(p => `<div class="item"><img src="/api/loja/previa/${p.id}" alt=""><div class="txt"><b>${esc(p.titulo)}</b><small>Comprado · sem desfoque</small></div>
+        <button class="btn mini sec" data-reenviar="${p.id}">Receber</button></div>`).join("")}
+    </div>`;
+}
+
+function mimos(){
+  return `
+    <div class="hero-vip" style="background:linear-gradient(135deg,#7b5cff,#ff2e7e)"><h2>Mande um mimo 💝</h2>
+      <p>Um agrado para ${esc(D.criadora.nome)}. Ela recebe na hora e vê que foi você.</p></div>
+    <div class="mimos">${D.gorjetas.map((v,i) => `<button class="mimo" data-item="gorjeta_${v}"><span class="emoji">${EMOJI_MIMO[i % EMOJI_MIMO.length]}</span><b>${reais(v)}</b><small>toque para enviar</small></button>`).join("")}</div>
+    <div class="campo"><input type="text" id="gorjeta-outro" inputmode="decimal" placeholder="Outro valor (ex: 15,00)"><button class="btn mini" id="gorjeta-ok" style="padding:0 18px">Enviar</button></div>`;
+}
+
+/* ── Folha (bottom sheet) ──────────────────────────────────────────────── */
+function abrirFolha(html){
+  fecharFolha();
+  const f = document.createElement("div"); f.className = "fundo"; f.id = "fundo";
+  f.innerHTML = `<div class="folha"><div class="alca"></div><button class="fechar" id="fechar">✕</button>${html}</div>`;
+  f.addEventListener("click", e => { if(e.target === f || e.target.id === "fechar") fecharFolha() });
+  document.body.appendChild(f);
+  try{ tg?.BackButton?.show(); tg?.BackButton?.onClick(fecharFolha) }catch(e){}
+}
+function fecharFolha(){ clearInterval(POLL); clearInterval(TIMER); POLL = TIMER = null; $("#fundo")?.remove(); try{ tg?.BackButton?.hide() }catch(e){} }
+
+function detalhes(id){
+  const p = D.packs.find(x => x.id === id) || D.combos.find(x => x.id === id);
+  const plano = D.planos.find(x => x.id === id);
+  if(p && p.comprado){ return reenviar(id.startsWith("combo_") ? null : id, id) }
+  const titulo = p ? p.titulo : plano ? `VIP ${plano.nome}` : "Mimo";
+  const preco = p ? p.preco_fmt : plano ? plano.preco_fmt : "";
+  abrirFolha(`
+    ${p ? `<div class="previa-wrap"><img src="/api/loja/previa/${id}" alt=""><div class="veu"><span class="cadeado">🔒</span></div></div>` : `<div class="ok-grande"><div class="emoji">⭐</div></div>`}
+    <h2>${esc(titulo)}</h2>
+    ${p ? `<div class="midia-chips">${midias(p).map(m => `<span>${m}</span>`).join("")}<span>🔓 sem desfoque após o pagamento</span><span>🛡️ conteúdo protegido</span></div>` : ""}
+    ${plano ? `<p class="sub">${plano.dias} dias de acesso ao canal VIP e ao chat.</p>` : ""}
+    ${p && p.packs ? `<p class="sub">Inclui: ${p.packs.map(esc).join(" · ")}<br>Separados: <s>${esc(p.separados_fmt)}</s></p>` : ""}
+    <div class="linha-preco"><span class="muted">Total</span><span class="v">${esc(preco)}</span></div>
+    <span class="cupom-toggle" id="cupom-toggle">Tenho um cupom</span>
+    <div class="cupom-wrap" id="cupom-wrap"><input type="text" id="cupom" placeholder="Código do cupom" autocapitalize="characters"></div>
+    <button class="btn" id="pagar" data-item="${id}">💠 Pagar com PIX</button>
+    <p class="sub" style="text-align:center;margin:10px 0 0;font-size:12.5px">Aprovação na hora · entregue no seu chat com o bot</p>`);
+  $("#cupom-toggle").onclick = () => { $("#cupom-wrap").classList.add("on"); $("#cupom-toggle").classList.add("ocultar"); $("#cupom").focus() };
+}
+
+async function pagar(id, cupom){
+  if(D.idade === "menor"){ abrirFolha(`<div class="ok-grande"><div class="emoji">🔞</div><h2>Conteúdo para maiores de 18</h2><p class="sub">Não é possível comprar com esta conta.</p></div>`); return }
+  if(D.idade !== "ok"){ return pedirIdade(() => pagar(id, cupom)) }
+  const btn = $("#pagar") || $("#assinar"); if(btn){ btn.disabled = true; btn.textContent = "Gerando PIX…" }
+  vibrar("leve");
+  const r = await api("/api/loja/comprar", {item_id: id, cupom});
+  if(r.status === "ja_comprou"){ vibrar("success"); return sucesso("Você já tem este conteúdo. Enviei de novo no seu chat com o bot 💌") }
+  if(!r.ok){ toast(r.status === "idade" ? "Confirme sua idade" : "Não consegui gerar o PIX. Tente de novo."); if(btn){btn.disabled=false; btn.textContent="💠 Pagar com PIX"} return }
+  mostrarPix(r);
+}
+
+function pedirIdade(continuar){
+  abrirFolha(`
+    <div class="ok-grande"><div class="emoji">🔞</div><h2>Conteúdo para maiores de 18 anos</h2>
+    <p class="sub">Para continuar, confirme que você tem 18 anos ou mais e que não vai compartilhar o conteúdo comprado.</p></div>
+    <button class="btn" id="idade-sim">Tenho 18 anos ou mais</button><div class="gap"></div>
+    <button class="btn sec" id="idade-nao">Sou menor de 18</button>`);
+  $("#idade-sim").onclick = async () => { await api("/api/loja/idade", {maior:true}); D.idade = "ok"; continuar() };
+  $("#idade-nao").onclick = async () => { await api("/api/loja/idade", {maior:false}); D.idade = "menor"; pagar() };
+}
+
+function mostrarPix(r){
+  const ate = new Date(r.expira);
+  abrirFolha(`
+    <div class="valor-pix"><small>${esc(r.titulo)}</small><div class="v">${esc(r.valor_fmt)}</div>
+      ${r.original_fmt ? `<small><s>${esc(r.original_fmt)}</s> · cupom aplicado</small>` : ""}</div>
+    ${r.cupom ? `<div class="aviso ok" style="text-align:center">🏷️ ${esc(r.cupom.codigo)} (${esc(r.cupom.descricao)})</div>` : ""}
+    ${r.cupom_erro ? `<div class="aviso" style="text-align:center">⚠️ ${esc(r.cupom_erro)}</div>` : ""}
+    <div class="qr-card"><img src="${r.qr}" alt="QR Code PIX"></div>
+    <div class="codigo"><code id="codigo">${esc(r.copia_e_cola)}</code><button class="btn mini" id="copiar">Copiar</button></div>
+    <div class="passos">
+      <div><i>1</i>Abra o app do seu banco e escolha PIX</div>
+      <div><i>2</i>Leia o QR Code ou cole o código</div>
+      <div><i>3</i>Pronto! O conteúdo chega no chat com o bot</div>
+    </div>
+    <div class="status"><span class="pulso"></span><span id="st">Aguardando pagamento · expira em <span class="timer" id="timer">--:--</span></span></div>
+    <button class="btn sec" id="ja-paguei">Já paguei</button>
+    ${D.teste ? `<div class="gap"></div><button class="btn fantasma" id="teste-pagar">🧪 Simular pagamento (teste)</button>` : ""}`);
+  if(D.teste) $("#teste-pagar").onclick = async () => { await api("/api/loja/teste_pagar", {pix_id: r.pix_id}); verificar(r.pix_id, false) };
+  $("#copiar").onclick = async () => {
+    try{ await navigator.clipboard.writeText(r.copia_e_cola); vibrar("leve"); toast("Código PIX copiado ✓") }
+    catch(e){ const s = getSelection(), rg = document.createRange(); rg.selectNodeContents($("#codigo")); s.removeAllRanges(); s.addRange(rg); toast("Selecione e copie o código") }
+  };
+  $("#ja-paguei").onclick = () => verificar(r.pix_id, true);
+  const tick = () => { const s = Math.max(0, Math.floor((ate - Date.now())/1000)); const el = $("#timer"); if(el) el.textContent = `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`; if(!s) clearInterval(TIMER) };
+  tick(); TIMER = setInterval(tick, 1000);
+  POLL = setInterval(() => verificar(r.pix_id, false), 3000);
+}
+
+async function verificar(pix, manual){
+  const r = await api(`/api/loja/pedido/${pix}${manual ? "?verificar=1" : ""}`);
+  if(r.status === "PAGO"){ vibrar("success"); sucesso("Pagamento confirmado! O conteúdo já está no seu chat com o bot 💌"); carregar(); return }
+  if(r.status === "EXPIRADO"){ clearInterval(POLL); clearInterval(TIMER); $("#st").textContent = "PIX expirado. Feche e gere um novo."; return }
+  if(manual) toast("Ainda não identificamos o pagamento. Aguarde alguns segundos.");
+}
+
+function sucesso(texto){
+  abrirFolha(`<div class="ok-grande"><div class="check">✓</div><h2>Tudo certo!</h2><p class="sub">${esc(texto)}</p></div>
+    <button class="btn" id="voltar-chat">Ir para o chat</button><div class="gap"></div>
+    <button class="btn sec" id="continuar">Continuar na loja</button>`);
+  $("#voltar-chat").onclick = () => tg ? tg.close() : fecharFolha();
+  $("#continuar").onclick = fecharFolha;
+}
+
+async function reenviar(packId, itemId){
+  if(!packId){ return pagar(itemId) }   // combo já comprado: a rota de compra reenvia tudo
+  const r = await api("/api/loja/reenviar", {pack_id: packId});
+  if(r.ok){ vibrar("success"); toast("Enviado no seu chat com o bot 💌") } else toast("Não consegui reenviar")
+}
+
+/* ── Eventos ───────────────────────────────────────────────────────────── */
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-aba],[data-vista],[data-filtro],[data-plano],[data-item],[data-reenviar],#pagar,#assinar,#gorjeta-ok");
+  if(!el) return;
+  if(el.dataset.aba){ ABA = el.dataset.aba; vibrar("leve"); render(); window.scrollTo({top: ABA === "inicio" ? 0 : 120, behavior:"smooth"}); return }
+  if(el.dataset.vista){ VISTA = el.dataset.vista; render(); return }
+  if(el.dataset.filtro){ FILTRO = el.dataset.filtro; render(); return }
+  if(el.dataset.plano){ PLANO_SEL = el.dataset.plano; vibrar("leve"); render(); return }
+  if(el.id === "pagar"){ pagar(el.dataset.item, $("#cupom")?.value.trim()); return }
+  if(el.id === "assinar"){ detalhes(el.dataset.item); return }
+  if(el.id === "gorjeta-ok"){
+    const v = Math.round(parseFloat(($("#gorjeta-outro").value || "").replace(/\./g,"").replace(",", ".")) * 100);
+    if(!v || v < 100){ toast("Valor mínimo: R$ 1,00"); return }
+    return pagar(`gorjeta_${v}`);
+  }
+  if(el.dataset.reenviar){ reenviar(el.dataset.reenviar); return }
+  if(el.dataset.item){
+    const id = el.dataset.item;
+    if(id.startsWith("gorjeta_")) return pagar(id);
+    detalhes(id);
+  }
+});
+
+carregar();
+</script>
+</body>
+</html>

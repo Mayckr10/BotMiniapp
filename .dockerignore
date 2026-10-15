@@ -1,0 +1,7 @@
+.env
+*.db
+*.db-*
+__pycache__/
+simulador.db*
+*.zip
+*.png

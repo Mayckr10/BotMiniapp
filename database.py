@@ -1,0 +1,790 @@
+"""
+Camada de banco de dados (SQLite assíncrono via aiosqlite).
+
+Tabelas:
+  packs    -> produtos à venda (mídias originais + mídias embaçadas)
+  combos   -> vários packs vendidos juntos por um preço especial
+  vendas   -> cada tentativa de compra (PENDENTE -> PAGO)
+  acessos  -> quais packs cada cliente já liberou (pack avulso ou via combo)
+  cupons   -> descontos aplicados via deep link (/start pack_8f3a_CUPOM10)
+  usuarios -> todo mundo que já deu /start (base para broadcast e métricas)
+  cliques  -> cada abertura de link de venda (para a taxa de conversão)
+
+As listas de mídias são guardadas como JSON:
+  [{"tipo": "photo", "file_id": "AgAC..."}, {"tipo": "video", "file_id": "BAAC..."}]
+Valores em dinheiro são guardados em CENTAVOS (inteiro).
+Datas são ISO-8601 em UTC ("2026-10-15T07:17:00+00:00"), então dá para comparar como texto.
+
+"Item" = algo que se compra: um pack (pack_xxxx) ou um combo (combo_xxxx).
+"""
+import json
+import secrets
+from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
+
+import aiosqlite
+
+SCHEMA = """
+CREATE TABLE IF NOT EXISTS packs (
+    id                  TEXT PRIMARY KEY,          -- ex: pack_8f3a
+    titulo              TEXT    NOT NULL,
+    preco               INTEGER NOT NULL,          -- em centavos (2990 = R$ 29,90)
+    file_ids_originais  TEXT    NOT NULL,          -- JSON com as mídias originais
+    file_ids_blur       TEXT    NOT NULL,          -- JSON com as mídias embaçadas (teaser)
+    ativo               INTEGER NOT NULL DEFAULT 1,
+    criado_em           TEXT    NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS combos (
+    id          TEXT PRIMARY KEY,                  -- ex: combo_1a2b
+    titulo      TEXT    NOT NULL,
+    preco       INTEGER NOT NULL,
+    pack_ids    TEXT    NOT NULL,                  -- JSON: ["pack_8f3a", "pack_77c1"]
+    ativo       INTEGER NOT NULL DEFAULT 1,
+    criado_em   TEXT    NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS vendas (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL,
+    pack_id     TEXT    NOT NULL,                      -- id do item: pack_xxxx ou combo_xxxx
+    status      TEXT    NOT NULL DEFAULT 'PENDENTE',   -- PENDENTE | PAGO
+    pix_id      TEXT    UNIQUE,                        -- id da cobrança no gateway
+    valor       INTEGER NOT NULL,                      -- centavos cobrados (já com desconto)
+    criado_em   TEXT    NOT NULL,
+    pago_em     TEXT
+);
+
+CREATE TABLE IF NOT EXISTS acessos (
+    user_id     INTEGER NOT NULL,
+    pack_id     TEXT    NOT NULL,
+    venda_id    INTEGER,
+    criado_em   TEXT    NOT NULL,
+    PRIMARY KEY (user_id, pack_id)
+);
+
+CREATE TABLE IF NOT EXISTS cupons (
+    codigo      TEXT PRIMARY KEY,                  -- sempre MAIÚSCULO
+    tipo        TEXT    NOT NULL,                  -- 'pct' (percentual) | 'fixo' (centavos)
+    valor       INTEGER NOT NULL,                  -- 10 = 10%  |  500 = R$ 5,00
+    item_id     TEXT,                              -- NULL = vale para qualquer pack/combo
+    user_id     INTEGER,                           -- NULL = qualquer cliente (remarketing usa cupom pessoal)
+    usos_max    INTEGER,                           -- NULL = ilimitado
+    usos        INTEGER NOT NULL DEFAULT 0,
+    expira_em   TEXT,                              -- NULL = não expira
+    ativo       INTEGER NOT NULL DEFAULT 1,
+    criado_em   TEXT    NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS usuarios (
+    user_id     INTEGER PRIMARY KEY,
+    nome        TEXT,
+    username    TEXT,
+    bloqueado   INTEGER NOT NULL DEFAULT 0,        -- 1 = bloqueou o bot (detectado no broadcast)
+    criado_em   TEXT    NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS cliques (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL,
+    item_id     TEXT    NOT NULL,
+    criado_em   TEXT    NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS planos (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome        TEXT    NOT NULL,                  -- ex: Mensal
+    dias        INTEGER NOT NULL,                  -- 30, 90, 180...
+    preco       INTEGER NOT NULL,                  -- centavos
+    ativo       INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS assinaturas (
+    user_id     INTEGER PRIMARY KEY,
+    plano_id    INTEGER,
+    inicio_em   TEXT    NOT NULL,
+    expira_em   TEXT    NOT NULL,
+    aviso_etapa INTEGER NOT NULL DEFAULT 0,        -- 0 nada | 1 aviso de vencimento enviado
+    status      TEXT    NOT NULL DEFAULT 'ATIVA'   -- ATIVA | VENCIDA
+);
+
+CREATE TABLE IF NOT EXISTS chat_relay (
+    admin_chat_id INTEGER NOT NULL,
+    admin_msg_id  INTEGER NOT NULL,
+    user_id       INTEGER NOT NULL,
+    PRIMARY KEY (admin_chat_id, admin_msg_id)
+);
+
+CREATE TABLE IF NOT EXISTS ajustes (
+    chave       TEXT PRIMARY KEY,                  -- bio, foto_perfil, link_vip...
+    valor       TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_vendas_user_pack ON vendas(user_id, pack_id, status);
+CREATE INDEX IF NOT EXISTS idx_vendas_status ON vendas(status, criado_em);
+CREATE INDEX IF NOT EXISTS idx_cliques_data ON cliques(criado_em);
+"""
+
+# Colunas adicionadas depois do MVP: aplicadas com ALTER TABLE em bancos antigos
+MIGRACOES = {
+    "vendas": {
+        "valor_original": "INTEGER",                    # preço antes do cupom
+        "cupom": "TEXT",                                # código usado
+        "pix_copia_cola": "TEXT",                       # para reenviar no lembrete
+        "remarketing_etapa": "INTEGER NOT NULL DEFAULT 0",  # 0 nada | 1 lembrete | 2 cupom enviado
+        "expira_em": "TEXT",                            # validade do PIX
+    },
+    "packs": {
+        "tipo": "TEXT NOT NULL DEFAULT 'pack'",        # pack (canal/catálogo) | ppv (mensagem paga no privado)
+    },
+    "usuarios": {
+        "maior_idade_em": "TEXT",                       # quando confirmou ter 18+ (NULL = não confirmou)
+        "menor": "INTEGER NOT NULL DEFAULT 0",          # 1 = declarou ser menor: compra bloqueada
+    },
+}
+
+STATUS_PENDENTE = "PENDENTE"
+STATUS_PAGO = "PAGO"
+STATUS_EXPIRADO = "EXPIRADO"     # PIX venceu sem pagamento (se o gateway confirmar depois, ainda entrega)
+
+
+def agora() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def iso(dt: datetime) -> str:
+    return dt.astimezone(timezone.utc).isoformat(timespec="seconds")
+
+
+def _agora() -> str:
+    return iso(agora())
+
+
+def fmt_reais(centavos: int) -> str:
+    """2990 -> 'R$ 29,90'"""
+    reais = f"{centavos / 100:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    return f"R$ {reais}"
+
+
+@dataclass
+class Pack:
+    id: str
+    titulo: str
+    preco: int
+    originais: list[dict]
+    blur: list[dict]
+    criado_em: str = ""
+
+    @property
+    def preco_fmt(self) -> str:
+        return fmt_reais(self.preco)
+
+
+@dataclass
+class Combo:
+    id: str
+    titulo: str
+    preco: int
+    pack_ids: list[str]
+
+    @property
+    def preco_fmt(self) -> str:
+        return fmt_reais(self.preco)
+
+
+@dataclass
+class Plano:
+    id: int
+    nome: str
+    dias: int
+    preco: int
+
+    @property
+    def item_id(self) -> str:
+        return f"plano_{self.id}"
+
+    @property
+    def titulo(self) -> str:
+        return f"Assinatura VIP · {self.nome} ({self.dias} dias)"
+
+    @property
+    def preco_fmt(self) -> str:
+        return fmt_reais(self.preco)
+
+
+@dataclass
+class Gorjeta:
+    preco: int
+    titulo: str = "Gorjeta 💝"
+
+    @property
+    def preco_fmt(self) -> str:
+        return fmt_reais(self.preco)
+
+
+@dataclass
+class Assinatura:
+    user_id: int
+    plano_id: int | None
+    expira_em: str
+    status: str
+    aviso_etapa: int
+
+    @property
+    def ativa(self) -> bool:
+        return self.status == "ATIVA" and self.expira_em > _agora()
+
+
+@dataclass
+class Cupom:
+    codigo: str
+    tipo: str
+    valor: int
+    item_id: str | None
+    user_id: int | None
+    usos_max: int | None
+    usos: int
+    expira_em: str | None
+    ativo: bool
+
+    def desconto(self, preco: int) -> int:
+        """Quanto descontar (centavos). Nunca deixa o preço final abaixo de R$ 1,00."""
+        d = preco * self.valor // 100 if self.tipo == "pct" else self.valor
+        return max(0, min(d, preco - 100))
+
+    @property
+    def descricao(self) -> str:
+        return f"{self.valor}% OFF" if self.tipo == "pct" else f"{fmt_reais(self.valor)} OFF"
+
+
+@dataclass
+class Venda:
+    id: int
+    user_id: int
+    pack_id: str            # id do item (pack ou combo)
+    status: str
+    pix_id: str | None
+    valor: int
+    valor_original: int | None = None
+    cupom: str | None = None
+    pix_copia_cola: str | None = None
+    remarketing_etapa: int = 0
+    criado_em: str = ""
+    expira_em: str | None = None
+
+
+class Database:
+    def __init__(self, path: str):
+        self.path = path
+        self.conn: aiosqlite.Connection | None = None
+
+    async def connect(self) -> None:
+        self.conn = await aiosqlite.connect(self.path)
+        self.conn.row_factory = aiosqlite.Row
+        await self.conn.execute("PRAGMA journal_mode=WAL")
+        await self.conn.executescript(SCHEMA)
+        await self._migrar()
+        await self.conn.commit()
+
+    async def _migrar(self) -> None:
+        for tabela, colunas in MIGRACOES.items():
+            async with self.conn.execute(f"PRAGMA table_info({tabela})") as cur:
+                existentes = {r["name"] for r in await cur.fetchall()}
+            for nome, tipo in colunas.items():
+                if nome not in existentes:
+                    await self.conn.execute(f"ALTER TABLE {tabela} ADD COLUMN {nome} {tipo}")
+        # Bancos do MVP: vendas pagas viram acessos (idempotente)
+        await self.conn.execute(
+            "INSERT OR IGNORE INTO acessos (user_id, pack_id, venda_id, criado_em) "
+            "SELECT user_id, pack_id, id, COALESCE(pago_em, criado_em) FROM vendas "
+            "WHERE status = 'PAGO' AND pack_id LIKE 'pack_%'"
+        )
+
+    async def close(self) -> None:
+        if self.conn:
+            await self.conn.close()
+
+    async def _um(self, sql: str, params=()) -> aiosqlite.Row | None:
+        async with self.conn.execute(sql, params) as cur:
+            return await cur.fetchone()
+
+    async def _todos(self, sql: str, params=()) -> list[aiosqlite.Row]:
+        async with self.conn.execute(sql, params) as cur:
+            return list(await cur.fetchall())
+
+    # ── Packs ──────────────────────────────────────────────────────────────
+    async def _gerar_id(self, prefixo: str) -> str:
+        """Gera um id curto e único no formato pack_xxxx / combo_xxxx."""
+        while True:
+            novo = f"{prefixo}_{secrets.token_hex(2)}"
+            if not await self._um("SELECT 1 FROM packs WHERE id = ? UNION SELECT 1 FROM combos WHERE id = ?",
+                                  (novo, novo)):
+                return novo
+
+    async def gerar_pack_id(self) -> str:
+        return await self._gerar_id("pack")
+
+    async def criar_pack(self, titulo: str, preco: int, originais: list[dict], blur: list[dict]) -> str:
+        pack_id = await self.gerar_pack_id()
+        await self.conn.execute(
+            "INSERT INTO packs (id, titulo, preco, file_ids_originais, file_ids_blur, criado_em) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (pack_id, titulo, preco, json.dumps(originais), json.dumps(blur), _agora()),
+        )
+        await self.conn.commit()
+        return pack_id
+
+    async def get_pack(self, pack_id: str) -> Pack | None:
+        row = await self._um("SELECT * FROM packs WHERE id = ? AND ativo = 1", (pack_id,))
+        if not row:
+            return None
+        return Pack(
+            id=row["id"],
+            titulo=row["titulo"],
+            preco=row["preco"],
+            originais=json.loads(row["file_ids_originais"]),
+            blur=json.loads(row["file_ids_blur"]),
+            criado_em=row["criado_em"],
+        )
+
+    async def listar_packs(self, tipo: str | None = "pack") -> list[Pack]:
+        """tipo='pack' (padrão: catálogo/canal), 'ppv' (mensagens pagas) ou None (todos)."""
+        sql = "SELECT id FROM packs WHERE ativo = 1" + (" AND tipo = ?" if tipo else "")
+        rows = await self._todos(sql + " ORDER BY criado_em DESC, rowid DESC", (tipo,) if tipo else ())
+        return [p for p in [await self.get_pack(r["id"]) for r in rows] if p]
+
+    async def definir_tipo_pack(self, pack_id: str, tipo: str) -> None:
+        await self.conn.execute("UPDATE packs SET tipo = ? WHERE id = ?", (tipo, pack_id))
+        await self.conn.commit()
+
+    # ── Combos ─────────────────────────────────────────────────────────────
+    async def criar_combo(self, titulo: str, preco: int, pack_ids: list[str]) -> str:
+        combo_id = await self._gerar_id("combo")
+        await self.conn.execute(
+            "INSERT INTO combos (id, titulo, preco, pack_ids, criado_em) VALUES (?, ?, ?, ?, ?)",
+            (combo_id, titulo, preco, json.dumps(pack_ids), _agora()),
+        )
+        await self.conn.commit()
+        return combo_id
+
+    async def get_combo(self, combo_id: str) -> Combo | None:
+        row = await self._um("SELECT * FROM combos WHERE id = ? AND ativo = 1", (combo_id,))
+        if not row:
+            return None
+        return Combo(id=row["id"], titulo=row["titulo"], preco=row["preco"], pack_ids=json.loads(row["pack_ids"]))
+
+    async def listar_combos(self) -> list[Combo]:
+        rows = await self._todos("SELECT id FROM combos WHERE ativo = 1 ORDER BY criado_em DESC, rowid DESC")
+        return [c for c in [await self.get_combo(r["id"]) for r in rows] if c]
+
+    async def get_item(self, item_id: str) -> "Pack | Combo | Plano | Gorjeta | None":
+        if item_id.startswith("combo_"):
+            return await self.get_combo(item_id)
+        if item_id.startswith("plano_"):
+            return await self.get_plano(int(item_id[6:]))
+        if item_id.startswith("gorjeta_"):
+            valor = int(item_id[8:])
+            return Gorjeta(valor) if valor >= 100 else None
+        return await self.get_pack(item_id)
+
+    async def packs_do_item(self, item_id: str) -> list[Pack]:
+        """Pack avulso -> [pack]; combo -> todos os packs ativos dele."""
+        item = await self.get_item(item_id)
+        if isinstance(item, Pack):
+            return [item]
+        if isinstance(item, Combo):
+            return [p for p in [await self.get_pack(i) for i in item.pack_ids] if p]
+        return []
+
+    # ── Planos e assinaturas ───────────────────────────────────────────────
+    async def criar_planos_padrao(self, planos: list[tuple[str, int, int]]) -> None:
+        """Só cria se ainda não existir nenhum plano."""
+        if await self._um("SELECT 1 FROM planos"):
+            return
+        await self.conn.executemany("INSERT INTO planos (nome, dias, preco) VALUES (?, ?, ?)", planos)
+        await self.conn.commit()
+
+    async def salvar_plano(self, nome: str, dias: int, preco: int) -> int:
+        """Cria o plano ou atualiza o de mesmo nome."""
+        row = await self._um("SELECT id FROM planos WHERE lower(nome) = lower(?)", (nome,))
+        if row:
+            await self.conn.execute("UPDATE planos SET dias = ?, preco = ?, ativo = 1 WHERE id = ?",
+                                    (dias, preco, row["id"]))
+            plano_id = row["id"]
+        else:
+            plano_id = (await self.conn.execute("INSERT INTO planos (nome, dias, preco) VALUES (?, ?, ?)",
+                                                (nome, dias, preco))).lastrowid
+        await self.conn.commit()
+        return plano_id
+
+    async def desativar_plano(self, plano_id: int) -> bool:
+        cur = await self.conn.execute("UPDATE planos SET ativo = 0 WHERE id = ?", (plano_id,))
+        await self.conn.commit()
+        return cur.rowcount == 1
+
+    async def get_plano(self, plano_id: int, incluir_inativos: bool = False) -> Plano | None:
+        sql = "SELECT * FROM planos WHERE id = ?" + ("" if incluir_inativos else " AND ativo = 1")
+        row = await self._um(sql, (plano_id,))
+        return Plano(row["id"], row["nome"], row["dias"], row["preco"]) if row else None
+
+    async def listar_planos(self) -> list[Plano]:
+        rows = await self._todos("SELECT * FROM planos WHERE ativo = 1 ORDER BY dias")
+        return [Plano(r["id"], r["nome"], r["dias"], r["preco"]) for r in rows]
+
+    async def get_assinatura(self, user_id: int) -> Assinatura | None:
+        row = await self._um("SELECT * FROM assinaturas WHERE user_id = ?", (user_id,))
+        if not row:
+            return None
+        return Assinatura(row["user_id"], row["plano_id"], row["expira_em"], row["status"], row["aviso_etapa"])
+
+    async def assinante_ativo(self, user_id: int) -> bool:
+        a = await self.get_assinatura(user_id)
+        return bool(a and a.ativa)
+
+    async def estender_assinatura(self, user_id: int, plano_id: int, dias: int) -> datetime:
+        """Soma `dias` a partir do vencimento atual (se ainda ativa) ou de agora. Retorna o novo vencimento."""
+        atual = await self.get_assinatura(user_id)
+        base = agora()
+        if atual and atual.ativa:
+            base = datetime.fromisoformat(atual.expira_em)
+        nova = base + timedelta(days=dias)
+        await self.conn.execute(
+            "INSERT INTO assinaturas (user_id, plano_id, inicio_em, expira_em, aviso_etapa, status) "
+            "VALUES (?, ?, ?, ?, 0, 'ATIVA') ON CONFLICT(user_id) DO UPDATE SET plano_id = excluded.plano_id, "
+            "expira_em = excluded.expira_em, aviso_etapa = 0, status = 'ATIVA'",
+            (user_id, plano_id, _agora(), iso(nova)),
+        )
+        await self.conn.commit()
+        return nova
+
+    async def assinaturas_a_avisar(self, vence_antes_de: datetime) -> list[Assinatura]:
+        rows = await self._todos(
+            "SELECT * FROM assinaturas WHERE status = 'ATIVA' AND aviso_etapa = 0 AND expira_em <= ? AND expira_em > ?",
+            (iso(vence_antes_de), _agora()))
+        return [Assinatura(r["user_id"], r["plano_id"], r["expira_em"], r["status"], r["aviso_etapa"]) for r in rows]
+
+    async def marcar_aviso_assinatura(self, user_id: int) -> None:
+        await self.conn.execute("UPDATE assinaturas SET aviso_etapa = 1 WHERE user_id = ?", (user_id,))
+        await self.conn.commit()
+
+    async def assinaturas_vencidas(self) -> list[Assinatura]:
+        rows = await self._todos("SELECT * FROM assinaturas WHERE status = 'ATIVA' AND expira_em <= ?", (_agora(),))
+        return [Assinatura(r["user_id"], r["plano_id"], r["expira_em"], r["status"], r["aviso_etapa"]) for r in rows]
+
+    async def vencer_agora(self, user_id: int) -> bool:
+        """Faz a assinatura vencer agora (o job remove do canal na próxima rodada)."""
+        cur = await self.conn.execute("UPDATE assinaturas SET expira_em = ? WHERE user_id = ? AND status = 'ATIVA'",
+                                      (_agora(), user_id))
+        await self.conn.commit()
+        return cur.rowcount == 1
+
+    async def encerrar_assinatura(self, user_id: int) -> None:
+        await self.conn.execute("UPDATE assinaturas SET status = 'VENCIDA' WHERE user_id = ?", (user_id,))
+        await self.conn.commit()
+
+    async def assinantes_ativos(self) -> list[int]:
+        rows = await self._todos(
+            "SELECT a.user_id FROM assinaturas a LEFT JOIN usuarios u ON u.user_id = a.user_id "
+            "WHERE a.status = 'ATIVA' AND a.expira_em > ? AND COALESCE(u.bloqueado, 0) = 0 ORDER BY a.user_id",
+            (_agora(),))
+        return [r["user_id"] for r in rows]
+
+    async def resumo_assinaturas(self) -> dict:
+        ativos = await self._um("SELECT COUNT(*) AS n FROM assinaturas WHERE status = 'ATIVA' AND expira_em > ?",
+                                (_agora(),))
+        vencendo = await self._um(
+            "SELECT COUNT(*) AS n FROM assinaturas WHERE status = 'ATIVA' AND expira_em > ? AND expira_em <= ?",
+            (_agora(), iso(agora() + timedelta(days=7))))
+        receita = await self._um(
+            "SELECT COALESCE(SUM(valor), 0) AS total FROM vendas WHERE status = 'PAGO' AND pack_id LIKE 'plano_%' "
+            "AND pago_em >= ?", (iso(agora() - timedelta(days=30)),))
+        return {"ativos": ativos["n"], "vencendo_7d": vencendo["n"], "receita_30d": receita["total"]}
+
+    # ── Chat com a criadora ────────────────────────────────────────────────
+    async def salvar_relay(self, admin_chat_id: int, admin_msg_id: int, user_id: int) -> None:
+        await self.conn.execute("INSERT OR REPLACE INTO chat_relay VALUES (?, ?, ?)", (admin_chat_id, admin_msg_id, user_id))
+        await self.conn.commit()
+
+    async def user_do_relay(self, admin_chat_id: int, admin_msg_id: int) -> int | None:
+        row = await self._um("SELECT user_id FROM chat_relay WHERE admin_chat_id = ? AND admin_msg_id = ?",
+                             (admin_chat_id, admin_msg_id))
+        return row["user_id"] if row else None
+
+    # ── Ajustes (perfil da criadora etc.) ──────────────────────────────────
+    async def get_ajuste(self, chave: str, padrao: str | None = None) -> str | None:
+        row = await self._um("SELECT valor FROM ajustes WHERE chave = ?", (chave,))
+        return row["valor"] if row else padrao
+
+    async def set_ajuste(self, chave: str, valor: str | None) -> None:
+        await self.conn.execute("INSERT OR REPLACE INTO ajustes VALUES (?, ?)", (chave, valor))
+        await self.conn.commit()
+
+    # ── Vendas ─────────────────────────────────────────────────────────────
+    async def criar_venda(self, user_id: int, item_id: str, valor: int,
+                          valor_original: int | None = None, cupom: str | None = None) -> int:
+        cur = await self.conn.execute(
+            "INSERT INTO vendas (user_id, pack_id, status, valor, valor_original, cupom, criado_em) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (user_id, item_id, STATUS_PENDENTE, valor, valor_original or valor, cupom, _agora()),
+        )
+        await self.conn.commit()
+        return cur.lastrowid
+
+    async def definir_pix(self, venda_id: int, pix_id: str, copia_e_cola: str = "",
+                          expira_em: datetime | None = None) -> None:
+        await self.conn.execute("UPDATE vendas SET pix_id = ?, pix_copia_cola = ?, expira_em = ? WHERE id = ?",
+                                (pix_id, copia_e_cola, iso(expira_em) if expira_em else None, venda_id))
+        await self.conn.commit()
+
+    async def get_venda(self, venda_id: int) -> Venda | None:
+        row = await self._um("SELECT * FROM vendas WHERE id = ?", (venda_id,))
+        return self._venda(row) if row else None
+
+    async def vendas_vencidas(self) -> list[Venda]:
+        rows = await self._todos("SELECT * FROM vendas WHERE status = ? AND expira_em IS NOT NULL AND expira_em <= ?",
+                                 (STATUS_PENDENTE, _agora()))
+        return [self._venda(r) for r in rows]
+
+    async def marcar_expirada(self, venda_id: int) -> bool:
+        cur = await self.conn.execute("UPDATE vendas SET status = ? WHERE id = ? AND status = ?",
+                                      (STATUS_EXPIRADO, venda_id, STATUS_PENDENTE))
+        await self.conn.commit()
+        return cur.rowcount == 1
+
+    async def definir_pix_id(self, venda_id: int, pix_id: str) -> None:   # compatibilidade com o MVP
+        await self.definir_pix(venda_id, pix_id)
+
+    async def get_venda_por_pix(self, pix_id: str) -> Venda | None:
+        row = await self._um("SELECT * FROM vendas WHERE pix_id = ?", (pix_id,))
+        return self._venda(row) if row else None
+
+    async def marcar_pago(self, pix_id: str) -> bool:
+        """
+        Marca a venda como PAGA de forma atômica e contabiliza o uso do cupom.
+        Retorna True só na PRIMEIRA vez (evita entregar o pack duas vezes
+        se o gateway reenviar o webhook). Uma venda EXPIRADA também pode ser paga:
+        se o dinheiro caiu, o cliente recebe.
+        """
+        cur = await self.conn.execute(
+            "UPDATE vendas SET status = ?, pago_em = ? WHERE pix_id = ? AND status IN (?, ?)",
+            (STATUS_PAGO, _agora(), pix_id, STATUS_PENDENTE, STATUS_EXPIRADO),
+        )
+        if cur.rowcount == 1:
+            await self.conn.execute(
+                "UPDATE cupons SET usos = usos + 1 WHERE codigo = (SELECT cupom FROM vendas WHERE pix_id = ?)",
+                (pix_id,),
+            )
+        await self.conn.commit()
+        return cur.rowcount == 1
+
+    async def liberar_acesso(self, user_id: int, pack_ids: list[str], venda_id: int | None) -> None:
+        await self.conn.executemany(
+            "INSERT OR IGNORE INTO acessos (user_id, pack_id, venda_id, criado_em) VALUES (?, ?, ?, ?)",
+            [(user_id, p, venda_id, _agora()) for p in pack_ids],
+        )
+        await self.conn.commit()
+
+    async def ja_comprou(self, user_id: int, pack_id: str) -> bool:
+        return await self._um("SELECT 1 FROM acessos WHERE user_id = ? AND pack_id = ?", (user_id, pack_id)) is not None
+
+    async def tem_todos(self, user_id: int, pack_ids: list[str]) -> bool:
+        if not pack_ids:
+            return False
+        marcas = ",".join("?" * len(pack_ids))
+        row = await self._um(f"SELECT COUNT(*) AS n FROM acessos WHERE user_id = ? AND pack_id IN ({marcas})",
+                             (user_id, *pack_ids))
+        return row["n"] == len(set(pack_ids))
+
+    async def packs_do_cliente(self, user_id: int) -> list[Pack]:
+        rows = await self._todos("SELECT pack_id FROM acessos WHERE user_id = ? ORDER BY criado_em", (user_id,))
+        return [p for p in [await self.get_pack(r["pack_id"]) for r in rows] if p]
+
+    async def vendas_para_lembrete(self, criadas_antes_de: datetime) -> list[Venda]:
+        """PIX ainda válido, sem lembrete enviado."""
+        rows = await self._todos(
+            "SELECT * FROM vendas WHERE status = ? AND remarketing_etapa = 0 AND criado_em <= ? "
+            "AND pix_id IS NOT NULL AND (expira_em IS NULL OR expira_em > ?) ORDER BY id",
+            (STATUS_PENDENTE, iso(criadas_antes_de), _agora()),
+        )
+        return [self._venda(r) for r in rows]
+
+    async def vendas_para_cupom(self, criadas_antes_de: datetime) -> list[Venda]:
+        """Não pagas (pendentes ou já expiradas) que ainda não ganharam cupom."""
+        rows = await self._todos(
+            "SELECT * FROM vendas WHERE status IN (?, ?) AND remarketing_etapa < 2 AND criado_em <= ? "
+            "AND pix_id IS NOT NULL ORDER BY id",
+            (STATUS_PENDENTE, STATUS_EXPIRADO, iso(criadas_antes_de)),
+        )
+        return [self._venda(r) for r in rows]
+
+    async def definir_etapa_remarketing(self, venda_id: int, etapa: int) -> None:
+        await self.conn.execute("UPDATE vendas SET remarketing_etapa = ? WHERE id = ?", (etapa, venda_id))
+        await self.conn.commit()
+
+    async def tem_venda_mais_nova(self, user_id: int, item_id: str, venda_id: int) -> bool:
+        """O cliente gerou outro PIX (ou pagou) este item depois? Aí só a venda mais nova recebe remarketing."""
+        return await self._um(
+            "SELECT 1 FROM vendas WHERE user_id = ? AND pack_id = ? AND id > ?",
+            (user_id, item_id, venda_id)) is not None
+
+    @staticmethod
+    def _venda(row) -> Venda:
+        chaves = row.keys()
+        return Venda(
+            id=row["id"], user_id=row["user_id"], pack_id=row["pack_id"],
+            status=row["status"], pix_id=row["pix_id"], valor=row["valor"],
+            valor_original=row["valor_original"] if "valor_original" in chaves else None,
+            cupom=row["cupom"] if "cupom" in chaves else None,
+            pix_copia_cola=row["pix_copia_cola"] if "pix_copia_cola" in chaves else None,
+            remarketing_etapa=row["remarketing_etapa"] if "remarketing_etapa" in chaves else 0,
+            criado_em=row["criado_em"],
+            expira_em=row["expira_em"] if "expira_em" in chaves else None,
+        )
+
+    # ── Cupons ─────────────────────────────────────────────────────────────
+    async def criar_cupom(self, codigo: str, tipo: str, valor: int, item_id: str | None = None,
+                          user_id: int | None = None, usos_max: int | None = None,
+                          expira_em: datetime | None = None) -> None:
+        await self.conn.execute(
+            "INSERT OR REPLACE INTO cupons (codigo, tipo, valor, item_id, user_id, usos_max, usos, expira_em, ativo, criado_em) "
+            "VALUES (?, ?, ?, ?, ?, ?, 0, ?, 1, ?)",
+            (codigo.upper(), tipo, valor, item_id, user_id, usos_max,
+             iso(expira_em) if expira_em else None, _agora()),
+        )
+        await self.conn.commit()
+
+    async def get_cupom(self, codigo: str) -> Cupom | None:
+        row = await self._um("SELECT * FROM cupons WHERE codigo = ?", (codigo.upper(),))
+        if not row:
+            return None
+        return Cupom(codigo=row["codigo"], tipo=row["tipo"], valor=row["valor"], item_id=row["item_id"],
+                     user_id=row["user_id"], usos_max=row["usos_max"], usos=row["usos"],
+                     expira_em=row["expira_em"], ativo=bool(row["ativo"]))
+
+    async def validar_cupom(self, codigo: str, item_id: str, user_id: int) -> tuple[Cupom | None, str]:
+        """Retorna (cupom, '') se puder usar, ou (None, motivo)."""
+        c = await self.get_cupom(codigo)
+        if not c or not c.ativo:
+            return None, "cupom não encontrado"
+        if c.expira_em and c.expira_em < _agora():
+            return None, "cupom expirado"
+        if c.usos_max is not None and c.usos >= c.usos_max:
+            return None, "cupom esgotado"
+        if c.item_id and c.item_id != item_id:
+            return None, "cupom não vale para este item"
+        if c.user_id and c.user_id != user_id:
+            return None, "cupom pessoal de outro cliente"
+        return c, ""
+
+    async def listar_cupons(self, incluir_pessoais: bool = False) -> list[Cupom]:
+        sql = "SELECT codigo FROM cupons WHERE ativo = 1" + ("" if incluir_pessoais else " AND user_id IS NULL")
+        rows = await self._todos(sql + " ORDER BY criado_em DESC")
+        return [c for c in [await self.get_cupom(r["codigo"]) for r in rows] if c]
+
+    async def desativar_cupom(self, codigo: str) -> bool:
+        cur = await self.conn.execute("UPDATE cupons SET ativo = 0 WHERE codigo = ?", (codigo.upper(),))
+        await self.conn.commit()
+        return cur.rowcount == 1
+
+    # ── Usuários e cliques ─────────────────────────────────────────────────
+    async def registrar_usuario(self, user_id: int, nome: str, username: str | None) -> None:
+        await self.conn.execute(
+            "INSERT INTO usuarios (user_id, nome, username, criado_em) VALUES (?, ?, ?, ?) "
+            "ON CONFLICT(user_id) DO UPDATE SET nome = excluded.nome, username = excluded.username, bloqueado = 0",
+            (user_id, nome, username, _agora()),
+        )
+        await self.conn.commit()
+
+    async def status_idade(self, user_id: int) -> str | None:
+        """'ok' (confirmou 18+), 'menor' (declarou ser menor) ou None (ainda não respondeu)."""
+        row = await self._um("SELECT maior_idade_em, menor FROM usuarios WHERE user_id = ?", (user_id,))
+        if not row:
+            return None
+        if row["menor"]:
+            return "menor"
+        return "ok" if row["maior_idade_em"] else None
+
+    async def registrar_idade(self, user_id: int, maior: bool) -> None:
+        await self.conn.execute(
+            "INSERT INTO usuarios (user_id, criado_em) VALUES (?, ?) ON CONFLICT(user_id) DO NOTHING",
+            (user_id, _agora()))
+        if maior:
+            await self.conn.execute("UPDATE usuarios SET maior_idade_em = ?, menor = 0 WHERE user_id = ?",
+                                    (_agora(), user_id))
+        else:
+            await self.conn.execute("UPDATE usuarios SET menor = 1, maior_idade_em = NULL WHERE user_id = ?",
+                                    (user_id,))
+        await self.conn.commit()
+
+    async def backup(self, destino: str) -> None:
+        """Cópia consistente do banco (API de backup do SQLite), mesmo com o bot rodando."""
+        import aiosqlite as _a
+        alvo = await _a.connect(destino)
+        try:
+            await self.conn.backup(alvo)
+        finally:
+            await alvo.close()
+
+    async def marcar_bloqueado(self, user_id: int) -> None:
+        await self.conn.execute(
+            "INSERT INTO usuarios (user_id, bloqueado, criado_em) VALUES (?, 1, ?) "
+            "ON CONFLICT(user_id) DO UPDATE SET bloqueado = 1", (user_id, _agora()))
+        await self.conn.commit()
+
+    async def registrar_clique(self, user_id: int, item_id: str) -> None:
+        await self.conn.execute("INSERT INTO cliques (user_id, item_id, criado_em) VALUES (?, ?, ?)",
+                                (user_id, item_id, _agora()))
+        await self.conn.commit()
+
+    async def todos_clientes(self) -> list[int]:
+        """Todo mundo que já falou com o bot e não o bloqueou."""
+        rows = await self._todos("SELECT user_id FROM usuarios WHERE bloqueado = 0 AND menor = 0 ORDER BY user_id")
+        return [r["user_id"] for r in rows]
+
+    async def compradores(self, item_id: str | None = None) -> list[int]:
+        """IDs de quem já comprou (opcionalmente só de um pack), sem quem bloqueou o bot."""
+        sql = ("SELECT DISTINCT a.user_id FROM acessos a LEFT JOIN usuarios u ON u.user_id = a.user_id "
+               "WHERE COALESCE(u.bloqueado, 0) = 0")
+        params: tuple = ()
+        if item_id:
+            sql += " AND a.pack_id = ?"
+            params = (item_id,)
+        return [r["user_id"] for r in await self._todos(sql + " ORDER BY a.user_id", params)]
+
+    # ── Estatísticas ───────────────────────────────────────────────────────
+    async def stats_periodo(self, desde: datetime) -> dict:
+        d = iso(desde)
+        pagas = await self._um(
+            "SELECT COUNT(*) AS n, COALESCE(SUM(valor), 0) AS total FROM vendas WHERE status = ? AND pago_em >= ?",
+            (STATUS_PAGO, d))
+        geradas = await self._um("SELECT COUNT(*) AS n FROM vendas WHERE criado_em >= ?", (d,))
+        cliques = await self._um(
+            "SELECT COUNT(*) AS n FROM (SELECT DISTINCT user_id, item_id FROM cliques WHERE criado_em >= ?)", (d,))
+        compradores = await self._um(
+            "SELECT COUNT(*) AS n FROM (SELECT DISTINCT user_id, pack_id FROM vendas WHERE status = ? AND pago_em >= ?)",
+            (STATUS_PAGO, d))
+        novos = await self._um("SELECT COUNT(*) AS n FROM usuarios WHERE criado_em >= ?", (d,))
+        top = await self._um(
+            "SELECT pack_id, COUNT(*) AS n, SUM(valor) AS total FROM vendas WHERE status = ? AND pago_em >= ? "
+            "GROUP BY pack_id ORDER BY n DESC, total DESC LIMIT 1", (STATUS_PAGO, d))
+        com_cupom = await self._um(
+            "SELECT COUNT(*) AS n FROM vendas WHERE status = ? AND pago_em >= ? AND cupom IS NOT NULL",
+            (STATUS_PAGO, d))
+        return {
+            "vendas": pagas["n"],
+            "faturamento": pagas["total"],
+            "ticket_medio": pagas["total"] // pagas["n"] if pagas["n"] else 0,
+            "pix_gerados": geradas["n"],
+            "cliques": cliques["n"],
+            "compras_unicas": compradores["n"],
+            "conversao": (compradores["n"] / cliques["n"]) if cliques["n"] else None,
+            "novos_usuarios": novos["n"],
+            "top_item": top["pack_id"] if top else None,
+            "top_qtd": top["n"] if top else 0,
+            "com_cupom": com_cupom["n"],
+        }
+
+    async def pendentes_abertos(self) -> int:
+        row = await self._um("SELECT COUNT(*) AS n FROM vendas WHERE status = ? AND criado_em >= ?",
+                             (STATUS_PENDENTE, iso(agora() - timedelta(days=1))))
+        return row["n"]
