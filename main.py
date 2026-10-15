@@ -84,7 +84,7 @@ async def run(cfg: Config) -> None:
     runner = web.AppRunner(app)
     await runner.setup()
     await web.TCPSite(runner, cfg.webhook_host, cfg.webhook_port).start()
-    logging.info("Bot @%s online | webhook PIX em %s", me.username, cfg.webhook_url)
+    logging.info("Bot @%s online | webhook PIX em %s", me.username, cfg.webhook_url.split("?")[0])   # sem o token no log
 
     jobs = [asyncio.create_task(loop_remarketing(bot, db, cfg))]
     if cfg.backup_ativo:
