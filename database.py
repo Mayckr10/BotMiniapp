@@ -120,6 +120,15 @@ CREATE TABLE IF NOT EXISTS ajustes (
     valor       TEXT
 );
 
+-- Publicações de texto do feed (com foto opcional, sempre visíveis para todos)
+CREATE TABLE IF NOT EXISTS posts (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    texto       TEXT    NOT NULL,
+    foto        TEXT,                              -- file_id da foto (opcional)
+    ativo       INTEGER NOT NULL DEFAULT 1,
+    criado_em   TEXT    NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_vendas_user_pack ON vendas(user_id, pack_id, status);
 CREATE INDEX IF NOT EXISTS idx_vendas_status ON vendas(status, criado_em);
 CREATE INDEX IF NOT EXISTS idx_cliques_data ON cliques(criado_em);
@@ -136,6 +145,7 @@ MIGRACOES = {
     },
     "packs": {
         "tipo": "TEXT NOT NULL DEFAULT 'pack'",        # pack (canal/catálogo) | ppv (mensagem paga no privado)
+        "legenda": "TEXT",                              # texto da postagem no feed da loja
     },
     "usuarios": {
         "maior_idade_em": "TEXT",                       # quando confirmou ter 18+ (NULL = não confirmou)
@@ -174,6 +184,8 @@ class Pack:
     originais: list[dict]
     blur: list[dict]
     criado_em: str = ""
+    legenda: str = ""
+    tipo: str = "pack"
 
     @property
     def preco_fmt(self) -> str:
@@ -345,6 +357,8 @@ class Database:
             originais=json.loads(row["file_ids_originais"]),
             blur=json.loads(row["file_ids_blur"]),
             criado_em=row["criado_em"],
+            legenda=row["legenda"] or "",
+            tipo=row["tipo"],
         )
 
     async def listar_packs(self, tipo: str | None = "pack") -> list[Pack]:
@@ -517,6 +531,39 @@ class Database:
 
     async def set_ajuste(self, chave: str, valor: str | None) -> None:
         await self.conn.execute("INSERT OR REPLACE INTO ajustes VALUES (?, ?)", (chave, valor))
+        await self.conn.commit()
+
+    # ── Publicações (feed) e edição de packs pelo painel da criadora ───────
+    async def criar_post(self, texto: str, foto: str | None = None) -> int:
+        cur = await self.conn.execute("INSERT INTO posts (texto, foto, criado_em) VALUES (?, ?, ?)",
+                                      (texto, foto, _agora()))
+        await self.conn.commit()
+        return cur.lastrowid
+
+    async def listar_posts(self) -> list[dict]:
+        rows = await self._todos("SELECT id, texto, foto, criado_em FROM posts WHERE ativo = 1 ORDER BY id DESC")
+        return [dict(r) for r in rows]
+
+    async def get_post(self, post_id: int) -> dict | None:
+        row = await self._um("SELECT id, texto, foto, criado_em FROM posts WHERE id = ? AND ativo = 1", (post_id,))
+        return dict(row) if row else None
+
+    async def editar_post(self, post_id: int, texto: str) -> None:
+        await self.conn.execute("UPDATE posts SET texto = ? WHERE id = ?", (texto, post_id))
+        await self.conn.commit()
+
+    async def apagar_post(self, post_id: int) -> None:
+        await self.conn.execute("UPDATE posts SET ativo = 0 WHERE id = ?", (post_id,))
+        await self.conn.commit()
+
+    async def editar_pack(self, pack_id: str, titulo: str, preco: int, legenda: str) -> None:
+        await self.conn.execute("UPDATE packs SET titulo = ?, preco = ?, legenda = ? WHERE id = ?",
+                                (titulo, preco, legenda, pack_id))
+        await self.conn.commit()
+
+    async def apagar_pack(self, pack_id: str) -> None:
+        """Tira da vitrine e para de vender. Quem já comprou continua com acesso (/meus_packs e galeria)."""
+        await self.conn.execute("UPDATE packs SET tipo = 'arquivado' WHERE id = ?", (pack_id,))
         await self.conn.commit()
 
     # ── Vendas ─────────────────────────────────────────────────────────────

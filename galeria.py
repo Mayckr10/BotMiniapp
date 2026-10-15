@@ -64,10 +64,10 @@ def _assinar(cfg: Config, user_id: int, item_id: str, n: int, exp: int) -> str:
     return hmac.new(chave, f"{user_id}:{item_id}:{n}:{exp}".encode(), hashlib.sha256).hexdigest()[:32]
 
 
-async def _midias_compradas(db: Database, user_id: int, item_id: str) -> list[dict] | None:
-    """Mídias originais do item, ou None se o usuário não comprou tudo."""
+async def _midias_compradas(db: Database, user_id: int, item_id: str, admin: bool = False) -> list[dict] | None:
+    """Mídias originais do item, ou None se o usuário não comprou tudo (a criadora vê tudo)."""
     packs = await db.packs_do_item(item_id)
-    if not packs or not await db.tem_todos(user_id, [p.id for p in packs]):
+    if not packs or (not admin and not await db.tem_todos(user_id, [p.id for p in packs])):
         return None
     return [m for p in packs for m in p.originais]
 
@@ -133,7 +133,7 @@ async def conteudo(request: web.Request) -> web.Response:
     bot: Bot = request.app["bot"]
     user = _usuario(request)
     item_id = request.match_info["item_id"]
-    midias = await _midias_compradas(db, user["id"], item_id)
+    midias = await _midias_compradas(db, user["id"], item_id, user["id"] in cfg.admin_ids)
     if midias is None:
         raise web.HTTPForbidden(text='{"erro":"nao_comprado"}', content_type="application/json")
 
@@ -166,7 +166,7 @@ async def midia(request: web.Request) -> web.Response:
         raise web.HTTPForbidden()
     if exp < time.time() or not hmac.compare_digest(sig, _assinar(cfg, uid, item_id, n, exp)):
         raise web.HTTPForbidden()
-    midias = await _midias_compradas(db, uid, item_id)
+    midias = await _midias_compradas(db, uid, item_id, uid in cfg.admin_ids)
     if midias is None or not 0 <= n < len(midias):
         raise web.HTTPForbidden()
     m = midias[n]

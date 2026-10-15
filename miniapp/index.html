@@ -218,6 +218,58 @@ input::placeholder{color:var(--muted)}
 .preco-tag.ok{cursor:pointer}
 .item{cursor:pointer}
 
+/* ── Posts de texto e legendas ───────────────────────────────────────── */
+.legenda{padding:0 14px 12px;font-size:14.5px;line-height:1.5;white-space:pre-wrap;word-break:break-word}
+.legenda.mais{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.post-texto .corpo{padding:0 14px 14px;font-size:15.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.post-texto img.foto-post{width:100%;max-height:560px;object-fit:cover}
+.post .cab{position:relative}
+.menu-post{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:50%;color:var(--muted);font-size:18px;display:grid;place-items:center}
+.menu-post:active{background:var(--line)}
+/* ── Modo criadora ─────────────────────────────────────────────────────── */
+.selo-criadora{display:inline-flex;align-items:center;gap:6px;margin-top:10px;background:color-mix(in srgb,var(--a1) 14%,transparent);color:var(--a1);font-size:12px;font-weight:800;padding:5px 11px;border-radius:999px}
+.avatar-wrap{position:relative;cursor:pointer}
+.avatar-wrap .lapis{position:absolute;right:0;bottom:2px;width:30px;height:30px;border-radius:50%;background:var(--text);color:var(--bg);display:grid;place-items:center;font-size:14px;border:3px solid var(--bg)}
+.fab{position:fixed;right:18px;bottom:calc(var(--nav-h) + 26px + env(safe-area-inset-bottom));z-index:11;width:58px;height:58px;border-radius:20px;background:var(--grad);color:#fff;font-size:30px;font-weight:300;display:grid;place-items:center;box-shadow:0 14px 34px color-mix(in srgb,var(--a1) 45%,transparent)}
+.fab:active{transform:scale(.94)}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:0 16px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.kpi small{color:var(--muted);font-size:12px;font-weight:600}
+.kpi b{display:block;font-size:21px;letter-spacing:-.02em;margin-top:2px}
+.kpi span{color:var(--muted);font-size:12.5px}
+.kpi.destaque{background:var(--grad);color:#fff;border:0}
+.kpi.destaque small,.kpi.destaque span{color:rgba(255,255,255,.85)}
+.acoes{display:grid;gap:10px;padding:0 16px}
+.acao{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;text-align:left;width:100%}
+.acao .ico{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;font-size:21px;flex:none;background:color-mix(in srgb,var(--a1) 13%,transparent)}
+.acao b{display:block;font-size:15px}
+.acao small{color:var(--muted);font-size:12.5px}
+.acao .seta{margin-left:auto;color:var(--muted);font-size:20px}
+.troca{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin:0 16px}
+.chave{position:relative;width:50px;height:30px;border-radius:999px;background:var(--line);transition:.2s;flex:none}
+.chave::after{content:"";position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.chave.on{background:var(--ok)}
+.chave.on::after{transform:translateX(20px)}
+.rotulo{display:block;font-size:13px;font-weight:700;color:var(--muted);margin:14px 0 6px}
+textarea{width:100%;min-height:110px;resize:vertical;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;color:var(--text);font:15px/1.5 inherit;font-family:inherit;outline:none}
+textarea:focus{border-color:var(--a1)}
+.escolher{display:flex;align-items:center;justify-content:center;gap:8px;border:2px dashed var(--line);border-radius:var(--r);padding:20px;color:var(--muted);font-weight:700;cursor:pointer;width:100%;background:transparent}
+.miniaturas{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
+.miniaturas div{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--card)}
+.miniaturas img,.miniaturas video{width:100%;height:100%;object-fit:cover}
+.miniaturas .x{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.65);color:#fff;font-size:12px;display:grid;place-items:center}
+.miniaturas .v{position:absolute;bottom:4px;left:4px;background:rgba(0,0,0,.6);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:999px}
+.progresso{height:8px;border-radius:8px;background:var(--line);overflow:hidden;margin:14px 0 6px}
+.progresso i{display:block;height:100%;width:0;background:var(--grad);transition:width .2s}
+.dica{font-size:12.5px;color:var(--muted);margin-top:6px}
+.dica code{background:var(--card);border:1px solid var(--line);padding:1px 6px;border-radius:6px;font-size:12px}
+.balao{background:var(--card);border:1px solid var(--line);border-radius:18px 18px 18px 6px;overflow:hidden;max-width:88%;margin-top:6px}
+.balao img{width:100%;max-height:220px;object-fit:cover}
+.balao p{margin:0;padding:10px 12px;white-space:pre-wrap;font-size:14px}
+.perigo{color:var(--err) !important}
+.lista-msg .acao .ico{background:color-mix(in srgb,#7b5cff 16%,transparent)}
+.foto-perfil-ed{width:110px;height:110px;border-radius:50%;object-fit:cover;margin:4px auto 8px;display:grid;place-items:center;background:var(--grad);font-size:44px;color:#fff;cursor:pointer}
+
 /* ── Galeria (carrossel do conteúdo comprado) ─────────────────────────── */
 .galeria{position:fixed;inset:0;z-index:50;background:#000;display:flex;flex-direction:column;animation:surge .2s;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .galeria header{position:absolute;top:0;left:0;right:0;z-index:2;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 14px 24px;background:linear-gradient(180deg,rgba(0,0,0,.7),transparent);color:#fff}
@@ -265,9 +317,11 @@ try{ tg?.ready(); tg?.expand(); tg?.setHeaderColor?.("bg_color"); tg?.setBackgro
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const criadora = () => D && D.sou_criadora && !COMO_FA;
+const avatarSrc = () => `/api/loja/foto?v=${encodeURIComponent(D.criadora.foto_v || "")}`;
 const reais = c => "R$ " + (c/100).toFixed(2).replace(".", ",");
 const EMOJI_MIMO = ["☕","🌹","💎","👑","🚀","🔥"];
-let ULTIMO = null, D = null, ABA = "inicio", FILTRO = "todos", VISTA = "feed", PLANO_SEL = null, POLL = null, TIMER = null;
+let COMO_FA = false, PAINEL = null, ULTIMO = null, D = null, ABA = "inicio", FILTRO = "todos", VISTA = "feed", PLANO_SEL = null, POLL = null, TIMER = null;
 
 async function api(caminho, corpo){
   const r = await fetch(caminho, {
@@ -277,6 +331,20 @@ async function api(caminho, corpo){
   });
   const j = await r.json().catch(() => ({}));
   return {ok: r.ok, status: r.status, ...j};
+}
+function enviarForm(caminho, campos, arquivos = [], aoProgresso){
+  return new Promise(res => {
+    const fd = new FormData();
+    Object.entries(campos).forEach(([k, v]) => fd.append(k, v ?? ""));
+    arquivos.forEach(([nome, f]) => fd.append(nome, f, f.name || "arquivo"));
+    const x = new XMLHttpRequest();
+    x.open("POST", caminho);
+    x.setRequestHeader("X-Telegram-Init-Data", INIT);
+    x.upload.onprogress = e => e.lengthComputable && aoProgresso?.(e.loaded / e.total);
+    x.onload = () => { let j = {}; try{ j = JSON.parse(x.responseText) }catch(e){} res({ok: x.status < 300, status: x.status, ...j}) };
+    x.onerror = () => res({ok:false, erro:"Sem conexão. Tente de novo."});
+    x.send(fd);
+  });
 }
 function toast(t){ const d=document.createElement("div"); d.className="toast"; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(),2600) }
 function vibrar(tipo){ try{ tipo === "leve" ? tg?.HapticFeedback?.impactOccurred("light") : tg?.HapticFeedback?.notificationOccurred(tipo) }catch(e){} }
@@ -293,7 +361,9 @@ function midias(x){
 async function carregar(){
   const r = await api("/api/loja/dados");
   if(!r.ok){ $("#app").innerHTML = `<div class="vazio"><div class="ico">🔒</div>Abra a loja pelo botão do bot no Telegram.</div>`; return }
+  const primeira = !D;
   D = r;
+  if(primeira && D.sou_criadora) return escolherModo();
   if(!PLANO_SEL) PLANO_SEL = (D.planos.find(p => p.economia) || D.planos[0])?.id;
   render();
 }
@@ -304,18 +374,22 @@ function render(){
   const mensal = D.planos.find(p => p.dias === 30) || D.planos[0];
   $("#app").innerHTML = `
     <header>
-      <div class="capa">${c.tem_foto ? `<img src="/api/loja/foto" alt="">` : `<span class="bolha b1"></span><span class="bolha b2"></span><span class="bolha b3"></span>`}</div>
+      <div class="capa">${c.tem_foto ? `<img src="${avatarSrc()}" alt="">` : `<span class="bolha b1"></span><span class="bolha b2"></span><span class="bolha b3"></span>`}</div>
       <div class="perfil">
-        ${c.tem_foto ? `<img class="avatar" src="/api/loja/foto" alt="">` : `<div class="avatar">✨</div>`}
+        <div class="${criadora() ? "avatar-wrap" : ""}" ${criadora() ? 'id="ed-perfil"' : ""}>
+          ${c.tem_foto ? `<img class="avatar" src="${avatarSrc()}" alt="">` : `<div class="avatar">✨</div>`}
+          ${criadora() ? `<span class="lapis">✎</span>` : ""}
+        </div>
         <div class="nome">${esc(c.nome)} <span class="verif" title="Perfil oficial">✓</span></div>
         <p class="bio">${esc(c.bio)}</p>
+        ${criadora() ? `<span class="selo-criadora">👑 Modo criadora</span>` : ""}
         <div class="stats">
           <div><b>${t.conteudos ?? D.packs.length}</b><small>conteúdos</small></div>
           <div><b>${t.fotos ?? 0}</b><small>fotos</small></div>
           <div><b>${t.videos ?? 0}</b><small>vídeos</small></div>
         </div>
       </div>
-      ${D.assinatura ? vipAtivo() : mensal && ABA !== "vip" ? `
+      ${criadora() ? "" : D.assinatura ? vipAtivo() : mensal && ABA !== "vip" ? `
       <div class="cta-vip" data-aba="vip">
         <div><b>Assinar VIP</b><small>Canal privado exclusivo · a partir de ${esc(mensal.preco_fmt)}/mês</small></div>
         <span class="seta">›</span>
@@ -323,9 +397,20 @@ function render(){
     </header>
     <section id="conteudo">${aba()}</section>`;
   $("#barra").innerHTML = `<nav>
-    ${[["inicio","🏠","Início"],["vip","⭐","VIP"],["minhas","🗂️","Minhas"],["gorjeta","💝","Mimos"]]
+    ${(criadora() ? [["inicio","🏠","Início"],["painel","📊","Painel"],["vip","⭐","VIP"],["gorjeta","💝","Mimos"]]
+                  : [["inicio","🏠","Início"],["vip","⭐","VIP"],["minhas","🗂️","Minhas"],["gorjeta","💝","Mimos"]])
       .map(([id,i,t]) => `<button data-aba="${id}" class="${ABA===id?"on":""}"><span class="ico">${i}</span>${t}</button>`).join("")}
   </nav>`;
+  $("#fab")?.remove();
+  if(criadora() && ABA === "inicio"){ const f = document.createElement("button"); f.className = "fab"; f.id = "fab"; f.textContent = "+"; f.onclick = escolherCriacao; document.body.appendChild(f) }
+  if(criadora() && ABA === "painel" && !PAINEL) carregarPainel();
+  $("#volta-criadora")?.remove();
+  if(D.sou_criadora && COMO_FA){
+    const v = document.createElement("button"); v.id = "volta-criadora"; v.className = "selo-criadora";
+    v.style.cssText = "position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:12;margin:0;box-shadow:var(--sombra);background:var(--bg)";
+    v.textContent = "👑 Entrar como criadora"; v.onclick = () => { COMO_FA = false; ABA = "painel"; render() };
+    document.body.appendChild(v);
+  }
 }
 
 function vipAtivo(){
@@ -339,43 +424,62 @@ function vipAtivo(){
 
 function aba(){
   if(ABA === "inicio") return inicio();
+  if(ABA === "painel") return painel();
   if(ABA === "vip") return vip();
   if(ABA === "minhas") return minhas();
   return mimos();
 }
 
+function cabPost(menu){
+  return `<div class="cab">${D.criadora.tem_foto ? `<img class="mini-av" src="${avatarSrc()}" alt="">` : `<div class="mini-av">✨</div>`}
+    <div><b>${esc(D.criadora.nome)}</b><small>${menu.data}</small></div>
+    ${criadora() && menu.acao ? `<button class="menu-post" data-menu="${menu.acao}">⋯</button>` : ""}</div>`;
+}
+function postTexto(p){
+  return `<article class="post post-texto">
+    ${cabPost({data: esc(relativo(p.criado_em)), acao: `post:${p.id}`})}
+    ${p.texto ? `<div class="corpo">${esc(p.texto)}</div>` : ""}
+    ${p.foto ? `<img class="foto-post" src="/api/loja/post_foto/${p.id}" loading="lazy" alt="">` : ""}
+  </article>`;
+}
 function inicio(){
   let itens = [...D.combos.map(x => ({...x, combo:true})), ...D.packs];
   if(FILTRO === "packs") itens = itens.filter(x => !x.combo);
   if(FILTRO === "combos") itens = itens.filter(x => x.combo);
+  if(FILTRO === "posts") itens = [];
+  const posts = FILTRO === "todos" || FILTRO === "posts" ? D.posts.map(p => ({...p, texto_post:true})) : [];
+  if(criadora()) itens = itens.map(x => ({...x, comprado: true}));
   const cab = `
     <div class="secao-titulo"><h2>Conteúdos</h2>
       <div class="alt-vista"><button data-vista="feed" class="${VISTA==="feed"?"on":""}">☰</button><button data-vista="grade" class="${VISTA==="grade"?"on":""}">▦</button></div></div>
-    <div class="chips">${[["todos","Todos"],["packs","📦 Packs"],["combos","🎁 Combos"]]
+    <div class="chips">${[["todos","Todos"],["posts","📝 Posts"],["packs","📦 Packs"],["combos","🎁 Combos"]]
       .map(([id,t]) => `<button class="chip ${FILTRO===id?"on":""}" data-filtro="${id}">${t}</button>`).join("")}</div>`;
-  if(!itens.length) return cab + `<div class="vazio"><div class="ico">🫧</div>Nada por aqui ainda.<br>Dá uma olhada no VIP ⭐</div>`;
+  if(!itens.length && !posts.length) return cab + (criadora()
+    ? `<div class="vazio"><div class="ico">✨</div>Seu feed está vazio.<br>Toque no <b>+</b> para publicar o primeiro post ou pack.</div>`
+    : `<div class="vazio"><div class="ico">🫧</div>Nada por aqui ainda.<br>Dá uma olhada no VIP ⭐</div>`);
   if(VISTA === "grade") return cab + `<div class="grade">${itens.map(x => `
     <div class="card" data-item="${x.id}">
       <img src="/api/loja/previa/${x.id}" loading="lazy" alt="">
       <span class="cad">${x.comprado ? "✅" : "🔒"}</span>
       <div class="veu"><b>${esc(x.titulo)}</b><small>${x.comprado ? "Comprado" : esc(x.preco_fmt)}</small></div>
     </div>`).join("")}</div>`;
-  return cab + `<div class="feed">${itens.map(x => `
+  const todos = [...posts, ...itens].sort((a, b) => (b.combo ? 1 : 0) - (a.combo ? 1 : 0) || String(b.criado_em || "").localeCompare(String(a.criado_em || "")));
+  return cab + `<div class="feed">${todos.map(x => x.texto_post ? postTexto(x) : `
     <article class="post">
-      <div class="cab">${D.criadora.tem_foto ? `<img class="mini-av" src="/api/loja/foto" alt="">` : `<div class="mini-av">✨</div>`}
-        <div><b>${esc(D.criadora.nome)}</b><small>${x.combo ? "Combo especial" : esc(relativo(x.criado_em)) || "Pack"}</small></div></div>
+      ${cabPost({data: x.combo ? "Combo especial" : esc(relativo(x.criado_em)) || "Pack", acao: x.combo ? "" : `pack:${x.id}`})}
+      ${x.legenda ? `<div class="legenda ${x.legenda.length > 220 ? "mais" : ""}">${esc(x.legenda)}</div>` : ""}
       <div class="midia card" data-item="${x.id}">
         <img src="/api/loja/previa/${x.id}" loading="lazy" alt="">
-        ${x.comprado ? `<span class="comprado-selo">✓ Comprado</span>` : ""}
+        ${criadora() ? `<span class="comprado-selo">${esc(x.preco_fmt)}</span>` : x.comprado ? `<span class="comprado-selo">✓ Comprado</span>` : ""}
         ${x.combo ? `<span class="tag-combo">🎁 ${x.packs.length} packs</span>` : ""}
         <div class="veu">
-          ${x.comprado ? `<span class="desbloq">▶ Ver agora</span>` : `<span class="cadeado">🔒</span><span class="desbloq">Desbloquear por ${esc(x.preco_fmt)}</span>`}
+          ${criadora() ? `<span class="desbloq">👁 Ver conteúdo</span>` : x.comprado ? `<span class="desbloq">▶ Ver agora</span>` : `<span class="cadeado">🔒</span><span class="desbloq">Desbloquear por ${esc(x.preco_fmt)}</span>`}
         </div>
         <div class="contagem">${midias(x).map(m => `<span class="pill">${m}</span>`).join("")}</div>
       </div>
       <div class="rodape">
         <div><b>${esc(x.titulo)}</b><small>${x.combo ? `Separados ${esc(x.separados_fmt)}` : esc(x.resumo)}</small></div>
-        ${x.comprado ? `<span class="preco-tag ok" data-ver="${x.id}">Abrir</span>` : `<span class="preco-tag" data-item="${x.id}">${esc(x.preco_fmt)}</span>`}
+        ${criadora() ? `<span class="preco-tag ok" data-menu="pack:${x.id}">Editar</span>` : x.comprado ? `<span class="preco-tag ok" data-ver="${x.id}">Abrir</span>` : `<span class="preco-tag" data-item="${x.id}">${esc(x.preco_fmt)}</span>`}
       </div>
     </article>`).join("")}</div>`;
 }
@@ -435,7 +539,7 @@ function fecharFolha(){ clearInterval(POLL); clearInterval(TIMER); POLL = TIMER 
 function detalhes(id){
   const p = D.packs.find(x => x.id === id) || D.combos.find(x => x.id === id);
   const plano = D.planos.find(x => x.id === id);
-  if(p && p.comprado){ return abrirGaleria(id) }
+  if(p && (p.comprado || criadora())){ return abrirGaleria(id) }
   const titulo = p ? p.titulo : plano ? `VIP ${plano.nome}` : "Mimo";
   const preco = p ? p.preco_fmt : plano ? plano.preco_fmt : "";
   abrirFolha(`
@@ -526,6 +630,214 @@ async function reenviar(packId){
   if(r.ok){ vibrar("success"); toast("Enviado no seu chat com o bot 💌") } else toast("Não consegui reenviar")
 }
 
+function escolherModo(){
+  $("#barra").innerHTML = "";
+  $("#app").innerHTML = `
+    <div class="capa"><span class="bolha b1"></span><span class="bolha b2"></span><span class="bolha b3"></span></div>
+    <div class="perfil">
+      ${D.criadora.tem_foto ? `<img class="avatar" src="${avatarSrc()}" alt="">` : `<div class="avatar">✨</div>`}
+      <div class="nome">Olá, ${esc(D.usuario.nome || D.criadora.nome)} 👋</div>
+      <p class="bio">Como você quer abrir a loja?</p>
+    </div>
+    <div class="acoes" style="margin-top:22px">
+      <button class="acao" data-modo="criadora"><span class="ico">👑</span><div><b>Criadora</b><small>Publicar, editar, ver vendas e ajustes</small></div><span class="seta">›</span></button>
+      <button class="acao" data-modo="cliente"><span class="ico">🛍️</span><div><b>Cliente</b><small>Ver e comprar como um fã vê</small></div><span class="seta">›</span></button>
+    </div>
+    <p class="dica" style="text-align:center;margin:18px">Dá para trocar depois: no Painel ou pelo botão no topo.</p>`;
+}
+
+/* ── Painel da criadora ────────────────────────────────────────────────── */
+async function carregarPainel(){
+  const r = await api("/api/criadora/painel");
+  if(r.ok){ PAINEL = r; if(ABA === "painel") $("#conteudo").innerHTML = painel() }
+}
+function painel(){
+  if(!PAINEL) return `<div class="kpis" style="margin-top:20px"><div class="sk" style="height:84px"></div><div class="sk" style="height:84px"></div></div>`;
+  const R = PAINEL.resumo;
+  return `
+    <div class="secao-titulo"><h2>Resumo</h2><small class="muted">vendas pagas</small></div>
+    <div class="kpis">
+      <div class="kpi destaque"><small>Hoje</small><b>${esc(R.hoje.valor)}</b><span>${R.hoje.vendas} venda(s)</span></div>
+      <div class="kpi"><small>Últimos 7 dias</small><b>${esc(R.semana.valor)}</b><span>${R.semana.vendas} venda(s)</span></div>
+      <div class="kpi"><small>Últimos 30 dias</small><b>${esc(R.mes.valor)}</b><span>${R.mes.vendas} venda(s)</span></div>
+      <div class="kpi"><small>Assinantes VIP</small><b>${R.assinantes}</b><span>${R.vencendo} vencem em 7 dias</span></div>
+    </div>
+    <div class="secao-titulo"><h2>Criar</h2></div>
+    <div class="acoes">
+      <button class="acao" data-criar="post"><span class="ico">📝</span><div><b>Nova publicação</b><small>Texto e foto, visível para todos</small></div><span class="seta">›</span></button>
+      <button class="acao" data-criar="pack"><span class="ico">📦</span><div><b>Novo pack pago</b><small>Fotos e vídeos com prévia embaçada</small></div><span class="seta">›</span></button>
+    </div>
+    <div class="secao-titulo"><h2>Ajustes</h2></div>
+    <div class="acoes lista-msg">
+      <button class="acao" id="ed-perfil2"><span class="ico">👤</span><div><b>Perfil</b><small>Foto, nome e bio</small></div><span class="seta">›</span></button>
+      <button class="acao" id="ed-msgs"><span class="ico">💬</span><div><b>Mensagens do bot</b><small>Boas-vindas, pós-compra e VIP</small></div><span class="seta">›</span></button>
+    </div>
+    <div class="gap"></div><div class="gap"></div>
+    <div class="troca"><div><b>Ver a loja como fã</b><br><small class="muted">Esconde as ferramentas de criadora</small></div><span class="chave" id="como-fa"></span></div>
+    <p class="dica" style="text-align:center;margin:16px">O bot continua com todos os comandos (/admin) como plano B.</p>`;
+}
+
+function escolherCriacao(){
+  abrirFolha(`<h2>Criar</h2><p class="sub">O que você quer publicar?</p>
+    <div class="acoes" style="padding:0">
+      <button class="acao" data-criar="post"><span class="ico">📝</span><div><b>Publicação</b><small>Texto com foto opcional, grátis no feed</small></div><span class="seta">›</span></button>
+      <button class="acao" data-criar="pack"><span class="ico">📦</span><div><b>Pack pago</b><small>Conteúdo bloqueado com preço e legenda</small></div><span class="seta">›</span></button>
+    </div>`);
+}
+
+function seletor(id, multiplo, aceitar){
+  return `<input type="file" id="${id}" accept="${aceitar}" ${multiplo ? "multiple" : ""} hidden>`;
+}
+function miniaturas(lista, alvo){
+  $(alvo).innerHTML = lista.map((f, i) => {
+    const url = URL.createObjectURL(f), video = f.type.startsWith("video");
+    return `<div>${video ? `<video src="${url}" muted playsinline></video><span class="v">VÍDEO</span>` : `<img src="${url}" alt="">`}<button class="x" data-tirar="${i}">✕</button></div>`;
+  }).join("");
+}
+
+function editarPerfil(){
+  const c = D.criadora; let nova = null;
+  abrirFolha(`<h2>Editar perfil</h2>
+    <label for="perfil-foto">${c.tem_foto ? `<img class="foto-perfil-ed" id="prev-av" src="${avatarSrc()}" alt="">` : `<div class="foto-perfil-ed" id="prev-av">✨</div>`}</label>
+    ${seletor("perfil-foto", false, "image/*")}
+    <p class="dica" style="text-align:center;margin-top:0">Toque na foto para trocar</p>
+    <span class="rotulo">Nome</span><input type="text" id="perfil-nome" maxlength="60" value="${esc(c.nome)}">
+    <span class="rotulo">Bio</span><textarea id="perfil-bio" maxlength="700">${esc(c.bio)}</textarea>
+    <div class="gap"></div><button class="btn" id="perfil-salvar">Salvar</button>`);
+  $("#perfil-foto").onchange = e => { nova = e.target.files[0]; if(nova){ const u = URL.createObjectURL(nova); $("#prev-av").outerHTML = `<img class="foto-perfil-ed" id="prev-av" src="${u}" alt="">` } };
+  $("#perfil-salvar").onclick = async () => {
+    const b = $("#perfil-salvar"); b.disabled = true; b.textContent = "Salvando…";
+    const r = await enviarForm("/api/criadora/perfil", {nome: $("#perfil-nome").value.trim(), bio: $("#perfil-bio").value.trim()}, nova ? [["foto", nova]] : []);
+    if(!r.ok){ b.disabled = false; b.textContent = "Salvar"; return toast(r.erro || "Não consegui salvar") }
+    vibrar("success"); toast("Perfil atualizado ✓"); fecharFolha(); PAINEL = null; carregar();
+  };
+}
+
+function novoPost(){
+  let foto = null;
+  abrirFolha(`<h2>Nova publicação</h2><p class="sub">Aparece no feed para todos, sem cobrança.</p>
+    <textarea id="post-texto" maxlength="4000" placeholder="Escreva algo para seus fãs…"></textarea>
+    <div class="gap"></div>
+    <label class="escolher" for="post-foto">📷 Adicionar foto (opcional)</label>${seletor("post-foto", false, "image/*")}
+    <div class="miniaturas" id="post-mini"></div>
+    <div class="gap"></div><button class="btn" id="post-publicar">Publicar</button>`);
+  $("#post-foto").onchange = e => { foto = e.target.files[0] || null; miniaturas(foto ? [foto] : [], "#post-mini") };
+  $("#post-mini").onclick = e => { if(e.target.dataset.tirar !== undefined){ foto = null; miniaturas([], "#post-mini") } };
+  $("#post-publicar").onclick = async () => {
+    const texto = $("#post-texto").value.trim();
+    if(!texto && !foto) return toast("Escreva algo ou escolha uma foto");
+    const b = $("#post-publicar"); b.disabled = true; b.textContent = "Publicando…";
+    const r = await enviarForm("/api/criadora/post", {texto}, foto ? [["foto", foto]] : []);
+    if(!r.ok){ b.disabled = false; b.textContent = "Publicar"; return toast(r.erro || "Não consegui publicar") }
+    vibrar("success"); toast("Publicado ✓"); fecharFolha(); ABA = "inicio"; FILTRO = "todos"; PAINEL = null; carregar();
+  };
+}
+
+function novoPack(){
+  let arqs = [];
+  abrirFolha(`<h2>Novo pack pago</h2><p class="sub">As prévias com desfoque são geradas sozinhas.</p>
+    <label class="escolher" for="pack-arqs">🖼️ Escolher fotos e vídeos</label>${seletor("pack-arqs", true, "image/*,video/*")}
+    <div class="miniaturas" id="pack-mini"></div>
+    <span class="rotulo">Título</span><input type="text" id="pack-titulo" maxlength="80" placeholder="Ex: Ensaio de verão">
+    <span class="rotulo">Preço</span><input type="text" id="pack-preco" inputmode="decimal" placeholder="29,90">
+    <span class="rotulo">Legenda</span><textarea id="pack-legenda" maxlength="2000" placeholder="Conte o que tem nesse pack…"></textarea>
+    ${PAINEL?.canal !== false ? `<div class="troca" style="margin:14px 0 0"><div><b>Postar prévia no canal</b><br><small class="muted">Canal de amostras, com botão de compra</small></div><span class="chave on" id="pack-canal"></span></div>` : ""}
+    <div id="pack-prog" class="ocultar"><div class="progresso"><i id="pack-barra"></i></div><p class="dica" id="pack-etapa">Enviando…</p></div>
+    <div class="gap"></div><button class="btn" id="pack-publicar">Publicar pack</button>`);
+  $("#pack-arqs").onchange = e => { arqs = [...arqs, ...e.target.files].slice(0, 30); miniaturas(arqs, "#pack-mini"); e.target.value = "" };
+  $("#pack-mini").onclick = e => { const i = e.target.dataset.tirar; if(i !== undefined){ arqs.splice(+i, 1); miniaturas(arqs, "#pack-mini") } };
+  $("#pack-canal") && ($("#pack-canal").onclick = e => e.currentTarget.classList.toggle("on"));
+  $("#pack-publicar").onclick = async () => {
+    if(!arqs.length) return toast("Escolha pelo menos uma foto ou vídeo");
+    const titulo = $("#pack-titulo").value.trim(), preco = $("#pack-preco").value.trim();
+    if(!titulo) return toast("Dê um título ao pack");
+    if(!preco) return toast("Defina o preço");
+    const grande = arqs.find(f => f.type.startsWith("video") && f.size > 49 * 1024 * 1024);
+    if(grande) return toast("Um vídeo passa de 50 MB, o limite do Telegram. Envie esse pelo bot.");
+    const b = $("#pack-publicar"); b.disabled = true; b.textContent = "Publicando…";
+    $("#pack-prog").classList.remove("ocultar");
+    const r = await enviarForm("/api/criadora/pack",
+      {titulo, preco, legenda: $("#pack-legenda").value.trim(), canal: $("#pack-canal")?.classList.contains("on") ? "1" : "0"},
+      arqs.map(f => ["arquivos", f]),
+      p => { $("#pack-barra").style.width = `${Math.round(p * 100)}%`; $("#pack-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : "Gerando as prévias com desfoque…" });
+    if(!r.ok){ b.disabled = false; b.textContent = "Publicar pack"; $("#pack-prog").classList.add("ocultar"); return toast(r.erro || "Não consegui publicar") }
+    vibrar("success"); toast(r.no_canal ? "Pack publicado e postado no canal ✓" : "Pack publicado ✓");
+    fecharFolha(); ABA = "inicio"; FILTRO = "todos"; PAINEL = null; carregar();
+  };
+}
+
+function menuItem(alvo){
+  const [tipo, id] = alvo.split(":");
+  if(tipo === "post"){
+    const p = D.posts.find(x => String(x.id) === id); if(!p) return;
+    abrirFolha(`<h2>Editar publicação</h2>
+      <textarea id="ed-texto" maxlength="4000">${esc(p.texto)}</textarea>
+      <div class="gap"></div><button class="btn" id="ed-salvar">Salvar</button><div class="gap"></div>
+      <button class="btn fantasma perigo" id="ed-apagar">Apagar publicação</button>`);
+    $("#ed-salvar").onclick = async () => {
+      const r = await api(`/api/criadora/post/${id}`, {texto: $("#ed-texto").value.trim()});
+      if(!r.ok) return toast(r.erro || "Não consegui salvar"); toast("Salvo ✓"); fecharFolha(); carregar();
+    };
+    $("#ed-apagar").onclick = () => confirmar("Apagar esta publicação?", async () => { await api(`/api/criadora/post/${id}/apagar`, {}); toast("Apagada"); fecharFolha(); carregar() });
+    return;
+  }
+  const p = D.packs.find(x => x.id === id); if(!p) return;
+  abrirFolha(`<h2>Editar pack</h2>
+    <span class="rotulo">Título</span><input type="text" id="ed-titulo" maxlength="80" value="${esc(p.titulo)}">
+    <span class="rotulo">Preço</span><input type="text" id="ed-preco" inputmode="decimal" value="${esc(p.preco_fmt.replace("R$ ", ""))}">
+    <span class="rotulo">Legenda</span><textarea id="ed-legenda" maxlength="2000">${esc(p.legenda || "")}</textarea>
+    <div class="gap"></div><button class="btn" id="ed-salvar">Salvar</button><div class="gap"></div>
+    <button class="btn sec" id="ed-ver">👁 Ver conteúdo</button><div class="gap"></div>
+    <button class="btn fantasma perigo" id="ed-apagar">Tirar da vitrine</button>
+    <p class="dica" style="text-align:center">Quem já comprou continua com acesso.</p>`);
+  $("#ed-ver").onclick = () => abrirGaleria(id);
+  $("#ed-salvar").onclick = async () => {
+    const r = await api(`/api/criadora/pack/${id}`, {titulo: $("#ed-titulo").value.trim(), preco: $("#ed-preco").value.trim(), legenda: $("#ed-legenda").value.trim()});
+    if(!r.ok) return toast(r.erro || "Não consegui salvar"); toast("Salvo ✓"); fecharFolha(); carregar();
+  };
+  $("#ed-apagar").onclick = () => confirmar(`Tirar "${p.titulo}" da vitrine?`, async () => { await api(`/api/criadora/pack/${id}/apagar`, {}); toast("Removido da vitrine"); fecharFolha(); PAINEL = null; carregar() });
+}
+
+function confirmar(texto, sim){
+  if(tg?.showConfirm){ try{ return tg.showConfirm(texto, ok => ok && sim()) }catch(e){} }
+  if(window.confirm(texto)) sim();
+}
+
+function editarMensagens(){
+  const M = PAINEL?.mensagens || [];
+  abrirFolha(`<h2>Mensagens do bot</h2><p class="sub">Edite o que o bot manda para seus fãs.</p>
+    <div class="acoes" style="padding:0">${M.map(m => `<button class="acao" data-msg="${m.chave}"><span class="ico">💬</span>
+      <div style="min-width:0"><b>${esc(m.rotulo)}</b><small style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.texto || "Padrão: " + (m.padrao || "bio do perfil"))}</small></div><span class="seta">›</span></button>`).join("")}</div>`);
+}
+function editarMensagem(chave){
+  const m = PAINEL.mensagens.find(x => x.chave === chave); let foto = null, remover = false;
+  const comFoto = chave === "boas_vindas";
+  const exemplo = t => (t || "").replaceAll("{nome}", D.usuario.nome || "Ana").replaceAll("{criadora}", D.criadora.nome).replaceAll("{item}", "Ensaio de verão");
+  abrirFolha(`<h2>${esc(m.rotulo)}</h2>
+    <textarea id="msg-texto" maxlength="3500" placeholder="${esc(m.padrao || "Vazio: usa a bio e a foto do perfil")}">${esc(m.texto)}</textarea>
+    <p class="dica">Marcadores: <code>{nome}</code> nome do fã · <code>{criadora}</code> seu nome${chave !== "boas_vindas" ? ` · <code>{item}</code> o que foi comprado` : ""}</p>
+    ${comFoto ? `<div class="gap"></div><label class="escolher" for="msg-foto">📷 ${m.foto ? "Trocar a foto" : "Adicionar foto"}</label>${seletor("msg-foto", false, "image/*")}
+      ${m.foto ? `<button class="btn fantasma perigo" id="msg-sem-foto">Remover foto</button>` : ""}` : ""}
+    <span class="rotulo">Prévia</span>
+    <div class="balao" id="msg-prev"></div>
+    <div class="gap"></div><button class="btn" id="msg-salvar">Salvar</button>`);
+  const prev = () => {
+    const img = foto ? URL.createObjectURL(foto) : (comFoto && m.foto && !remover ? `/api/loja/msg_foto/${chave}?t=${Date.now()}` : "");
+    $("#msg-prev").innerHTML = `${img ? `<img src="${img}" alt="">` : ""}<p>${esc(exemplo($("#msg-texto").value || m.padrao || D.criadora.bio))}</p>`;
+  };
+  $("#msg-texto").oninput = prev; prev();
+  if(comFoto){
+    $("#msg-foto").onchange = e => { foto = e.target.files[0] || null; remover = false; prev() };
+    $("#msg-sem-foto") && ($("#msg-sem-foto").onclick = () => { remover = true; foto = null; prev(); toast("A foto será removida ao salvar") });
+  }
+  $("#msg-salvar").onclick = async () => {
+    const b = $("#msg-salvar"); b.disabled = true; b.textContent = "Salvando…";
+    const r = await enviarForm("/api/criadora/mensagem", {chave, texto: $("#msg-texto").value.trim(), remover_foto: remover ? "1" : "0"}, foto ? [["foto", foto]] : []);
+    if(!r.ok){ b.disabled = false; b.textContent = "Salvar"; return toast(r.erro || "Não consegui salvar") }
+    vibrar("success"); toast("Mensagem salva ✓"); await carregarPainel(); editarMensagens();
+  };
+}
+
 /* ── Galeria ───────────────────────────────────────────────────────────── */
 async function abrirGaleria(id){
   fecharGaleria(); fecharFolha();
@@ -576,8 +888,16 @@ function fecharGaleria(){
 
 /* ── Eventos ───────────────────────────────────────────────────────────── */
 document.addEventListener("click", e => {
-  const el = e.target.closest("[data-reenviar],[data-ver],[data-aba],[data-vista],[data-filtro],[data-plano],[data-item],#pagar,#assinar,#gorjeta-ok");
+  const el = e.target.closest("[data-modo],[data-menu],[data-criar],[data-msg],#ed-perfil,#ed-perfil2,#ed-msgs,#como-fa,[data-reenviar],[data-ver],[data-aba],[data-vista],[data-filtro],[data-plano],[data-item],#pagar,#assinar,#gorjeta-ok");
   if(!el) return;
+  if(el.dataset.modo){ COMO_FA = el.dataset.modo === "cliente"; ABA = "inicio"; vibrar("leve");
+    if(!PLANO_SEL) PLANO_SEL = (D.planos.find(p => p.economia) || D.planos[0])?.id; return render() }
+  if(el.dataset.menu){ e.stopPropagation(); return menuItem(el.dataset.menu) }
+  if(el.dataset.criar){ return el.dataset.criar === "post" ? novoPost() : novoPack() }
+  if(el.dataset.msg){ return editarMensagem(el.dataset.msg) }
+  if(el.id === "ed-perfil" || el.id === "ed-perfil2"){ return editarPerfil() }
+  if(el.id === "ed-msgs"){ return PAINEL ? editarMensagens() : carregarPainel().then(editarMensagens) }
+  if(el.id === "como-fa"){ COMO_FA = true; ABA = "inicio"; vibrar("leve"); render(); toast("Vendo a loja como seus fãs"); return }
   if(el.dataset.aba){ ABA = el.dataset.aba; vibrar("leve"); render(); window.scrollTo({top: ABA === "inicio" ? 0 : 120, behavior:"smooth"}); return }
   if(el.dataset.vista){ VISTA = el.dataset.vista; render(); return }
   if(el.dataset.filtro){ FILTRO = el.dataset.filtro; render(); return }

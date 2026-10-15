@@ -102,7 +102,7 @@ async def dados(request: web.Request) -> web.Response:
                       "resumo": _resumo([p]), "comprado": await db.ja_comprou(user["id"], p.id),
                       "fotos": sum(m["tipo"] == "photo" for m in p.originais),
                       "videos": sum(m["tipo"] == "video" for m in p.originais),
-                      "criado_em": p.criado_em})
+                      "criado_em": p.criado_em, "legenda": p.legenda})
     todos = await db.listar_packs(tipo=None)
     totais = {"conteudos": len(todos),
               "fotos": sum(m["tipo"] == "photo" for p in todos for m in p.originais),
@@ -119,8 +119,12 @@ async def dados(request: web.Request) -> web.Response:
         "criadora": {"nome": cfg.criadora_nome,
                      "bio": await db.get_ajuste("bio", "Conteúdo exclusivo todos os dias 🔥"),
                      "tem_foto": bool(await db.get_ajuste("foto_perfil")),
+                     "foto_v": (await db.get_ajuste("foto_perfil") or "")[-10:],
                      "totais": totais},
         "usuario": {"nome": user["nome"]},
+        "sou_criadora": user["id"] in cfg.admin_ids,
+        "posts": [{"id": p["id"], "texto": p["texto"], "foto": bool(p["foto"]), "criado_em": p["criado_em"]}
+                  for p in await db.listar_posts()],
         "idade": await _idade_ok(db, cfg, user["id"]),
         "teste": isinstance(request.app["gateway"], MockPixGateway),
         "assinatura": {"ativa": True, "ate": data_local(assinatura.expira_em, cfg)}

@@ -154,6 +154,17 @@ confirmado o **bot manda o conteúdo no chat**, igual à compra pelo bot.
 - A página só recebe as **prévias embaçadas**. As mídias originais nunca passam pela loja: quem entrega é o bot, com `protect_content`.
 - Cupons, 18+, validade do PIX, "Já paguei" e remarketing funcionam igual ao bot.
 
+### Modo criadora (painel no Mini App)
+
+Quem está em `ADMIN_IDS` escolhe ao abrir a loja se entra como **Criadora** ou **Cliente** (dá para trocar depois).
+No modo criadora o controle todo fica no Mini App, e os comandos do bot ficam só para emergência:
+
+- **Painel**: vendas de hoje, da semana e do mês, assinantes e packs.
+- **Criar**: post de texto (com foto opcional) e pack pago com legenda, enviado do celular (até 30 arquivos, vídeos até 49 MB; maiores pelo `/novo_pack`). Pode postar a prévia no canal de amostras.
+- **⋯** em cada post ou pack: editar (título, preço, legenda) ou apagar. Pack apagado sai da loja, mas quem comprou continua com acesso.
+- **Perfil**: foto, nome e bio.
+- **Mensagens do bot**: boas-vindas do /start (com foto), mensagem depois da compra e boas-vindas do VIP. Marcadores: `{nome}`, `{criadora}`, `{item}`.
+
 ## Testar no Telegram só pelo celular
 
 Sem PC, o bot precisa rodar num servidor na nuvem. O caminho mais simples pelo navegador do celular é o **Railway**:

@@ -24,7 +24,9 @@ from database import Database
 from payments import criar_gateway
 from backup import loop_backup
 from remarketing import loop_remarketing
+import criadora
 import loja
+import mensagens
 from webhook import criar_app_web
 
 
@@ -39,6 +41,9 @@ async def run(cfg: Config) -> None:
     db = Database(cfg.db_path)
     await db.connect()
     await db.criar_planos_padrao(parse_planos(cfg.planos_padrao))   # só na primeira execução
+    # nome editado pelo painel do Mini App (Config é imutável, por isso o __setattr__)
+    object.__setattr__(cfg, "criadora_nome", await db.get_ajuste("nome", cfg.criadora_nome))
+    mensagens.configurar(db, cfg)
     gateway = criar_gateway(cfg)
     bot = criar_bot(cfg)
 
@@ -78,6 +83,7 @@ async def run(cfg: Config) -> None:
 
     app = criar_app_web(bot, db, gateway, cfg)
     loja.registrar_rotas(app)
+    criadora.registrar_rotas(app)
     url = loja.url_loja(cfg)
     if url:   # botão fixo "🛍️ Loja" ao lado do campo de mensagem, no chat com o bot
         await bot.set_chat_menu_button(menu_button=MenuButtonWebApp(text="🛍️ Loja", web_app=WebAppInfo(url=url)))

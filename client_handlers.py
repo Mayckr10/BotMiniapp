@@ -28,6 +28,7 @@ from aiogram.types import (BufferedInputFile, CallbackQuery, InlineKeyboardButto
 
 from admin_handlers import _resumo_midias, legenda_canal, parse_preco
 from assinaturas import data_local, teclado_planos
+import mensagens
 from config import Config
 from database import STATUS_EXPIRADO, Combo, Database, Gorjeta, Pack, Plano, fmt_reais
 from payments import MockPixGateway, PixGateway
@@ -226,7 +227,13 @@ async def mostrar_perfil(msg: Message, user: User, db: Database, cfg: Config) ->
     assinatura = await db.get_assinatura(user.id)
     status = (f"\n\n✅ Você é assinante VIP até {data_local(assinatura.expira_em, cfg)}"
               if assinatura and assinatura.ativa else "")
-    texto = (f"✨ <b>{html.escape(cfg.criadora_nome)}</b>\n\n{html.escape(bio)}\n\n" + " · ".join(partes) + status)
+    personalizada = await mensagens.texto(db, "boas_vindas")
+    if personalizada:
+        texto = mensagens.montar(personalizada, nome=user.first_name or "", criadora=cfg.criadora_nome)
+        texto += ("\n\n" + " · ".join(partes) if partes else "") + status
+        foto = await mensagens.foto(db, "boas_vindas") or foto
+    else:
+        texto = (f"✨ <b>{html.escape(cfg.criadora_nome)}</b>\n\n{html.escape(bio)}\n\n" + " · ".join(partes) + status)
     if user.id in cfg.admin_ids:
         texto += "\n\n👑 Você é admin: /admin abre o painel."
     if foto:

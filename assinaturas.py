@@ -20,6 +20,7 @@ from zoneinfo import ZoneInfo
 from aiogram import Bot, F, Router
 from aiogram.types import ChatJoinRequest, InlineKeyboardButton, InlineKeyboardMarkup
 
+import mensagens
 from config import Config
 from database import Database, Plano, Venda, agora, fmt_reais
 
@@ -80,7 +81,8 @@ async def ativar_assinatura(bot: Bot, db: Database, cfg: Config, venda: Venda, p
             ]])
             await bot.send_message(
                 venda.user_id,
-                f"⭐ <b>Bem-vindo(a) ao VIP!</b>\nSua assinatura vale até {data_local(vence, cfg)}.\n\n"
+                f"{await mensagens.para_fa('vip', venda.user_id, plano.nome)}\n"
+                f"Sua assinatura vale até {data_local(vence, cfg)}.\n\n"
                 "Toque no botão para pedir a entrada no canal. A aprovação é automática.",
                 reply_markup=teclado,
             )

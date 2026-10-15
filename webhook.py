@@ -22,6 +22,7 @@ from aiogram import Bot
 from aiogram.types import InputMediaPhoto, InputMediaVideo
 from aiohttp import web
 
+import mensagens
 from config import Config
 from assinaturas import ativar_assinatura
 from database import Database, Pack, fmt_reais
@@ -50,8 +51,7 @@ async def entregar_pack(bot: Bot, user_id: int, pack: Pack, agradecer: bool = Tr
                 protect_content=True,
             )
     if agradecer:
-        await bot.send_message(user_id, f"💖 Aproveite <b>{html.escape(pack.titulo)}</b>! Obrigada pela compra.",
-                               protect_content=True)
+        await bot.send_message(user_id, await mensagens.para_fa("obrigado", user_id, pack.titulo), protect_content=True)
 
 
 async def entregar_packs(bot: Bot, user_id: int, packs: list[Pack], titulo: str) -> None:
@@ -60,8 +60,8 @@ async def entregar_packs(bot: Bot, user_id: int, packs: list[Pack], titulo: str)
         if len(packs) > 1:
             await bot.send_message(user_id, f"📦 <b>{html.escape(pack.titulo)}</b>", protect_content=True)
         await entregar_pack(bot, user_id, pack, agradecer=False)
-    await bot.send_message(user_id, f"💖 Aproveite <b>{html.escape(titulo)}</b>! Obrigada pela compra.\n"
-                                    "Use /meus_packs para receber de novo quando quiser.", protect_content=True)
+    await bot.send_message(user_id, await mensagens.para_fa("obrigado", user_id, titulo) +
+                           "\nUse /meus_packs para receber de novo quando quiser.", protect_content=True)
 
 
 async def processar_pagamento(bot: Bot, db: Database, gateway: PixGateway, pix_id: str,
@@ -170,7 +170,7 @@ async def mock_pagar(request: web.Request) -> web.Response:
 
 
 def criar_app_web(bot: Bot, db: Database, gateway: PixGateway, cfg: Config) -> web.Application:
-    app = web.Application()
+    app = web.Application(client_max_size=200 * 1024 * 1024)   # uploads do painel da criadora
     app["bot"], app["db"], app["gateway"], app["cfg"] = bot, db, gateway, cfg
     app.router.add_post("/webhook/pix", webhook_pix)
     app.router.add_get("/health", health)
