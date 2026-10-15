@@ -27,6 +27,7 @@ from aiogram import Bot
 from aiogram.utils.web_app import safe_parse_webapp_init_data
 from aiohttp import web
 
+import galeria
 from assinaturas import data_local
 from config import Config
 from database import Database, Pack, fmt_reais
@@ -241,6 +242,7 @@ def registrar_rotas(app: web.Application) -> None:
     app.router.add_get("/api/loja/pedido/{pix_id}", pedido)
     app.router.add_post("/api/loja/reenviar", reenviar)
     app.router.add_post("/api/loja/teste_pagar", teste_pagar)
+    galeria.registrar_rotas(app)
 
 
 def url_loja(cfg: Config) -> str | None:

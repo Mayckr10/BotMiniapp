@@ -215,6 +215,37 @@ input::placeholder{color:var(--muted)}
 /* ── Skeleton ──────────────────────────────────────────────────────────── */
 .sk{background:linear-gradient(90deg,var(--card) 25%,color-mix(in srgb,var(--card) 70%,white 6%) 50%,var(--card) 75%);background-size:200% 100%;animation:sk 1.3s infinite;border-radius:14px}
 @keyframes sk{to{background-position:-200% 0}}
+.preco-tag.ok{cursor:pointer}
+.item{cursor:pointer}
+
+/* ── Galeria (carrossel do conteúdo comprado) ─────────────────────────── */
+.galeria{position:fixed;inset:0;z-index:50;background:#000;display:flex;flex-direction:column;animation:surge .2s;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.galeria header{position:absolute;top:0;left:0;right:0;z-index:2;display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top)) 14px 24px;background:linear-gradient(180deg,rgba(0,0,0,.7),transparent);color:#fff}
+.galeria header .av{width:34px;height:34px;border-radius:50%;background:var(--grad);display:grid;place-items:center;font-size:15px;flex:none;object-fit:cover}
+.galeria header .t{flex:1;min-width:0}
+.galeria header b{display:block;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.galeria header small{opacity:.75;font-size:12px}
+.galeria header button{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;font-size:16px;display:grid;place-items:center}
+.trilho{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain}
+.trilho::-webkit-scrollbar{display:none}
+.slide{flex:0 0 100%;height:100%;scroll-snap-align:center;scroll-snap-stop:always;display:flex;align-items:center;justify-content:center;position:relative}
+.slide img,.slide video{max-width:100%;max-height:100%;object-fit:contain;-webkit-user-drag:none;pointer-events:auto}
+.slide img{pointer-events:none}
+.slide .carregando{position:absolute;inset:0;display:grid;place-items:center}
+.slide .carregando i{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.18);border-top-color:#fff;animation:gira .8s linear infinite}
+@keyframes gira{to{transform:rotate(360deg)}}
+.slide .grande{color:#fff;text-align:center;padding:24px;display:grid;gap:12px;justify-items:center}
+.slide .grande .ico{font-size:46px}
+.galeria footer{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:22px 16px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(0deg,rgba(0,0,0,.7),transparent);display:flex;flex-direction:column;align-items:center;gap:10px}
+.pontos{display:flex;gap:6px;max-width:100%;overflow:hidden}
+.pontos i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35);transition:.2s;flex:none}
+.pontos i.on{background:#fff;width:18px;border-radius:4px}
+.contador{position:absolute;top:calc(64px + env(safe-area-inset-top));right:14px;z-index:2;background:rgba(0,0,0,.55);color:#fff;font-size:12.5px;font-weight:700;padding:4px 10px;border-radius:999px}
+.seta-g{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;font-size:22px;display:none;place-items:center}
+@media (hover:hover){.seta-g{display:grid}}
+.seta-g.esq{left:12px}.seta-g.dir{right:12px}
+.galeria .rodape-g{display:flex;gap:8px}
+.galeria .rodape-g .btn{width:auto;padding:10px 16px;font-size:13.5px}
 </style>
 </head>
 <body>
@@ -236,7 +267,7 @@ const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const reais = c => "R$ " + (c/100).toFixed(2).replace(".", ",");
 const EMOJI_MIMO = ["☕","🌹","💎","👑","🚀","🔥"];
-let D = null, ABA = "inicio", FILTRO = "todos", VISTA = "feed", PLANO_SEL = null, POLL = null, TIMER = null;
+let ULTIMO = null, D = null, ABA = "inicio", FILTRO = "todos", VISTA = "feed", PLANO_SEL = null, POLL = null, TIMER = null;
 
 async function api(caminho, corpo){
   const r = await fetch(caminho, {
@@ -338,13 +369,13 @@ function inicio(){
         ${x.comprado ? `<span class="comprado-selo">✓ Comprado</span>` : ""}
         ${x.combo ? `<span class="tag-combo">🎁 ${x.packs.length} packs</span>` : ""}
         <div class="veu">
-          ${x.comprado ? `<span class="desbloq">Ver no chat</span>` : `<span class="cadeado">🔒</span><span class="desbloq">Desbloquear por ${esc(x.preco_fmt)}</span>`}
+          ${x.comprado ? `<span class="desbloq">▶ Ver agora</span>` : `<span class="cadeado">🔒</span><span class="desbloq">Desbloquear por ${esc(x.preco_fmt)}</span>`}
         </div>
         <div class="contagem">${midias(x).map(m => `<span class="pill">${m}</span>`).join("")}</div>
       </div>
       <div class="rodape">
         <div><b>${esc(x.titulo)}</b><small>${x.combo ? `Separados ${esc(x.separados_fmt)}` : esc(x.resumo)}</small></div>
-        <span class="preco-tag ${x.comprado?"ok":""}" data-item="${x.id}">${x.comprado ? "Receber" : esc(x.preco_fmt)}</span>
+        ${x.comprado ? `<span class="preco-tag ok" data-ver="${x.id}">Abrir</span>` : `<span class="preco-tag" data-item="${x.id}">${esc(x.preco_fmt)}</span>`}
       </div>
     </article>`).join("")}</div>`;
 }
@@ -377,8 +408,8 @@ function minhas(){
   return `<div class="secao-titulo"><h2>Minhas compras</h2><small class="muted">${D.minhas.length} item(ns)</small></div>
     <div class="lista">
       ${a ? `<div class="item"><div class="thumb">⭐</div><div class="txt"><b>Assinatura VIP</b><small>Ativa até ${esc(a.ate)}</small></div><button class="btn mini sec" data-aba="vip">Renovar</button></div>` : ""}
-      ${D.minhas.map(p => `<div class="item"><img src="/api/loja/previa/${p.id}" alt=""><div class="txt"><b>${esc(p.titulo)}</b><small>Comprado · sem desfoque</small></div>
-        <button class="btn mini sec" data-reenviar="${p.id}">Receber</button></div>`).join("")}
+      ${D.minhas.map(p => `<div class="item" data-ver="${p.id}"><img src="/api/loja/previa/${p.id}" alt=""><div class="txt"><b>${esc(p.titulo)}</b><small>Toque para ver · sem desfoque</small></div>
+        <button class="btn mini sec" data-reenviar="${p.id}">No chat</button></div>`).join("")}
     </div>`;
 }
 
@@ -404,7 +435,7 @@ function fecharFolha(){ clearInterval(POLL); clearInterval(TIMER); POLL = TIMER 
 function detalhes(id){
   const p = D.packs.find(x => x.id === id) || D.combos.find(x => x.id === id);
   const plano = D.planos.find(x => x.id === id);
-  if(p && p.comprado){ return reenviar(id.startsWith("combo_") ? null : id, id) }
+  if(p && p.comprado){ return abrirGaleria(id) }
   const titulo = p ? p.titulo : plano ? `VIP ${plano.nome}` : "Mimo";
   const preco = p ? p.preco_fmt : plano ? plano.preco_fmt : "";
   abrirFolha(`
@@ -426,6 +457,7 @@ async function pagar(id, cupom){
   if(D.idade !== "ok"){ return pedirIdade(() => pagar(id, cupom)) }
   const btn = $("#pagar") || $("#assinar"); if(btn){ btn.disabled = true; btn.textContent = "Gerando PIX…" }
   vibrar("leve");
+  ULTIMO = id;
   const r = await api("/api/loja/comprar", {item_id: id, cupom});
   if(r.status === "ja_comprou"){ vibrar("success"); return sucesso("Você já tem este conteúdo. Enviei de novo no seu chat com o bot 💌") }
   if(!r.ok){ toast(r.status === "idade" ? "Confirme sua idade" : "Não consegui gerar o PIX. Tente de novo."); if(btn){btn.disabled=false; btn.textContent="💠 Pagar com PIX"} return }
@@ -478,22 +510,73 @@ async function verificar(pix, manual){
 }
 
 function sucesso(texto){
+  const ver = /^(pack|combo)_/.test(ULTIMO || "");
   abrirFolha(`<div class="ok-grande"><div class="check">✓</div><h2>Tudo certo!</h2><p class="sub">${esc(texto)}</p></div>
-    <button class="btn" id="voltar-chat">Ir para o chat</button><div class="gap"></div>
+    ${ver ? `<button class="btn" id="ver-agora">▶ Ver agora</button><div class="gap"></div>` : ""}
+    <button class="btn ${ver ? "sec" : ""}" id="voltar-chat">Ir para o chat</button><div class="gap"></div>
     <button class="btn sec" id="continuar">Continuar na loja</button>`);
   $("#voltar-chat").onclick = () => tg ? tg.close() : fecharFolha();
   $("#continuar").onclick = fecharFolha;
+  if(ver) $("#ver-agora").onclick = () => { const id = ULTIMO; fecharFolha(); abrirGaleria(id) };
 }
 
-async function reenviar(packId, itemId){
-  if(!packId){ return pagar(itemId) }   // combo já comprado: a rota de compra reenvia tudo
+async function reenviar(packId){
+  if(packId.startsWith("combo_")){ return pagar(packId) }   // combo já comprado: a rota de compra reenvia tudo
   const r = await api("/api/loja/reenviar", {pack_id: packId});
   if(r.ok){ vibrar("success"); toast("Enviado no seu chat com o bot 💌") } else toast("Não consegui reenviar")
 }
 
+/* ── Galeria ───────────────────────────────────────────────────────────── */
+async function abrirGaleria(id){
+  fecharGaleria(); fecharFolha();
+  const p = D.packs.find(x => x.id === id) || D.combos.find(x => x.id === id) || D.minhas.find(x => x.id === id) || {};
+  const g = document.createElement("div"); g.className = "galeria"; g.id = "galeria";
+  g.innerHTML = `
+    <header>${D.criadora.tem_foto ? `<img class="av" src="/api/loja/foto" alt="">` : `<div class="av">✨</div>`}
+      <div class="t"><b>${esc(p.titulo || "Conteúdo")}</b><small>${esc(D.criadora.nome)}</small></div>
+      <button id="g-fechar" aria-label="Fechar">✕</button></header>
+    <span class="contador" id="g-cont"></span>
+    <button class="seta-g esq" id="g-esq">‹</button><button class="seta-g dir" id="g-dir">›</button>
+    <div class="trilho" id="trilho"><div class="slide"><div class="carregando"><i></i></div></div></div>
+    <footer><div class="pontos" id="g-pontos"></div>
+      <div class="rodape-g"><button class="btn sec" data-reenviar="${esc(id)}">📩 Receber no chat</button></div></footer>`;
+  g.addEventListener("contextmenu", e => e.preventDefault());
+  document.body.appendChild(g); document.body.style.overflow = "hidden";
+  $("#g-fechar").onclick = fecharGaleria;
+  try{ tg?.BackButton?.show(); tg?.BackButton?.onClick(fecharGaleria) }catch(e){}
+
+  const r = await api(`/api/loja/conteudo/${id}`);
+  if(!r.ok || !r.midias?.length){ $("#trilho").innerHTML = `<div class="slide"><div class="grande"><div class="ico">😕</div>Não consegui abrir agora. Toque em "Receber no chat".</div></div>`; return }
+  const M = r.midias;
+  $("#trilho").innerHTML = M.map((m, i) => `<div class="slide" data-i="${i}">${
+    m.grande ? `<div class="grande"><div class="ico">🎬</div><b>Vídeo grande demais para abrir aqui</b><button class="btn mini" data-reenviar="${esc(id)}">Assistir no chat</button></div>`
+    : m.tipo === "video" ? `<video src="${m.url}" playsinline controls preload="metadata" controlslist="nodownload noplaybackrate" disablepictureinpicture></video>`
+    : `<div class="carregando"><i></i></div><img src="${m.url}" alt="" draggable="false" ${i > 1 ? 'loading="lazy"' : ""} onload="this.previousElementSibling?.remove()">`
+  }</div>`).join("");
+  $("#g-pontos").innerHTML = M.length > 1 ? M.map((_, i) => `<i class="${i ? "" : "on"}"></i>`).join("") : "";
+  const tr = $("#trilho");
+  const atual = () => Math.round(tr.scrollLeft / tr.clientWidth);
+  const marcar = () => {
+    const i = atual();
+    $("#g-cont").textContent = `${i + 1}/${M.length}`;
+    document.querySelectorAll("#g-pontos i").forEach((d, j) => d.classList.toggle("on", j === i));
+    document.querySelectorAll("#trilho video").forEach(v => { if(+v.parentElement.dataset.i !== i) v.pause() });
+  };
+  tr.addEventListener("scroll", () => { clearTimeout(tr._t); tr._t = setTimeout(marcar, 60) }, {passive:true});
+  const ir = d => { tr.scrollTo({left: (atual() + d) * tr.clientWidth, behavior:"smooth"}); vibrar("leve") };
+  $("#g-esq").onclick = () => ir(-1); $("#g-dir").onclick = () => ir(1);
+  marcar();
+}
+function fecharGaleria(){
+  const g = $("#galeria"); if(!g) return;
+  g.querySelectorAll("video").forEach(v => { v.pause(); v.removeAttribute("src"); v.load() });
+  g.remove(); document.body.style.overflow = "";
+  try{ tg?.BackButton?.offClick(fecharGaleria); tg?.BackButton?.hide() }catch(e){}
+}
+
 /* ── Eventos ───────────────────────────────────────────────────────────── */
 document.addEventListener("click", e => {
-  const el = e.target.closest("[data-aba],[data-vista],[data-filtro],[data-plano],[data-item],[data-reenviar],#pagar,#assinar,#gorjeta-ok");
+  const el = e.target.closest("[data-reenviar],[data-ver],[data-aba],[data-vista],[data-filtro],[data-plano],[data-item],#pagar,#assinar,#gorjeta-ok");
   if(!el) return;
   if(el.dataset.aba){ ABA = el.dataset.aba; vibrar("leve"); render(); window.scrollTo({top: ABA === "inicio" ? 0 : 120, behavior:"smooth"}); return }
   if(el.dataset.vista){ VISTA = el.dataset.vista; render(); return }
@@ -507,6 +590,7 @@ document.addEventListener("click", e => {
     return pagar(`gorjeta_${v}`);
   }
   if(el.dataset.reenviar){ reenviar(el.dataset.reenviar); return }
+  if(el.dataset.ver){ abrirGaleria(el.dataset.ver); return }
   if(el.dataset.item){
     const id = el.dataset.item;
     if(id.startsWith("gorjeta_")) return pagar(id);
