@@ -166,6 +166,8 @@ async def midia(request: web.Request) -> web.Response:
         raise web.HTTPForbidden()
     if exp < time.time() or not hmac.compare_digest(sig, _assinar(cfg, uid, item_id, n, exp)):
         raise web.HTTPForbidden()
+    if uid not in cfg.admin_ids and await db.esta_banido(uid):
+        raise web.HTTPForbidden()
     midias = await _midias_compradas(db, uid, item_id, uid in cfg.admin_ids)
     if midias is None or not 0 <= n < len(midias):
         raise web.HTTPForbidden()
@@ -177,6 +179,8 @@ async def midia(request: web.Request) -> web.Response:
         log.exception("Galeria: não consegui baixar %s", m["file_id"])
         raise web.HTTPRequestEntityTooLarge(max_size=LIMITE_BOT_API, actual_size=0)
 
+    if m["tipo"] == "photo" and await db.get_ajuste("marca_dagua", "1") != "1":     # a criadora desligou a marca
+        return web.Response(body=dados, content_type="image/jpeg", headers={"Cache-Control": "private, no-store"})
     if m["tipo"] == "photo":
         chave = (uid, m["file_id"])
         marcada = _marcadas.get(chave)

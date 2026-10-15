@@ -25,6 +25,7 @@ from aiohttp import web
 import mensagens
 from config import Config
 from assinaturas import ativar_assinatura
+from notificacoes import avisar_venda
 from database import Database, Pack, fmt_reais
 from payments import MockPixGateway, PixGateway
 
@@ -84,22 +85,17 @@ async def processar_pagamento(bot: Bot, db: Database, gateway: PixGateway, pix_i
     # Assinatura VIP
     if venda.pack_id.startswith("plano_"):
         plano = await db.get_plano(int(venda.pack_id[6:]), incluir_inativos=True)
+        renovacao = await db.assinante_ativo(venda.user_id)
         await bot.send_message(venda.user_id, "✅ <b>Pagamento confirmado!</b>")
         await ativar_assinatura(bot, db, cfg, venda, plano)
+        await avisar_venda(bot, db, cfg, venda, " · renovação" if renovacao else " · nova assinatura")
         return "entregue"
 
     # Gorjeta
     if venda.pack_id.startswith("gorjeta_"):
-        mimo = await db.get_item(venda.pack_id)
-        onde = f" em <b>{html.escape(mimo.titulo.split(' · ', 1)[1])}</b>" if mimo and mimo.alvo else ""
         await bot.send_message(venda.user_id, f"💝 Recebi sua gorjeta de <b>{fmt_reais(venda.valor)}</b>. "
                                               "Muito obrigada pelo carinho! 🥰")
-        for admin_id in cfg.admin_ids:
-            try:
-                await bot.send_message(admin_id, f"💝 Gorjeta de {fmt_reais(venda.valor)} de "
-                                                 f"<code>{venda.user_id}</code>{onde}.")
-            except Exception:
-                pass
+        await avisar_venda(bot, db, cfg, venda)
         return "entregue"
 
     # Pack, combo ou PPV
@@ -108,6 +104,7 @@ async def processar_pagamento(bot: Bot, db: Database, gateway: PixGateway, pix_i
     await db.liberar_acesso(venda.user_id, [p.id for p in packs], venda.id)
     await bot.send_message(venda.user_id, "✅ <b>Pagamento confirmado!</b> Enviando seu conteúdo…")
     await entregar_packs(bot, venda.user_id, packs, item.titulo if item else "seu conteúdo")
+    await avisar_venda(bot, db, cfg, venda)
     return "entregue"
 
 

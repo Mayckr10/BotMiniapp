@@ -521,6 +521,22 @@ img.fade.ok{opacity:1}
 .opcoes{display:flex;gap:6px;padding:4px;background:var(--card);border:1px solid var(--line);border-radius:14px}
 .opcoes button{flex:1;height:38px;border-radius:10px;font-weight:700;color:var(--muted);transition:.25s}
 .opcoes button.on{background:var(--text);color:var(--bg)}
+/* ── VIP: renovação e promo ──────────────────────────────────────────── */
+.vip-ativo.urgente{border-color:color-mix(in srgb,var(--warn) 55%,transparent);background:color-mix(in srgb,var(--warn) 10%,var(--card))}
+.vip-ativo .btn.mini{flex:none}
+.renovar{margin:0 16px 14px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.renovar .topo-r{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;color:var(--muted)}
+.renovar .topo-r b{color:var(--text);font-size:15px}
+.renovar .btn{margin-top:12px}
+.plano .valor s{display:block;color:var(--muted);font-size:12px;font-weight:600}
+.eco.promo{background:color-mix(in srgb,var(--a1) 16%,transparent);color:var(--a1)}
+/* ── Ficha do fã / bloqueados ────────────────────────────────────────── */
+.ficha{display:flex;align-items:center;gap:14px;margin:4px 0 14px}
+.ficha .av-fa{width:56px;height:56px;border-radius:50%;background:var(--grad);display:grid;place-items:center;color:#fff;font-size:24px;font-weight:800;flex:none}
+.ficha b{display:block;font-size:17px}
+.ficha small{color:var(--muted)}
+.selo-bloq{display:inline-block;background:color-mix(in srgb,var(--err) 15%,transparent);color:var(--err);font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:999px;margin-top:4px}
+.bloqueado-tela{min-height:80vh;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted)}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}}
 </style>
 </head>
@@ -653,11 +669,12 @@ function midias(x){
 
 async function carregar(){
   const r = await api("/api/loja/dados");
+  if(r.erro === "bloqueado"){ $("#barra").innerHTML = ""; $("#app").innerHTML = `<div class="bloqueado-tela"><div><div style="font-size:48px">🚫</div><h2 style="color:var(--text);margin:8px 0 6px">Acesso indisponível</h2>Seu acesso a este perfil foi bloqueado.</div></div>`; return }
   if(!r.ok){ $("#app").innerHTML = `<div class="vazio"><div class="ico">🔒</div>Abra a loja pelo botão do bot no Telegram.</div>`; return }
   const primeira = !D;
   D = r;
   if(primeira && D.sou_criadora) return escolherModo();
-  if(!PLANO_SEL) PLANO_SEL = (D.planos.find(p => p.economia) || D.planos[0])?.id;
+  if(!PLANO_SEL) PLANO_SEL = D.assinatura?.plano || (D.planos.find(p => p.economia) || D.planos[0])?.id;
   render();
 }
 
@@ -682,7 +699,7 @@ function render(){
           <div><b>${t.videos ?? 0}</b><small>vídeos</small></div>
         </div>
       </div>
-      ${criadora() ? "" : D.assinatura ? vipAtivo() : mensal && ABA !== "vip" ? `
+      ${criadora() || ABA === "vip" ? "" : D.assinatura ? vipAtivo() : mensal ? `
       <div class="cta-vip vivo brilho" data-aba="vip">
         <div><b>Assinar VIP</b><small>Canal privado exclusivo · a partir de ${esc(mensal.preco_fmt)}/mês</small></div>
         <span class="seta">›</span>
@@ -735,11 +752,11 @@ function irPara(nova){
 addEventListener("scroll", () => document.body.classList.toggle("rolou", scrollY > 240), {passive:true});
 
 function vipAtivo(){
-  const a = D.assinatura;
-  return `<div class="vip-ativo" data-aba="vip">
+  const a = D.assinatura, urgente = a.dias <= 3 && a.plano;
+  return `<div class="vip-ativo ${urgente ? "urgente" : ""}" data-aba="vip">
     <div class="ico">⭐</div>
-    <div style="flex:1"><b>Você é VIP</b><small>Acesso até ${esc(a.ate)}</small></div>
-    <span class="muted" style="font-size:18px">›</span>
+    <div style="flex:1;min-width:0"><b>${urgente ? (a.dias <= 1 ? "Seu VIP vence amanhã" : `Seu VIP vence em ${a.dias} dias`) : "Você é VIP"}</b><small>Acesso até ${esc(a.ate)}</small></div>
+    ${urgente ? `<button class="btn mini brilho" data-renovar="${a.plano}">Renovar</button>` : `<span class="muted" style="font-size:18px">›</span>`}
   </div>`;
 }
 
@@ -832,6 +849,10 @@ function vip(){
   return `
     <div class="hero-vip vivo"><h2>${a ? "Renovar VIP" : "Seja VIP"}</h2>
       <p>${a ? `Você é VIP até ${esc(a.ate)}. Renovando agora, os dias são somados.` : `Todo o conteúdo exclusivo de ${esc(D.criadora.nome)}, sem censura, em um canal só para assinantes.`}</p></div>
+    ${a && a.plano ? `<div class="renovar">
+      <div class="topo-r"><span>Seu plano: <b>${esc(a.plano_nome)}</b></span><span>${a.dias} dia(s) restante(s)</span></div>
+      <div class="barra-prog"><i style="width:${Math.min(100, Math.round(a.dias / Math.max(1, a.plano_dias) * 100))}%"></i></div>
+      <p class="dica" style="margin-top:10px">Escolha o plano e renove em 1 toque: o PIX sai na hora e os dias são somados ao que você já tem.</p></div>` : ""}
     <div class="beneficios">
       ${[["🔐","Canal privado com conteúdo exclusivo"],["🎬","Novidades toda semana e pay per view"],["🔄","Sem renovação automática: você escolhe quando renovar"]]
         .map(([i,t]) => `<div class="beneficio"><span class="ico">${i}</span>${t}</div>`).join("")}
@@ -840,10 +861,12 @@ function vip(){
       <div class="plano ${p.id===sel.id?"on":""}" data-plano="${p.id}">
         ${melhor && p.id === melhor.id && p.economia ? `<span class="popular">MAIS POPULAR</span>` : ""}
         <span class="radio"></span>
-        <div class="txt"><b>${esc(p.nome)}</b>${p.economia ? `<span class="eco">-${p.economia}%</span>` : ""}<small>${p.dias} dias de acesso</small></div>
-        <div class="valor"><b>${esc(p.preco_fmt)}</b><small class="muted">${reais(Math.round(p.preco_fmt.replace(/[^\d,]/g,"").replace(",",".")*100/ p.dias * 30))}/mês</small></div>
+        <div class="txt"><b>${esc(p.nome)}</b>${p.promo ? `<span class="eco promo">1º mês -${p.promo.pct}%</span>` : p.economia ? `<span class="eco">-${p.economia}%</span>` : ""}<small>${p.dias} dias de acesso</small></div>
+        <div class="valor">${p.promo ? `<s>${esc(p.preco_fmt)}</s><b>${esc(p.promo.preco_fmt)}</b><small class="muted">no 1º mês</small>` : `<b>${esc(p.preco_fmt)}</b><small class="muted">${reais(Math.round(p.preco_fmt.replace(/[^\d,]/g,"").replace(",",".")*100/ p.dias * 30))}/mês</small>`}</div>
       </div>`).join("")}</div>
-    <div class="fixo-cta"><button class="btn brilho" id="assinar" data-item="${sel.id}">${a ? "Renovar" : "Assinar"} ${esc(sel.nome)} · ${esc(sel.preco_fmt)}</button></div>`;
+    <div class="fixo-cta">${a
+      ? `<button class="btn brilho" data-renovar="${sel.id}">🔄 Renovar ${esc(sel.nome)} · ${esc(sel.preco_fmt)}</button>`
+      : `<button class="btn brilho" id="assinar" data-item="${sel.id}">Assinar ${esc(sel.nome)} · ${esc(sel.promo ? sel.promo.preco_fmt : sel.preco_fmt)}</button>`}</div>`;
 }
 
 function minhas(){
@@ -898,12 +921,12 @@ function detalhes(id){
   const plano = D.planos.find(x => x.id === id);
   if(p && (p.comprado || criadora())){ return abrirGaleria(id) }
   const titulo = p ? p.titulo : plano ? `VIP ${plano.nome}` : "Mimo";
-  const preco = p ? p.preco_fmt : plano ? plano.preco_fmt : "";
+  const preco = p ? p.preco_fmt : plano ? (plano.promo ? plano.promo.preco_fmt : plano.preco_fmt) : "";
   abrirFolha(`
     ${p ? `<div class="previa-wrap"><img src="/api/loja/previa/${id}" alt=""><div class="veu"><span class="cadeado">🔒</span></div></div>` : `<div class="ok-grande"><div class="emoji">⭐</div></div>`}
     <h2>${esc(titulo)}</h2>
     ${p ? `<div class="midia-chips">${midias(p).map(m => `<span>${m}</span>`).join("")}<span>🔓 sem desfoque após o pagamento</span><span>🛡️ conteúdo protegido</span></div>` : ""}
-    ${plano ? `<p class="sub">${plano.dias} dias de acesso ao canal VIP e ao chat.</p>` : ""}
+    ${plano ? `<p class="sub">${plano.dias} dias de acesso ao canal VIP.${plano.promo ? `<br>🎁 Primeiro mês com ${plano.promo.pct}% OFF: de <s>${esc(plano.preco_fmt)}</s> por <b>${esc(plano.promo.preco_fmt)}</b>.` : ""}</p>` : ""}
     ${p && p.packs ? `<p class="sub">Inclui: ${p.packs.map(esc).join(" · ")}<br>Separados: <s>${esc(p.separados_fmt)}</s></p>` : ""}
     <div class="linha-preco"><span class="muted">Total</span><span class="v">${esc(preco)}</span></div>
     <span class="cupom-toggle" id="cupom-toggle">Tenho um cupom</span>
@@ -920,7 +943,8 @@ async function pagar(id, cupom){
   vibrar("leve");
   ULTIMO = id;
   const r = await api("/api/loja/comprar", {item_id: id, cupom});
-  if(r.status === "ja_comprou"){ vibrar("success"); return sucesso("Você já tem este conteúdo. Enviei de novo no seu chat com o bot 💌") }
+  if(r.status === "limite"){ if(btn){btn.disabled=false; btn.textContent="💠 Pagar com PIX"} return avisoLimite(id) }
+  if(r.status === "ja_comprou"){ vibrar("success"); return sucesso("Você já tem este conteúdo. Enviei de novo no seu chat com o bot 💌" + textoRestantes(r.restantes)) }
   if(!r.ok){ toast(r.status === "idade" ? "Confirme sua idade" : "Não consegui gerar o PIX. Tente de novo."); if(btn){btn.disabled=false; btn.textContent="💠 Pagar com PIX"} return }
   mostrarPix(r);
 }
@@ -942,6 +966,7 @@ function mostrarPix(r){
       ${r.original_fmt ? `<small><s>${esc(r.original_fmt)}</s> · cupom aplicado</small>` : ""}</div>
     ${r.cupom ? `<div class="aviso ok" style="text-align:center">🏷️ ${esc(r.cupom.codigo)} (${esc(r.cupom.descricao)})</div>` : ""}
     ${r.cupom_erro ? `<div class="aviso" style="text-align:center">⚠️ ${esc(r.cupom_erro)}</div>` : ""}
+    ${r.promo ? `<div class="aviso ok" style="text-align:center">🎁 ${esc(r.promo)}</div>` : ""}
     <div class="qr-card"><img src="${r.qr}" alt="QR Code PIX"></div>
     <div class="codigo"><code id="codigo">${esc(r.copia_e_cola)}</code><button class="btn mini" id="copiar">Copiar</button></div>
     <div class="passos">
@@ -985,7 +1010,17 @@ function sucesso(texto){
 async function reenviar(packId){
   if(packId.startsWith("combo_")){ return pagar(packId) }   // combo já comprado: a rota de compra reenvia tudo
   const r = await api("/api/loja/reenviar", {pack_id: packId});
-  if(r.ok){ vibrar("success"); toast("Enviado no seu chat com o bot 💌") } else toast("Não consegui reenviar")
+  if(r.ok){ vibrar("success"); toast("Enviado no seu chat com o bot 💌" + textoRestantes(r.restantes)) }
+  else if(r.erro === "limite") avisoLimite(packId)
+  else toast("Não consegui reenviar")
+}
+const textoRestantes = n => n == null ? "" : n === 0 ? " · último reenvio" : ` · restam ${n}`;
+function avisoLimite(id){
+  vibrar("warning");
+  abrirFolha(`<div class="ok-grande"><div class="emoji">🔒</div><h2>Limite de reenvios atingido</h2>
+    <p class="sub">Você já recebeu este conteúdo de novo no chat o máximo de vezes. Ele continua liberado aqui na loja, sempre que quiser.</p></div>
+    <button class="btn" id="lim-ver">▶ Ver na loja</button>`);
+  $("#lim-ver").onclick = () => { fecharFolha(); abrirGaleria(id) };
 }
 
 function escolherModo(){
@@ -1357,6 +1392,10 @@ function config(){
       <button class="linha-c add" data-plano-ed="novo">＋ Novo plano</button>
     </div>
     <p class="legenda-grupo">Mudar o preço vale para as próximas compras. Quem já assinou continua até o fim do período.</p>
+    <div class="gap"></div>
+    <div class="grupo">
+      ${linha('id="ed-promo"', "🎁", "Desconto no 1º mês", C.vip_1mes_pct ? `${C.vip_1mes_pct}% OFF para quem nunca assinou` : "Desligado", `${C.vip_1mes_pct ? `<span class="v">-${C.vip_1mes_pct}%</span>` : ""}<span class="seta">›</span>`)}
+    </div>
 
     <div class="secao-titulo"><h2>Mimos</h2></div>
     <div class="grupo">
@@ -1368,6 +1407,20 @@ function config(){
       ${C.cupons.length ? C.cupons.map(c => linha(`data-cupom-ed="${esc(c.codigo)}"`, "🏷️", esc(c.codigo), `${esc(c.descricao)} · ${c.usos}${c.usos_max ? `/${c.usos_max}` : ""} uso(s)${c.expira ? ` · até ${esc(c.expira)}` : ""}`, `<span class="seta perigo">✕</span>`)).join("") : `<div class="vazio-c">Nenhum cupom ativo.</div>`}
       <button class="linha-c add" id="cupom-novo">＋ Novo cupom</button>
     </div>
+
+    <div class="secao-titulo"><h2>Notificações</h2><small class="muted">no chat com o bot</small></div>
+    <div class="grupo">
+      <div class="linha-c"><span class="ico">💰</span><span class="txt"><b>Avisar a cada venda</b><small>Quem comprou, o quê e quanto, com botão de bloquear</small></span><span class="chave ${C.notif_vendas ? "on" : ""}" id="notif-chave"></span></div>
+      <div class="linha-c"><span class="ico">🌙</span><span class="txt"><b>Resumo do dia às ${C.resumo_hora}h</b><small>Faturamento, novos fãs, VIP e o mais vendido</small></span><span class="chave ${C.resumo_diario ? "on" : ""}" id="resumo-chave"></span></div>
+    </div>
+
+    <div class="secao-titulo"><h2>Proteção</h2></div>
+    <div class="grupo">
+      ${linha('id="ed-limite"', "📩", "Reenvios no chat", C.limite_reenvio ? `Cada compra pode ser reenviada ${C.limite_reenvio}x` : "Sem limite", `<span class="v">${C.limite_reenvio || "∞"}</span><span class="seta">›</span>`)}
+      <div class="linha-c"><span class="ico">💧</span><span class="txt"><b>Marca d'água</b><small>O @ e o ID de quem comprou nas fotos abertas na loja</small></span><span class="chave ${C.marca_dagua ? "on" : ""}" id="marca-chave"></span></div>
+      ${linha('id="ed-bloq"', "🚫", "Fãs bloqueados", C.bloqueados.length ? `${C.bloqueados.length} bloqueado(s)` : "Ninguém bloqueado", `<span class="seta">›</span>`)}
+    </div>
+    <p class="legenda-grupo">${C.marca_dagua ? "Se uma foto vazar, a marca mostra quem comprou." : "Sem a marca, fica difícil saber quem vazou uma foto."} No chat do bot o conteúdo vai protegido contra encaminhar e salvar.</p>
 
     <div class="secao-titulo"><h2>Publicação</h2></div>
     <div class="grupo">
@@ -1382,6 +1435,75 @@ function config(){
     <p class="dica" style="text-align:center;margin:18px 16px">O bot continua com todos os comandos (/admin) como plano B.</p>`;
 }
 const recarregarConfig = async () => { CONFIG = null; await carregarConfig() };
+async function salvarAjuste(dados, ok){
+  const r = await api("/api/criadora/ajustes", dados);
+  if(!r.ok){ toast(r.erro || "Não consegui salvar"); return false }
+  if(ok) toast(ok); return true;
+}
+function editarPromo(){
+  const C = CONFIG; let ligado = C.vip_1mes_pct > 0;
+  const mensais = C.planos.filter(p => p.dias <= 31);
+  abrirFolha(`<h2>Desconto no 1º mês</h2><p class="sub">Quem nunca assinou o VIP vê o preço com desconto no plano mensal. Vale uma vez por pessoa. Se o fã usar um cupom, vale o cupom.</p>
+    <div class="troca" style="margin:0"><div><b>Ativar desconto</b><br><small class="muted">Você liga e desliga quando quiser</small></div><span class="chave ${ligado ? "on" : ""}" id="pr-chave"></span></div>
+    <div id="pr-campos" class="${ligado ? "" : "ocultar"}">
+      <span class="rotulo">Desconto (%)</span><input type="text" id="pr-pct" inputmode="numeric" placeholder="50" value="${C.vip_1mes_pct || ""}">
+      <div class="gap"></div><div class="lista" style="padding:0" id="pr-prev"></div>
+    </div>
+    ${mensais.length ? "" : `<p class="aviso">Você não tem plano de até 31 dias. Crie um plano mensal para o desconto aparecer.</p>`}
+    <div class="gap"></div><button class="btn" id="pr-salvar">Salvar</button>`);
+  const prev = () => { const v = Math.min(90, +($("#pr-pct").value.replace(/\D/g, "")) || 0);
+    $("#pr-prev").innerHTML = v ? mensais.map(p => `<div class="item"><div class="thumb">⭐</div><div class="txt"><b>${esc(p.nome)}</b><small><s>${esc(p.preco_fmt)}</s> → ${reais(Math.max(100, p.preco - Math.floor(p.preco * v / 100)))} no 1º mês</small></div></div>`).join("") : "" };
+  $("#pr-pct").oninput = prev; prev();
+  $("#pr-chave").onclick = e => { ligado = !ligado; e.currentTarget.classList.toggle("on", ligado); $("#pr-campos").classList.toggle("ocultar", !ligado); vibrar("leve"); if(ligado) $("#pr-pct").focus() };
+  $("#pr-salvar").onclick = async () => {
+    const pct = ligado ? +($("#pr-pct").value.replace(/\D/g, "")) || 0 : 0;
+    if(ligado && !pct) return toast("Informe o desconto, ex: 50");
+    if(await salvarAjuste({vip_1mes_pct: pct}, pct ? `1º mês com ${pct}% OFF ativado ✓` : "Desconto desligado")){ vibrar("success"); fecharFolha(true); await recarregarConfig(); carregar() }
+  };
+}
+function editarLimite(){
+  let v = CONFIG.limite_reenvio;
+  abrirFolha(`<h2>Reenvios no chat</h2><p class="sub">Quantas vezes o fã pode pedir para receber de novo no chat um conteúdo que já comprou. Isso dificulta repassar o conteúdo. A entrega da compra não conta, e ele continua vendo tudo na loja (com marca d'água).</p>
+    <div class="opcoes" id="lim-op">${[[0,"Sem limite"],[1,"1"],[3,"3"],[5,"5"],[10,"10"]].map(([n,t]) => `<button data-lim="${n}" class="${n===v?"on":""}">${t}</button>`).join("")}</div>
+    <p class="dica" id="lim-dica"></p>
+    <div class="gap"></div><button class="btn" id="lim-salvar">Salvar</button>`);
+  const dica = () => $("#lim-dica").textContent = v ? `Depois de ${v} reenvio(s), o bot avisa que o limite acabou e mostra o botão da loja.` : "O fã pode pedir quantas vezes quiser.";
+  dica();
+  $("#lim-op").onclick = e => { const b = e.target.closest("[data-lim]"); if(!b) return; v = +b.dataset.lim; document.querySelectorAll("#lim-op button").forEach(x => x.classList.toggle("on", x === b)); dica(); vibrar("leve") };
+  $("#lim-salvar").onclick = async () => { if(await salvarAjuste({limite_reenvio: v}, "Limite salvo ✓")){ vibrar("success"); fecharFolha(true); recarregarConfig() } };
+}
+function nomeFa(u){ return (u.nome || "Sem nome") + (u.username ? ` · @${u.username}` : "") }
+function gerenciarBloqueados(){
+  const B = CONFIG.bloqueados;
+  abrirFolha(`<h2>Fãs bloqueados</h2><p class="sub">Quem está bloqueado não abre a loja, não compra, não entra no VIP e o bot não responde. Se tinha VIP, perde o acesso na hora.</p>
+    <span class="rotulo">Bloquear pelo ID do Telegram</span>
+    <div class="campo" style="padding:0"><input type="text" id="bl-id" inputmode="numeric" placeholder="Ex: 123456789"><button class="btn mini" id="bl-ok" style="padding:0 18px">Bloquear</button></div>
+    <p class="dica">O ID aparece nos avisos de venda e na marca d'água das fotos.</p>
+    <div class="gap"></div>
+    <div class="lista" style="padding:0">${B.length ? B.map(u => `<div class="item"><div class="thumb">🚫</div><div class="txt"><b>${esc(nomeFa(u))}</b><small>ID ${u.id}${u.desde ? ` · desde ${esc(u.desde)}` : ""}</small></div><button class="btn mini sec" data-desbloq="${u.id}">Desbloquear</button></div>`).join("") : `<div class="vazio" style="padding:20px">Ninguém bloqueado 🙂</div>`}</div>`);
+  $("#bl-ok").onclick = () => {
+    const id = $("#bl-id").value.replace(/\D/g, ""); if(!id) return toast("Digite o ID (só números)");
+    confirmar(`Bloquear o ID ${id}? Ele perde o acesso à loja, ao bot e ao VIP.`, () => bloquearFa(id, true));
+  };
+}
+async function bloquearFa(id, bloquear){
+  const r = await api("/api/criadora/bloquear", {user_id: id, bloquear});
+  if(!r.ok) return toast(r.erro || "Não consegui concluir");
+  vibrar(bloquear ? "warning" : "success"); toast(bloquear ? "Fã bloqueado" : "Fã desbloqueado");
+  await recarregarConfig(); if($("#fundo")) gerenciarBloqueados();
+}
+async function abrirFa(id){
+  const r = await api(`/api/criadora/fa/${id}`); if(!r.ok) return toast("Não encontrei esse fã");
+  abrirFolha(`<div class="ficha"><div class="av-fa">${esc((r.nome || "?")[0].toUpperCase())}</div>
+      <div style="min-width:0"><b>${esc(r.nome || "Sem nome")}</b><small>${r.username ? "@" + esc(r.username) + " · " : ""}ID ${r.id}</small>${r.bloqueado ? `<br><span class="selo-bloq">Bloqueado</span>` : ""}</div></div>
+    <div class="kpis" style="padding:0"><div class="kpi"><small>Total gasto</small><b>${esc(r.total)}</b><span>${r.compras} compra(s)</span></div>
+      <div class="kpi"><small>VIP</small><b style="font-size:16px">${r.vip ? "Ativo" : "Não"}</b><span>${r.vip ? "até " + esc(r.vip) : "sem assinatura"}</span></div></div>
+    ${r.desde ? `<p class="dica">Fã desde ${esc(r.desde)}</p>` : ""}
+    <div class="gap"></div>
+    <button class="btn ${r.bloqueado ? "" : "sec perigo"}" id="fa-bloq">${r.bloqueado ? "Desbloquear" : "🚫 Bloquear fã"}</button>`);
+  $("#fa-bloq").onclick = () => r.bloqueado ? bloquearFa(r.id, false).then(() => fecharFolha(true))
+    : confirmar(`Bloquear ${r.nome || "este fã"}? Ele perde o acesso à loja, ao bot e ao VIP.`, () => bloquearFa(r.id, true).then(() => fecharFolha(true)));
+}
 function editarPlano(id){
   const p = CONFIG.planos.find(x => String(x.id) === String(id));
   abrirFolha(`<h2>${p ? "Editar plano" : "Novo plano"}</h2><p class="sub">Os fãs veem o nome, a duração e o preço na aba VIP.</p>
@@ -1677,10 +1799,28 @@ document.addEventListener("click", e => {
     TOQUE = {el: duplo, t: agora, timer: duplo.dataset.item ? setTimeout(() => { TOQUE = {}; detalhes(duplo.dataset.item) }, 260) : null};
     return;
   }
-  const el = e.target.closest("[data-plano-ed],[data-cupom-ed],#cupom-novo,#ed-mimos,#canal-chave,[data-fila],[data-previa],#rev-chave,[data-volta],[data-mais],[data-col],[data-curtir],[data-mimo],[data-mimo-outro],[data-periodo],[data-modo],[data-menu],[data-criar],[data-msg],#ed-perfil,#ed-perfil2,#ed-msgs,#como-fa,[data-reenviar],[data-ver],[data-aba],[data-vista],[data-filtro],[data-plano],[data-item],#pagar,#assinar,#gorjeta-ok");
+  const el = e.target.closest("[data-renovar],[data-fa],[data-desbloq],#ed-promo,#ed-limite,#ed-bloq,#notif-chave,#resumo-chave,#marca-chave,[data-plano-ed],[data-cupom-ed],#cupom-novo,#ed-mimos,#canal-chave,[data-fila],[data-previa],#rev-chave,[data-volta],[data-mais],[data-col],[data-curtir],[data-mimo],[data-mimo-outro],[data-periodo],[data-modo],[data-menu],[data-criar],[data-msg],#ed-perfil,#ed-perfil2,#ed-msgs,#como-fa,[data-reenviar],[data-ver],[data-aba],[data-vista],[data-filtro],[data-plano],[data-item],#pagar,#assinar,#gorjeta-ok");
   if(!el) return;
   if(el.dataset.modo){ COMO_FA = el.dataset.modo === "cliente"; ABA = "inicio"; vibrar("leve");
     if(!PLANO_SEL) PLANO_SEL = (D.planos.find(p => p.economia) || D.planos[0])?.id; return render() }
+  if(el.dataset.renovar){ e.stopPropagation(); ULTIMO = el.dataset.renovar; return pagar(el.dataset.renovar) }
+  if(el.dataset.fa){ return abrirFa(el.dataset.fa) }
+  if(el.dataset.desbloq){ return bloquearFa(el.dataset.desbloq, false) }
+  if(el.id === "ed-promo"){ return editarPromo() }
+  if(el.id === "ed-limite"){ return editarLimite() }
+  if(el.id === "ed-bloq"){ return gerenciarBloqueados() }
+  if(el.id === "marca-chave"){
+    const novo = !CONFIG.marca_dagua;
+    const aplicar = () => { CONFIG.marca_dagua = novo; el.classList.toggle("on", novo); vibrar("leve");
+      salvarAjuste({marca_dagua: novo}, novo ? "Marca d'água ligada" : "Marca d'água desligada").then(() => { const c = $("#conteudo"); if(ABA === "config") c.innerHTML = config() }) };
+    return novo ? aplicar() : confirmar("Desligar a marca d'água? As fotos abertas na loja ficam sem o @ e o ID de quem comprou.", aplicar);
+  }
+  if(el.id === "notif-chave" || el.id === "resumo-chave"){
+    const k = el.id === "notif-chave" ? "notif_vendas" : "resumo_diario";
+    CONFIG[k] = !CONFIG[k]; el.classList.toggle("on", CONFIG[k]); vibrar("leve");
+    salvarAjuste({[k]: CONFIG[k]}, k === "notif_vendas" ? (CONFIG[k] ? "Avisos de venda ligados" : "Avisos de venda desligados") : (CONFIG[k] ? "Resumo diário ligado" : "Resumo diário desligado"));
+    return;
+  }
   if(el.dataset.planoEd){ return editarPlano(el.dataset.planoEd) }
   if(el.id === "ed-mimos"){ return editarMimos() }
   if(el.id === "cupom-novo"){ return novoCupom() }

@@ -53,6 +53,7 @@ class Config:
     # Backup automático do SQLite (enviado no privado dos admins)
     backup_ativo: bool = os.getenv("BACKUP_ATIVO", "1") != "0"
     backup_hora: int = int(os.getenv("BACKUP_HORA", "4"))          # todo dia, hora local (FUSO_HORARIO)
+    resumo_hora: int = int(os.getenv("RESUMO_HORA", "22"))         # resumo do dia no chat da criadora
 
     # Remarketing de PIX pendente
     lembrete_minutos: float = float(os.getenv("LEMBRETE_MINUTOS", "30"))

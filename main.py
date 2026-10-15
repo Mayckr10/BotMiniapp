@@ -27,6 +27,8 @@ from remarketing import loop_remarketing
 import criadora
 import loja
 import mensagens
+import notificacoes
+import protecao
 from webhook import criar_app_web
 
 
@@ -49,8 +51,11 @@ async def run(cfg: Config) -> None:
 
     # Tudo que for passado aqui é injetado nos handlers pelo nome do parâmetro
     dp = Dispatcher(storage=MemoryStorage(), db=db, cfg=cfg, gateway=gateway)
+    dp.message.outer_middleware(protecao.Bloqueio(db, cfg))          # fã bloqueado não passa daqui
+    dp.callback_query.outer_middleware(protecao.Bloqueio(db, cfg))
     dp.include_router(admin_handlers.get_router(cfg))   # admin primeiro
     dp.include_router(admin_vendas.get_router(cfg))
+    dp.include_router(protecao.get_router(cfg))
     dp.include_router(assinaturas.get_router(cfg))
     dp.include_router(client_handlers.router)
     dp.include_router(client_handlers.fallback_router)   # por último: mensagens livres mostram o menu
@@ -75,6 +80,8 @@ async def run(cfg: Config) -> None:
                  BotCommand(command="stats", description="Estatísticas de vendas"),
                  BotCommand(command="broadcast", description="Mensagem para compradores"),
                  BotCommand(command="backup", description="Receber backup do banco agora"),
+                 BotCommand(command="bloquear", description="Bloquear um fã pelo ID"),
+                 BotCommand(command="bloqueados", description="Fãs bloqueados"),
                  BotCommand(command="cancelar", description="Cancelar operação")],
                 scope=BotCommandScopeChat(chat_id=admin_id),
             )
@@ -92,7 +99,8 @@ async def run(cfg: Config) -> None:
     await web.TCPSite(runner, cfg.webhook_host, cfg.webhook_port).start()
     logging.info("Bot @%s online | webhook PIX em %s", me.username, cfg.webhook_url.split("?")[0])   # sem o token no log
 
-    jobs = [asyncio.create_task(loop_remarketing(bot, db, cfg))]
+    jobs = [asyncio.create_task(loop_remarketing(bot, db, cfg)),
+            asyncio.create_task(notificacoes.loop_resumo(bot, db, cfg))]
     if cfg.backup_ativo:
         jobs.append(asyncio.create_task(loop_backup(bot, db, cfg)))
     try:

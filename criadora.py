@@ -38,6 +38,7 @@ from aiohttp import web
 from PIL import Image, ImageOps
 
 import mensagens
+import protecao
 from admin_handlers import parse_preco, postar_no_canal
 from blur_service import _capa_video_generica, _frame_ffmpeg, aplicar_blur
 from config import Config
@@ -365,6 +366,25 @@ async def ajustes(request: web.Request) -> web.Response:
         await db.set_ajuste("revisao", "1" if corpo["revisao"] else "0")
     if "canal_padrao" in corpo:
         await db.set_ajuste("canal_padrao", "1" if corpo["canal_padrao"] else "0")
+    for chave in ("notif_vendas", "resumo_diario", "marca_dagua"):
+        if chave in corpo:
+            await db.set_ajuste(chave, "1" if corpo[chave] else "0")
+    if "limite_reenvio" in corpo:
+        try:
+            limite = int(corpo["limite_reenvio"])
+        except (TypeError, ValueError):
+            return _erro("Limite inválido.")
+        if not 0 <= limite <= 50:
+            return _erro("Use de 0 (sem limite) a 50 reenvios.")
+        await db.set_ajuste("limite_reenvio", str(limite))
+    if "vip_1mes_pct" in corpo:
+        try:
+            pct = int(str(corpo["vip_1mes_pct"]).replace("%", "").strip() or 0)
+        except ValueError:
+            return _erro("Desconto inválido.")
+        if not 0 <= pct <= 90:
+            return _erro("O desconto do 1º mês deve ser de 1 a 90% (0 desliga).")
+        await db.set_ajuste("vip_1mes_pct", str(pct))
     if "gorjetas" in corpo:
         valores = sorted({int(v) for v in str(corpo["gorjetas"]).replace(";", ",").split(",")
                           if v.strip().isdigit() and 1 <= int(v) <= 10000})
@@ -390,7 +410,51 @@ async def config(request: web.Request) -> web.Response:
         "revisao": await db.get_ajuste("revisao", "0") == "1",
         "canal_padrao": await db.get_ajuste("canal_padrao", "1") == "1",
         "canal": bool(request.app["cfg"].channel_id),
+        "notif_vendas": await db.get_ajuste("notif_vendas", "1") == "1",
+        "resumo_diario": await db.get_ajuste("resumo_diario", "1") == "1",
+        "resumo_hora": request.app["cfg"].resumo_hora,
+        "limite_reenvio": await protecao.limite_reenvio(db),
+        "marca_dagua": await db.get_ajuste("marca_dagua", "1") == "1",
+        "vip_1mes_pct": int(await db.get_ajuste("vip_1mes_pct", "0") or 0),
+        "bloqueados": [{"id": u["user_id"], "nome": u["nome"] or "", "username": u["username"] or "",
+                        "desde": data_local(u["banido_em"], request.app["cfg"]) if u["banido_em"] else ""}
+                       for u in await db.listar_banidos()],
     })
+
+
+async def bloquear(request: web.Request) -> web.Response:
+    """Bloqueia (ou desbloqueia) um fã pelo ID do Telegram."""
+    _admin(request)
+    corpo = await request.json()
+    try:
+        user_id = int(str(corpo.get("user_id", "")).strip())
+    except ValueError:
+        return _erro("ID inválido. É um número, como 123456789.")
+    if user_id <= 0:
+        return _erro("ID inválido. É um número, como 123456789.")
+    db: Database = request.app["db"]
+    if corpo.get("bloquear", True):
+        erro = await protecao.bloquear(request.app["bot"], db, request.app["cfg"], user_id)
+        if erro:
+            return _erro(erro)
+    else:
+        await protecao.desbloquear(db, user_id)
+    return _ok()
+
+
+async def fa(request: web.Request) -> web.Response:
+    """Ficha de um fã para a criadora: quem é, quanto já gastou, VIP e se está bloqueado."""
+    _admin(request)
+    db: Database = request.app["db"]
+    cfg: Config = request.app["cfg"]
+    user_id = int(request.match_info["id"])
+    u = await db.get_usuario(user_id) or {}
+    gasto = await db.total_gasto(user_id)
+    a = await db.get_assinatura(user_id)
+    return _ok(id=user_id, nome=u.get("nome") or "", username=u.get("username") or "",
+               desde=data_local(u["criado_em"], cfg) if u.get("criado_em") else "",
+               compras=gasto["compras"], total=fmt_reais(gasto["total"]), bloqueado=bool(u.get("banido")),
+               vip=data_local(a.expira_em, cfg) if a and a.ativa else None)
 
 
 async def salvar_plano(request: web.Request) -> web.Response:
@@ -489,6 +553,8 @@ async def aprovar(request: web.Request) -> web.Response:
 
 
 def registrar_rotas(app: web.Application) -> None:
+    app.router.add_post("/api/criadora/bloquear", bloquear)
+    app.router.add_get("/api/criadora/fa/{id:\\d+}", fa)
     app.router.add_post("/api/criadora/ajustes", ajustes)
     app.router.add_get("/api/criadora/config", config)
     app.router.add_post("/api/criadora/plano", salvar_plano)

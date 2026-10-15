@@ -19,7 +19,9 @@ As mídias originais nunca passam pela página: só o bot as envia, com protect_
 """
 import base64
 import logging
+import math
 import time
+from datetime import datetime, timezone
 from io import BytesIO
 from pathlib import Path
 
@@ -33,8 +35,9 @@ from config import Config
 import mensagens
 from database import Database, Pack, fmt_reais
 from payments import MockPixGateway
-from vendas import criar_pedido
-from webhook import entregar_pack, entregar_packs, processar_pagamento
+import protecao
+from vendas import aplicar_pct, criar_pedido, desconto_primeiro_mes
+from webhook import processar_pagamento
 
 log = logging.getLogger(__name__)
 PAGINA = Path(__file__).parent / "miniapp" / "index.html"
@@ -116,6 +119,18 @@ async def dados(request: web.Request) -> web.Response:
                        "separados_fmt": fmt_reais(sum(p.preco for p in itens)),
                        "comprado": await db.tem_todos(user["id"], [p.id for p in itens])})
     assinatura = await db.get_assinatura(user["id"])
+    info_vip = None
+    if assinatura and assinatura.ativa:
+        plano = next((p for p in planos if p.id == assinatura.plano_id), None) or mensal or (planos[0] if planos else None)
+        restam = (datetime.fromisoformat(assinatura.expira_em) - datetime.now(timezone.utc)).total_seconds() / 86400
+        info_vip = {"ativa": True, "ate": data_local(assinatura.expira_em, cfg), "dias": max(0, math.ceil(restam)),
+                    "plano": plano.item_id if plano else None, "plano_nome": plano.nome if plano else None,
+                    "plano_preco": plano.preco_fmt if plano else None, "plano_dias": plano.dias if plano else None}
+    promo = {}
+    for p in planos:
+        pct = await desconto_primeiro_mes(db, user["id"], p)
+        if pct:
+            promo[p.item_id] = {"pct": pct, "preco_fmt": fmt_reais(aplicar_pct(p.preco, pct))}
     return web.json_response({
         "criadora": {"nome": cfg.criadora_nome,
                      "bio": await db.get_ajuste("bio", "Conteúdo exclusivo todos os dias 🔥"),
@@ -128,10 +143,9 @@ async def dados(request: web.Request) -> web.Response:
                   for p in await db.listar_posts()],
         "idade": await _idade_ok(db, cfg, user["id"]),
         "teste": isinstance(request.app["gateway"], MockPixGateway),
-        "assinatura": {"ativa": True, "ate": data_local(assinatura.expira_em, cfg)}
-                      if assinatura and assinatura.ativa else None,
+        "assinatura": info_vip,
         "planos": [{"id": p.item_id, "nome": p.nome, "dias": p.dias, "preco_fmt": p.preco_fmt,
-                    "economia": economia(p)} for p in planos],
+                    "economia": economia(p), "promo": promo.get(p.item_id)} for p in planos],
         "packs": packs,
         "combos": combos,
         "gorjetas": [v * 100 for v in await mensagens.valores_gorjeta()],
@@ -206,8 +220,8 @@ async def comprar(request: web.Request) -> web.Response:
     if pedido.status == "inexistente":
         return web.json_response({"status": "inexistente"}, status=404)
     if pedido.status == "ja_comprou":
-        await entregar_packs(bot, user["id"], pedido.packs, pedido.item.titulo)
-        return web.json_response({"status": "ja_comprou"})
+        enviou, restantes = await protecao.reenviar(bot, db, cfg, user["id"], pedido.packs, pedido.item.titulo)
+        return web.json_response({"status": "ja_comprou" if enviou else "limite", "restantes": restantes})
     if pedido.status == "erro_gateway":
         return web.json_response({"status": "erro_gateway"}, status=502)
 
@@ -223,6 +237,7 @@ async def comprar(request: web.Request) -> web.Response:
         "cupom": {"codigo": pedido.cupom.codigo, "descricao": pedido.cupom.descricao} if pedido.cupom else None,
         "cupom_erro": f"Cupom {pedido.cupom_invalido} não aplicado: {pedido.motivo_cupom}"
                       if pedido.cupom_invalido else None,
+        "promo": pedido.promo,
         "expira": pedido.expira.isoformat(),
     })
 
@@ -260,11 +275,27 @@ async def reenviar(request: web.Request) -> web.Response:
     pack = await db.get_pack(pack_id)
     if not pack or not await db.ja_comprou(user["id"], pack_id):
         raise web.HTTPForbidden()
-    await entregar_pack(request.app["bot"], user["id"], pack)
-    return web.json_response({"ok": True})
+    enviou, restantes = await protecao.reenviar(request.app["bot"], db, request.app["cfg"], user["id"], [pack], pack.titulo)
+    if not enviou:
+        return web.json_response({"ok": False, "erro": "limite", "limite": await protecao.limite_reenvio(db)}, status=429)
+    return web.json_response({"ok": True, "restantes": restantes})
+
+
+@web.middleware
+async def barrar_bloqueados(request: web.Request, handler):
+    """Fã bloqueado pela criadora não usa a API da loja (as imagens públicas continuam como estão)."""
+    if request.path.startswith("/api/") and request.headers.get("X-Telegram-Init-Data"):
+        try:
+            user = _usuario(request)
+        except web.HTTPException:
+            return await handler(request)          # a própria rota responde o 401
+        if user["id"] not in request.app["cfg"].admin_ids and await request.app["db"].esta_banido(user["id"]):
+            return web.json_response({"ok": False, "erro": "bloqueado"}, status=403)
+    return await handler(request)
 
 
 def registrar_rotas(app: web.Application) -> None:
+    app.middlewares.append(barrar_bloqueados)
     app.router.add_get("/loja", pagina)
     app.router.add_get("/api/loja/dados", dados)
     app.router.add_get("/api/loja/previa/{item_id}", previa)

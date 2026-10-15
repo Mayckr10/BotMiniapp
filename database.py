@@ -136,6 +136,14 @@ CREATE TABLE IF NOT EXISTS curtidas (
     PRIMARY KEY (user_id, alvo)
 );
 
+-- Quantas vezes o fã pediu para receber de novo no chat um pack já comprado (limite anti-repasse)
+CREATE TABLE IF NOT EXISTS reenvios (
+    user_id     INTEGER NOT NULL,
+    pack_id     TEXT    NOT NULL,
+    n           INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (user_id, pack_id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_vendas_user_pack ON vendas(user_id, pack_id, status);
 CREATE INDEX IF NOT EXISTS idx_vendas_status ON vendas(status, criado_em);
 CREATE INDEX IF NOT EXISTS idx_cliques_data ON cliques(criado_em);
@@ -161,6 +169,8 @@ MIGRACOES = {
     "usuarios": {
         "maior_idade_em": "TEXT",                       # quando confirmou ter 18+ (NULL = não confirmou)
         "menor": "INTEGER NOT NULL DEFAULT 0",          # 1 = declarou ser menor: compra bloqueada
+        "banido": "INTEGER NOT NULL DEFAULT 0",         # 1 = a criadora bloqueou este fã (sem loja, sem bot, sem VIP)
+        "banido_em": "TEXT",
     },
 }
 
@@ -498,15 +508,20 @@ class Database:
         await self.conn.commit()
         return nova
 
-    async def assinaturas_a_avisar(self, vence_antes_de: datetime) -> list[Assinatura]:
+    async def assinaturas_a_avisar(self, vence_antes_de: datetime, etapa: int = 1) -> list[Assinatura]:
+        """Ativas que vencem antes de `vence_antes_de` e ainda não receberam o aviso desta etapa (1 = 3 dias, 2 = 1 dia)."""
         rows = await self._todos(
-            "SELECT * FROM assinaturas WHERE status = 'ATIVA' AND aviso_etapa = 0 AND expira_em <= ? AND expira_em > ?",
-            (iso(vence_antes_de), _agora()))
+            "SELECT * FROM assinaturas WHERE status = 'ATIVA' AND aviso_etapa < ? AND expira_em <= ? AND expira_em > ?",
+            (etapa, iso(vence_antes_de), _agora()))
         return [Assinatura(r["user_id"], r["plano_id"], r["expira_em"], r["status"], r["aviso_etapa"]) for r in rows]
 
-    async def marcar_aviso_assinatura(self, user_id: int) -> None:
-        await self.conn.execute("UPDATE assinaturas SET aviso_etapa = 1 WHERE user_id = ?", (user_id,))
+    async def marcar_aviso_assinatura(self, user_id: int, etapa: int = 1) -> None:
+        await self.conn.execute("UPDATE assinaturas SET aviso_etapa = ? WHERE user_id = ?", (etapa, user_id))
         await self.conn.commit()
+
+    async def ja_assinou(self, user_id: int) -> bool:
+        """Já teve alguma assinatura VIP (ativa ou vencida)? Usado no desconto do 1º mês."""
+        return await self._um("SELECT 1 FROM assinaturas WHERE user_id = ?", (user_id,)) is not None
 
     async def assinaturas_vencidas(self) -> list[Assinatura]:
         rows = await self._todos("SELECT * FROM assinaturas WHERE status = 'ATIVA' AND expira_em <= ?", (_agora(),))
@@ -526,7 +541,8 @@ class Database:
     async def assinantes_ativos(self) -> list[int]:
         rows = await self._todos(
             "SELECT a.user_id FROM assinaturas a LEFT JOIN usuarios u ON u.user_id = a.user_id "
-            "WHERE a.status = 'ATIVA' AND a.expira_em > ? AND COALESCE(u.bloqueado, 0) = 0 ORDER BY a.user_id",
+            "WHERE a.status = 'ATIVA' AND a.expira_em > ? AND COALESCE(u.bloqueado, 0) = 0 AND COALESCE(u.banido, 0) = 0 "
+            "ORDER BY a.user_id",
             (_agora(),))
         return [r["user_id"] for r in rows]
 
@@ -883,6 +899,47 @@ class Database:
         finally:
             await alvo.close()
 
+    # ── Fãs bloqueados pela criadora ───────────────────────────────────────
+    async def banir(self, user_id: int, banido: bool = True) -> None:
+        await self.conn.execute(
+            "INSERT INTO usuarios (user_id, criado_em) VALUES (?, ?) ON CONFLICT(user_id) DO NOTHING", (user_id, _agora()))
+        await self.conn.execute("UPDATE usuarios SET banido = ?, banido_em = ? WHERE user_id = ?",
+                                (int(banido), _agora() if banido else None, user_id))
+        await self.conn.commit()
+
+    async def esta_banido(self, user_id: int) -> bool:
+        return await self._um("SELECT 1 FROM usuarios WHERE user_id = ? AND banido = 1", (user_id,)) is not None
+
+    async def listar_banidos(self) -> list[dict]:
+        rows = await self._todos("SELECT user_id, nome, username, banido_em FROM usuarios WHERE banido = 1 "
+                                 "ORDER BY banido_em DESC")
+        return [dict(r) for r in rows]
+
+    async def get_usuario(self, user_id: int) -> dict | None:
+        row = await self._um("SELECT user_id, nome, username, criado_em, banido FROM usuarios WHERE user_id = ?", (user_id,))
+        return dict(row) if row else None
+
+    async def total_gasto(self, user_id: int) -> dict:
+        row = await self._um("SELECT COUNT(*) AS n, COALESCE(SUM(valor), 0) AS total FROM vendas "
+                             "WHERE user_id = ? AND status = ?", (user_id, STATUS_PAGO))
+        return {"compras": row["n"], "total": row["total"]}
+
+    # ── Limite de reenvios no chat ─────────────────────────────────────────
+    async def reenvios_feitos(self, user_id: int, pack_ids: list[str]) -> int:
+        """O maior número de reenvios entre os packs (combo conta pelo pack mais reenviado)."""
+        if not pack_ids:
+            return 0
+        marcas = ",".join("?" * len(pack_ids))
+        row = await self._um(f"SELECT MAX(n) AS n FROM reenvios WHERE user_id = ? AND pack_id IN ({marcas})",
+                             (user_id, *pack_ids))
+        return (row["n"] if row else None) or 0
+
+    async def registrar_reenvio(self, user_id: int, pack_ids: list[str]) -> None:
+        await self.conn.executemany(
+            "INSERT INTO reenvios (user_id, pack_id, n) VALUES (?, ?, 1) "
+            "ON CONFLICT(user_id, pack_id) DO UPDATE SET n = n + 1", [(user_id, p) for p in pack_ids])
+        await self.conn.commit()
+
     async def marcar_bloqueado(self, user_id: int) -> None:
         await self.conn.execute(
             "INSERT INTO usuarios (user_id, bloqueado, criado_em) VALUES (?, 1, ?) "
@@ -896,13 +953,13 @@ class Database:
 
     async def todos_clientes(self) -> list[int]:
         """Todo mundo que já falou com o bot e não o bloqueou."""
-        rows = await self._todos("SELECT user_id FROM usuarios WHERE bloqueado = 0 AND menor = 0 ORDER BY user_id")
+        rows = await self._todos("SELECT user_id FROM usuarios WHERE bloqueado = 0 AND menor = 0 AND banido = 0 ORDER BY user_id")
         return [r["user_id"] for r in rows]
 
     async def compradores(self, item_id: str | None = None) -> list[int]:
         """IDs de quem já comprou (opcionalmente só de um pack), sem quem bloqueou o bot."""
         sql = ("SELECT DISTINCT a.user_id FROM acessos a LEFT JOIN usuarios u ON u.user_id = a.user_id "
-               "WHERE COALESCE(u.bloqueado, 0) = 0")
+               "WHERE COALESCE(u.bloqueado, 0) = 0 AND COALESCE(u.banido, 0) = 0")
         params: tuple = ()
         if item_id:
             sql += " AND a.pack_id = ?"

@@ -27,6 +27,16 @@ from database import Database, Plano, Venda, agora, fmt_reais
 log = logging.getLogger(__name__)
 
 
+def teclado_renovar(planos: list[Plano], plano_atual: int | None) -> InlineKeyboardMarkup:
+    """Renovação em 1 toque: o plano que a pessoa já tem vem primeiro e gera o PIX direto."""
+    atual = next((p for p in planos if p.id == plano_atual), None) or next((p for p in planos if p.dias <= 31), None)
+    teclado = teclado_planos([p for p in planos if not atual or p.id != atual.id])
+    if atual:
+        teclado.inline_keyboard.insert(0, [InlineKeyboardButton(text=f"🔄 Renovar {atual.nome} · {atual.preco_fmt}",
+                                                                callback_data=f"comprar:{atual.item_id}")])
+    return teclado
+
+
 def teclado_planos(planos: list[Plano], titulo_extra: str = "") -> InlineKeyboardMarkup:
     linhas = []
     mensal = next((p for p in planos if p.dias == 30), None)
@@ -66,7 +76,6 @@ async def esta_no_canal(bot: Bot, cfg: Config, user_id: int) -> bool:
 
 async def ativar_assinatura(bot: Bot, db: Database, cfg: Config, venda: Venda, plano: Plano) -> None:
     """Chamado pelo webhook quando o PIX de um plano é pago."""
-    renovacao = await db.assinante_ativo(venda.user_id)
     vence = await db.estender_assinatura(venda.user_id, plano.id, plano.dias)
     try:
         await bot.unban_chat_member(cfg.vip_channel_id, venda.user_id, only_if_banned=True)
@@ -98,13 +107,6 @@ async def ativar_assinatura(bot: Bot, db: Database, cfg: Config, venda: Venda, p
                                                      "com permissão de convidar usuários e se VIP_CHANNEL_ID está certo.")
                 except Exception:
                     pass
-    for admin_id in cfg.admin_ids:
-        try:
-            await bot.send_message(admin_id, f"⭐ {'Renovação' if renovacao else 'Nova assinatura'}: "
-                                             f"<code>{venda.user_id}</code> · {html.escape(plano.nome)} · "
-                                             f"{fmt_reais(venda.valor)}", disable_notification=True)
-        except Exception:
-            pass
 
 
 async def remover_do_canal(bot: Bot, cfg: Config, user_id: int) -> None:
@@ -119,15 +121,20 @@ async def rodar_assinaturas(bot: Bot, db: Database, cfg: Config) -> tuple[int, i
     """Avisos de vencimento e remoção de quem venceu."""
     planos = await db.listar_planos()
     avisos = removidos = 0
-    for a in await db.assinaturas_a_avisar(agora() + timedelta(days=cfg.assinatura_aviso_dias)):
-        await db.marcar_aviso_assinatura(a.user_id)
-        try:
-            await bot.send_message(a.user_id, f"⏰ Sua assinatura VIP vence em {data_local(a.expira_em, cfg)}.\n"
-                                              "Renove agora para não perder o acesso (os dias são somados):",
-                                   reply_markup=teclado_planos(planos))
-            avisos += 1
-        except Exception:
-            pass
+    # 1º aviso ASSINATURA_AVISO_DIAS antes (padrão 3), 2º aviso 1 dia antes; os dois com renovação em 1 toque
+    etapas = [(2, 1.0, "⏰ <b>Sua assinatura VIP vence amanhã</b> ({data}).\nToque abaixo e renove em 1 toque, "
+                       "os dias são somados:"),
+              (1, cfg.assinatura_aviso_dias, "⏰ Sua assinatura VIP vence em {data}.\n"
+                                             "Renove agora para não perder o acesso (os dias são somados):")]
+    for etapa, dias, modelo in etapas:
+        for a in await db.assinaturas_a_avisar(agora() + timedelta(days=dias), etapa):
+            await db.marcar_aviso_assinatura(a.user_id, etapa)
+            try:
+                await bot.send_message(a.user_id, modelo.format(data=data_local(a.expira_em, cfg)),
+                                       reply_markup=teclado_renovar(planos, a.plano_id))
+                avisos += 1
+            except Exception:
+                pass
     for a in await db.assinaturas_vencidas():
         await db.encerrar_assinatura(a.user_id)
         await remover_do_canal(bot, cfg, a.user_id)
@@ -135,7 +142,7 @@ async def rodar_assinaturas(bot: Bot, db: Database, cfg: Config) -> tuple[int, i
         try:
             await bot.send_message(a.user_id, "💔 Sua assinatura VIP venceu e o acesso ao canal foi encerrado.\n"
                                               "Quer voltar? É só escolher um plano:",
-                                   reply_markup=teclado_planos(planos))
+                                   reply_markup=teclado_renovar(planos, a.plano_id))
         except Exception:
             pass
     return avisos, removidos
@@ -146,7 +153,8 @@ def get_router(cfg: Config) -> Router:
 
     @router.chat_join_request(F.chat.id == cfg.vip_channel_id)
     async def pedido_de_entrada(req: ChatJoinRequest, bot: Bot, db: Database):
-        if await db.assinante_ativo(req.from_user.id) or req.from_user.id in cfg.admin_ids:
+        if req.from_user.id in cfg.admin_ids or (await db.assinante_ativo(req.from_user.id)
+                                                 and not await db.esta_banido(req.from_user.id)):
             await req.approve()
             log.info("VIP: entrada aprovada para %s", req.from_user.id)
             return

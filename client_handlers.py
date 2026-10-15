@@ -34,8 +34,9 @@ from database import STATUS_EXPIRADO, Combo, Database, Gorjeta, Pack, Plano, fmt
 from payments import MockPixGateway, PixGateway
 from remarketing import teclado_novo_pix
 from loja import url_loja
-from vendas import criar_pedido
-from webhook import entregar_pack, entregar_packs, processar_pagamento
+import protecao
+from vendas import aplicar_pct, criar_pedido, desconto_primeiro_mes
+from webhook import processar_pagamento
 
 log = logging.getLogger(__name__)
 router = Router(name="cliente")
@@ -109,8 +110,7 @@ async def iniciar_compra(msg: Message, user: User, item_id: str, codigo_cupom: s
         await msg.answer("😕 Esse item não existe mais ou foi removido.")
         return
     if pedido.status == "ja_comprou":
-        await msg.answer("✅ Você já comprou este conteúdo! Reenviando…")
-        await entregar_packs(bot, user.id, pedido.packs, pedido.item.titulo)
+        await reenviar_no_chat(msg, bot, db, cfg, user.id, pedido.packs, pedido.item.titulo)
         return
     if pedido.status == "erro_gateway":
         await msg.answer("⚠️ Não consegui gerar o PIX agora. Tente novamente em instantes.")
@@ -123,6 +123,8 @@ async def iniciar_compra(msg: Message, user: User, item_id: str, codigo_cupom: s
                        f"de <s>{item.preco_fmt}</s> por <b>{fmt_reais(preco)}</b>\n")
     elif pedido.cupom_invalido:
         aviso_cupom = f"⚠️ Cupom <b>{html.escape(pedido.cupom_invalido)}</b> não aplicado: {pedido.motivo_cupom}.\n"
+    if pedido.promo:
+        aviso_cupom += f"🎁 {pedido.promo}: de <s>{item.preco_fmt}</s> por <b>{fmt_reais(preco)}</b>\n"
 
     midias = [m for p in packs for m in p.originais]
     if isinstance(item, Plano):
@@ -156,6 +158,18 @@ async def iniciar_compra(msg: Message, user: User, item_id: str, codigo_cupom: s
     await msg.answer_photo(
         BufferedInputFile(cobranca.qr_png, filename="pix.png"), caption=legenda, reply_markup=teclado
     )
+
+
+async def reenviar_no_chat(msg: Message, bot: Bot, db: Database, cfg: Config, user_id: int,
+                           packs: list[Pack], titulo: str) -> None:
+    """Reentrega um conteúdo já comprado respeitando o limite de reenvios."""
+    limite = await protecao.limite_reenvio(db)
+    if limite and user_id not in cfg.admin_ids and await db.reenvios_feitos(user_id, [p.id for p in packs]) >= limite:
+        await msg.answer(protecao.texto_limite(limite), reply_markup=protecao.teclado_loja(cfg))
+        return
+    await msg.answer("✅ Você já comprou este conteúdo! Reenviando…")
+    _, restantes = await protecao.reenviar(bot, db, cfg, user_id, packs, titulo)
+    await protecao.avisar_restantes(bot, user_id, restantes)
 
 
 @router.message(CommandStart(deep_link=True, magic=F.args.regexp(RE_PAYLOAD)))
@@ -257,6 +271,11 @@ async def mostrar_planos(msg: Message, user: User, db: Database, cfg: Config) ->
     assinatura = await db.get_assinatura(user.id)
     extra = (f"\n\n✅ Você já é assinante até {data_local(assinatura.expira_em, cfg)}. Renovando agora, os dias são somados."
              if assinatura and assinatura.ativa else "")
+    mensal = next((p for p in planos if p.dias <= 31), None)
+    pct = await desconto_primeiro_mes(db, user.id, mensal) if mensal else 0
+    if pct:
+        extra += (f"\n\n🎁 <b>Primeiro mês com {pct}% OFF</b>: {html.escape(mensal.nome)} sai por "
+                  f"<b>{fmt_reais(aplicar_pct(mensal.preco, pct))}</b> (de <s>{mensal.preco_fmt}</s>).")
     await msg.answer(
         f"⭐ <b>VIP de {html.escape(cfg.criadora_nome)}</b>\n\n"
         "🔐 Acesso ao canal privado com todo o conteúdo exclusivo\n"
@@ -374,14 +393,20 @@ async def meus_packs_de(msg: Message, user_id: int, db: Database) -> None:
 
 
 @router.callback_query(F.data.startswith("rever:"))
-async def rever(cb: CallbackQuery, bot: Bot, db: Database):
+async def rever(cb: CallbackQuery, bot: Bot, db: Database, cfg: Config):
     pack_id = cb.data.split(":", 1)[1]
     pack = await db.get_pack(pack_id)
     if not pack or not await db.ja_comprou(cb.from_user.id, pack_id):
         await cb.answer("Pack indisponível.", show_alert=True)
         return
-    await cb.answer("Enviando…")
-    await entregar_pack(bot, cb.from_user.id, pack)
+    enviou, restantes = await protecao.reenviar(bot, db, cfg, cb.from_user.id, [pack], pack.titulo)
+    if not enviou:
+        await cb.answer()
+        await cb.message.answer(protecao.texto_limite(await protecao.limite_reenvio(db)),
+                                reply_markup=protecao.teclado_loja(cfg))
+        return
+    await cb.answer("Enviado!")
+    await protecao.avisar_restantes(bot, cb.from_user.id, restantes)
 
 
 @router.callback_query(F.data.startswith("novopix:"))
