@@ -144,6 +144,23 @@ CREATE TABLE IF NOT EXISTS reenvios (
     PRIMARY KEY (user_id, pack_id)
 );
 
+-- Enquetes: um voto por fã por post (o post guarda as opções em posts.enquete)
+CREATE TABLE IF NOT EXISTS votos (
+    post_id     INTEGER NOT NULL,
+    user_id     INTEGER NOT NULL,
+    opcao       INTEGER NOT NULL,
+    criado_em   TEXT    NOT NULL,
+    PRIMARY KEY (post_id, user_id)
+);
+
+-- "Me avise" de um lançamento agendado: o bot manda mensagem quando o pack sai
+CREATE TABLE IF NOT EXISTS avisos_lancamento (
+    pack_id     TEXT    NOT NULL,
+    user_id     INTEGER NOT NULL,
+    criado_em   TEXT    NOT NULL,
+    PRIMARY KEY (pack_id, user_id)
+);
+
 CREATE INDEX IF NOT EXISTS idx_vendas_user_pack ON vendas(user_id, pack_id, status);
 CREATE INDEX IF NOT EXISTS idx_vendas_status ON vendas(status, criado_em);
 CREATE INDEX IF NOT EXISTS idx_cliques_data ON cliques(criado_em);
@@ -159,12 +176,16 @@ MIGRACOES = {
         "expira_em": "TEXT",                            # validade do PIX
     },
     "posts": {
-        "status": "TEXT NOT NULL DEFAULT 'publicado'",  # publicado | fila (aguardando revisão da criadora)
+        "status": "TEXT NOT NULL DEFAULT 'publicado'",  # publicado | fila (aguardando revisão) | agendado
+        "enquete": "TEXT",                              # JSON com as opções (NULL = sem enquete)
+        "agendado_para": "TEXT",                        # quando publicar sozinho (status agendado)
     },
     "packs": {
         "postar_canal": "INTEGER NOT NULL DEFAULT 0",   # na fila: posta no canal quando for aprovado
         "tipo": "TEXT NOT NULL DEFAULT 'pack'",        # pack (canal/catálogo) | ppv (mensagem paga no privado)
         "legenda": "TEXT",                              # texto da postagem no feed da loja
+        "agendado_para": "TEXT",                        # tipo agendado: quando o pack vai ao ar
+        "contagem": "INTEGER NOT NULL DEFAULT 0",       # 1 = fãs veem a contagem regressiva antes do lançamento
     },
     "usuarios": {
         "maior_idade_em": "TEXT",                       # quando confirmou ter 18+ (NULL = não confirmou)
@@ -577,16 +598,104 @@ class Database:
         await self.conn.commit()
 
     # ── Publicações (feed) e edição de packs pelo painel da criadora ───────
-    async def criar_post(self, texto: str, foto: str | None = None) -> int:
-        cur = await self.conn.execute("INSERT INTO posts (texto, foto, criado_em) VALUES (?, ?, ?)",
-                                      (texto, foto, _agora()))
+    async def criar_post(self, texto: str, foto: str | None = None, enquete: list[str] | None = None) -> int:
+        cur = await self.conn.execute("INSERT INTO posts (texto, foto, enquete, criado_em) VALUES (?, ?, ?, ?)",
+                                      (texto, foto, json.dumps(enquete, ensure_ascii=False) if enquete else None, _agora()))
         await self.conn.commit()
         return cur.lastrowid
 
     async def listar_posts(self, status: str = "publicado") -> list[dict]:
-        rows = await self._todos("SELECT id, texto, foto, criado_em FROM posts WHERE ativo = 1 AND status = ? "
-                                 "ORDER BY id DESC", (status,))
-        return [dict(r) for r in rows]
+        rows = await self._todos("SELECT id, texto, foto, criado_em, enquete, agendado_para FROM posts "
+                                 "WHERE ativo = 1 AND status = ? ORDER BY id DESC", (status,))
+        return [{**dict(r), "enquete": json.loads(r["enquete"]) if r["enquete"] else None} for r in rows]
+
+    # ── Agendamento ────────────────────────────────────────────────────────
+    async def agendar_post(self, post_id: int, quando: datetime) -> None:
+        await self.conn.execute("UPDATE posts SET status = 'agendado', agendado_para = ? WHERE id = ?",
+                                (iso(quando), post_id))
+        await self.conn.commit()
+
+    async def agendar_pack(self, pack_id: str, quando: datetime, contagem: bool, postar_canal: bool) -> None:
+        await self.conn.execute("UPDATE packs SET tipo = 'agendado', agendado_para = ?, contagem = ?, postar_canal = ? "
+                                "WHERE id = ?", (iso(quando), int(contagem), int(postar_canal), pack_id))
+        await self.conn.commit()
+
+    async def reagendar(self, tipo: str, item_id, quando: datetime) -> bool:
+        tabela, cond = ("posts", "status = 'agendado'") if tipo == "post" else ("packs", "tipo = 'agendado'")
+        cur = await self.conn.execute(f"UPDATE {tabela} SET agendado_para = ? WHERE id = ? AND {cond}",
+                                      (iso(quando), item_id))
+        await self.conn.commit()
+        return cur.rowcount == 1
+
+    async def agendados(self, so_vencidos: bool = False) -> dict:
+        """{"posts": [...], "packs": [Pack + agendado_para/contagem]} na ordem em que vão ao ar."""
+        filtro, params = (" AND agendado_para <= ?", (_agora(),)) if so_vencidos else ("", ())
+        posts = await self._todos("SELECT id, texto, foto, enquete, agendado_para FROM posts WHERE ativo = 1 "
+                                  "AND status = 'agendado'" + filtro + " ORDER BY agendado_para", params)
+        packs = await self._todos("SELECT id, agendado_para, contagem, postar_canal FROM packs WHERE ativo = 1 "
+                                  "AND tipo = 'agendado'" + filtro + " ORDER BY agendado_para", params)
+        return {"posts": [{**dict(r), "enquete": json.loads(r["enquete"]) if r["enquete"] else None} for r in posts],
+                "packs": [{"pack": await self.get_pack(r["id"]), "agendado_para": r["agendado_para"],
+                           "contagem": bool(r["contagem"]), "postar_canal": bool(r["postar_canal"])} for r in packs]}
+
+    async def publicar_post_agendado(self, post_id: int) -> bool:
+        cur = await self.conn.execute("UPDATE posts SET status = 'publicado', criado_em = ? WHERE id = ? "
+                                      "AND status = 'agendado'", (_agora(), post_id))
+        await self.conn.commit()
+        return cur.rowcount == 1
+
+    async def publicar_pack_agendado(self, pack_id: str) -> tuple[bool, bool]:
+        """Devolve (publicou?, pediu para postar no canal?)."""
+        row = await self._um("SELECT postar_canal FROM packs WHERE id = ? AND tipo = 'agendado' AND ativo = 1", (pack_id,))
+        if not row:
+            return False, False
+        await self.conn.execute("UPDATE packs SET tipo = 'pack', criado_em = ? WHERE id = ?", (_agora(), pack_id))
+        await self.conn.commit()
+        return True, bool(row["postar_canal"])
+
+    async def cancelar_pack_agendado(self, pack_id: str) -> None:
+        await self.conn.execute("UPDATE packs SET ativo = 0 WHERE id = ? AND tipo = 'agendado'", (pack_id,))
+        await self.conn.commit()
+
+    # ── Enquetes ───────────────────────────────────────────────────────────
+    async def votar(self, post_id: int, user_id: int, opcao: int) -> bool:
+        """Um voto por fã (não muda depois). Devolve False se já tinha votado."""
+        cur = await self.conn.execute("INSERT OR IGNORE INTO votos VALUES (?, ?, ?, ?)", (post_id, user_id, opcao, _agora()))
+        await self.conn.commit()
+        return cur.rowcount == 1
+
+    async def resultados_enquetes(self, user_id: int) -> dict[int, dict]:
+        """{post_id: {"votos": {opcao: n}, "meu": opcao | None}}"""
+        saida: dict[int, dict] = {}
+        for r in await self._todos("SELECT post_id, opcao, COUNT(*) AS n, MAX(user_id = ?) AS eu FROM votos "
+                                   "GROUP BY post_id, opcao", (user_id,)):
+            d = saida.setdefault(r["post_id"], {"votos": {}, "meu": None})
+            d["votos"][r["opcao"]] = r["n"]
+            if r["eu"]:
+                d["meu"] = r["opcao"]
+        return saida
+
+    # ── Avisos de lançamento ───────────────────────────────────────────────
+    async def alternar_aviso(self, pack_id: str, user_id: int) -> bool:
+        cur = await self.conn.execute("DELETE FROM avisos_lancamento WHERE pack_id = ? AND user_id = ?", (pack_id, user_id))
+        ligado = cur.rowcount == 0
+        if ligado:
+            await self.conn.execute("INSERT INTO avisos_lancamento VALUES (?, ?, ?)", (pack_id, user_id, _agora()))
+        await self.conn.commit()
+        return ligado
+
+    async def avisos_do_usuario(self, user_id: int) -> set[str]:
+        return {r["pack_id"] for r in await self._todos("SELECT pack_id FROM avisos_lancamento WHERE user_id = ?", (user_id,))}
+
+    async def contar_avisos(self) -> dict[str, int]:
+        return {r["pack_id"]: r["n"] for r in await self._todos(
+            "SELECT pack_id, COUNT(*) AS n FROM avisos_lancamento GROUP BY pack_id")}
+
+    async def quem_pediu_aviso(self, pack_id: str) -> list[int]:
+        rows = await self._todos("SELECT a.user_id FROM avisos_lancamento a LEFT JOIN usuarios u ON u.user_id = a.user_id "
+                                 "WHERE a.pack_id = ? AND COALESCE(u.bloqueado, 0) = 0 AND COALESCE(u.banido, 0) = 0",
+                                 (pack_id,))
+        return [r["user_id"] for r in rows]
 
     # ── Fila de revisão ────────────────────────────────────────────────────
     async def mandar_post_para_fila(self, post_id: int) -> None:

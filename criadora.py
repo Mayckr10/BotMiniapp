@@ -26,6 +26,7 @@ Rotas (todas exigem initData de um admin):
   GET  /api/loja/post_foto/{id}        (público) foto de uma publicação de texto
 """
 import asyncio
+import json
 import logging
 import unicodedata
 from datetime import datetime, timedelta
@@ -203,11 +204,46 @@ async def perfil(request: web.Request) -> web.Response:
     return _ok()
 
 
+def _quando(campos: dict) -> tuple[datetime | None, str | None]:
+    """Lê o campo 'agendar' (ISO enviado pelo app). Devolve (data, erro)."""
+    bruto = (campos.get("agendar") or "").strip()
+    if not bruto:
+        return None, None
+    try:
+        quando = datetime.fromisoformat(bruto.replace("Z", "+00:00"))
+    except ValueError:
+        return None, "Data do agendamento inválida."
+    if quando.tzinfo is None:
+        return None, "Data do agendamento sem fuso."
+    if quando < agora() + timedelta(minutes=1):
+        return None, "Escolha um horário no futuro."
+    if quando > agora() + timedelta(days=90):
+        return None, "Agende para no máximo 90 dias."
+    return quando, None
+
+
+def _enquete(campos: dict) -> tuple[list[str] | None, str | None]:
+    bruto = campos.get("enquete") or ""
+    if not bruto:
+        return None, None
+    try:
+        opcoes = [str(o).strip()[:60] for o in json.loads(bruto) if str(o).strip()]
+    except (ValueError, TypeError):
+        return None, "Enquete inválida."
+    if not 2 <= len(opcoes) <= 4:
+        return None, "A enquete precisa de 2 a 4 opções."
+    return opcoes, None
+
+
 async def novo_post(request: web.Request) -> web.Response:
     user = _admin(request)
     db: Database = request.app["db"]
     campos, arquivos = await _ler_multipart(request)
     texto = campos.get("texto", "")[:4000]
+    enquete, erro = _enquete(campos)
+    quando, erro2 = _quando(campos)
+    if erro or erro2:
+        return _erro(erro or erro2)
     if not texto and not arquivos:
         return _erro("Escreva algo ou escolha uma foto.")
     foto = None
@@ -217,7 +253,10 @@ async def novo_post(request: web.Request) -> web.Response:
         except Exception:
             return _erro("Não consegui ler essa imagem.")
         foto = await _subir(request.app["bot"], user["id"], "photo", jpg, "post.jpg")
-    post_id = await db.criar_post(texto, foto)
+    post_id = await db.criar_post(texto, foto, enquete)
+    if quando:                                 # agendado: ela já decidiu quando vai ao ar, não passa pela fila
+        await db.agendar_post(post_id, quando)
+        return _ok(id=post_id, agendado=data_local(quando, request.app["cfg"]))
     if await _revisao(db):
         await db.mandar_post_para_fila(post_id)
         return _ok(id=post_id, fila=True)
@@ -256,6 +295,9 @@ async def novo_pack(request: web.Request) -> web.Response:
         return _erro("Escolha pelo menos uma foto ou vídeo.")
     if len(arquivos) > MAX_ARQUIVOS:
         return _erro(f"Máximo de {MAX_ARQUIVOS} arquivos por pack.")
+    quando, erro = _quando(campos)
+    if erro:
+        return _erro(erro)
 
     originais, blur = [], []
     for i, (_, ctype, dados) in enumerate(arquivos):
@@ -283,6 +325,9 @@ async def novo_pack(request: web.Request) -> web.Response:
 
     pack_id = await db.criar_pack(titulo, preco, originais, blur)
     await db.editar_pack(pack_id, titulo, preco, campos.get("legenda", "")[:2000])
+    if quando:
+        await db.agendar_pack(pack_id, quando, campos.get("contagem") == "1", campos.get("canal") == "1")
+        return _ok(id=pack_id, agendado=data_local(quando, cfg))
     if await _revisao(db):                    # fica na fila: nada aparece nem vai para o canal até aprovar
         await db.mandar_pack_para_fila(pack_id, campos.get("canal") == "1")
         return _ok(id=pack_id, fila=True)
@@ -552,7 +597,36 @@ async def aprovar(request: web.Request) -> web.Response:
     return _ok(no_canal=no_canal)
 
 
+async def agendado(request: web.Request) -> web.Response:
+    """Publicar agora, mudar o horário ou cancelar um post/pack agendado."""
+    _admin(request)
+    db: Database = request.app["db"]
+    cfg: Config = request.app["cfg"]
+    tipo, item_id, acao = request.match_info["tipo"], request.match_info["id"], request.match_info["acao"]
+    if tipo == "post" and not item_id.isdigit():
+        return _erro("Publicação não encontrada.", 404)
+    ref = int(item_id) if tipo == "post" else item_id
+    if acao == "horario":
+        quando, erro = _quando(await request.json())
+        if erro or not quando:
+            return _erro(erro or "Escolha o novo horário.")
+        return _ok(agendado=data_local(quando, cfg)) if await db.reagendar(tipo, ref, quando) \
+            else _erro("Esse item não está mais agendado.", 404)
+    if acao == "cancelar":
+        if tipo == "post":
+            await db.apagar_post(ref)
+        else:
+            await db.cancelar_pack_agendado(ref)
+        return _ok()
+    if tipo == "post":
+        return _ok() if await db.publicar_post_agendado(ref) else _erro("Esse post não está mais agendado.", 404)
+    from agenda import publicar_pack
+    publicou, no_canal = await publicar_pack(request.app["bot"], db, cfg, ref)
+    return _ok(no_canal=no_canal) if publicou else _erro("Esse pack não está mais agendado.", 404)
+
+
 def registrar_rotas(app: web.Application) -> None:
+    app.router.add_post("/api/criadora/agendado/{tipo:post|pack}/{id}/{acao:publicar|cancelar|horario}", agendado)
     app.router.add_post("/api/criadora/bloquear", bloquear)
     app.router.add_get("/api/criadora/fa/{id:\\d+}", fa)
     app.router.add_post("/api/criadora/ajustes", ajustes)

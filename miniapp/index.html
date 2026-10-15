@@ -537,6 +537,35 @@ img.fade.ok{opacity:1}
 .ficha small{color:var(--muted)}
 .selo-bloq{display:inline-block;background:color-mix(in srgb,var(--err) 15%,transparent);color:var(--err);font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:999px;margin-top:4px}
 .bloqueado-tela{min-height:80vh;display:grid;place-items:center;text-align:center;padding:24px;color:var(--muted)}
+/* ── Enquetes ─────────────────────────────────────────────────────────── */
+.enquete{display:grid;gap:8px;padding:0 14px 12px}
+.enquete .opc{position:relative;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;padding:10px 14px;border-radius:14px;border:1.5px solid var(--line);background:transparent;font-weight:700;font-size:14.5px;text-align:left;overflow:hidden;width:100%}
+.enquete button.opc{transition:transform .15s,border-color .2s}
+.enquete button.opc:active{transform:scale(.98);border-color:var(--a1)}
+.enquete .opc i{position:absolute;left:0;top:0;bottom:0;background:color-mix(in srgb,var(--text) 8%,transparent);border-radius:12px 0 0 12px;transform-origin:left;animation:cresce-x .7s cubic-bezier(.2,.9,.3,1) backwards}
+.enquete .opc.meu{border-color:var(--a1)}
+.enquete .opc.meu i{background:color-mix(in srgb,var(--a1) 22%,transparent)}
+.enquete .opc span,.enquete .opc b{position:relative}
+.enquete .opc b{font-variant-numeric:tabular-nums}
+.enquete small{font-size:12.5px}
+.ed-enq{display:grid;gap:8px;margin-top:10px}
+/* ── Lançamentos e agendados ──────────────────────────────────────────── */
+.lancamento .midia img{filter:saturate(1.2)}
+.lancamento .veu{background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.6))}
+.selo-lanc{background:var(--grad);color:#fff;font-weight:800;font-size:12.5px;padding:6px 12px;border-radius:999px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.relogio{display:flex;gap:8px;font-variant-numeric:tabular-nums}
+.relogio div{min-width:58px;padding:8px 6px;border-radius:14px;background:rgba(255,255,255,.14);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.25);text-align:center}
+.relogio b{display:block;font-size:24px;font-weight:900;letter-spacing:-.02em;line-height:1.1}
+.relogio small{font-size:10.5px;opacity:.85;text-transform:uppercase;letter-spacing:.06em}
+.lancamento .quando{font-size:13px;opacity:.9;font-weight:600}
+.btn-aviso{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:999px;font-weight:800;font-size:13.5px;background:var(--grad);color:#fff;white-space:nowrap}
+.btn-aviso.on{background:var(--card);color:var(--ok);border:1px solid var(--line)}
+.btn-aviso .sino{display:inline-block}
+.btn-aviso:not(.on) .sino{animation:sino 2.4s ease-in-out infinite;transform-origin:50% 0}
+@keyframes sino{0%,60%,100%{transform:rotate(0)}10%{transform:rotate(16deg)}20%{transform:rotate(-14deg)}30%{transform:rotate(9deg)}40%{transform:rotate(-6deg)}}
+.ag-item::before{background:#7b5cff !important}
+.ag-item .quando-ag{color:#7b5cff;font-weight:800}
+input[type=datetime-local]{width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;color:var(--text);font:15px inherit;font-family:inherit;outline:none;color-scheme:dark light;min-height:48px}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}}
 </style>
 </head>
@@ -791,9 +820,28 @@ function postTexto(p){
   return `<article class="post post-texto">
     ${cabPost({data: esc(relativo(p.criado_em)), acao: `post:${p.id}`})}
     ${p.texto ? `<div class="corpo">${esc(p.texto)}</div>` : ""}
+    ${enquete(p)}
     ${p.foto ? `<div class="foto-wrap" data-duplo="post_${p.id}"><img class="foto-post" src="/api/loja/post_foto/${p.id}" loading="lazy" alt=""></div>` : ""}
     <div style="height:8px"></div>${interacoes(`post_${p.id}`)}
   </article>`;
+}
+function enquete(p){
+  const E = p.enquete; if(!E) return "";
+  const total = E.votos.reduce((a, b) => a + b, 0), ver = E.meu != null || criadora() || PREVIA;
+  return `<div class="enquete" data-enq="${p.id}">${E.opcoes.map((o, i) => {
+    const pct = total ? Math.round(E.votos[i] * 100 / total) : 0;
+    return ver ? `<div class="opc ${E.meu === i ? "meu" : ""}"><i style="width:${pct}%"></i><span>${E.meu === i ? "✓ " : ""}${esc(o)}</span><b>${pct}%</b></div>`
+               : `<button class="opc" data-votar="${p.id}:${i}"><span>${esc(o)}</span></button>`;
+  }).join("")}<small class="muted">📊 ${total} voto(s)${ver ? "" : " · toque numa opção para votar"}</small></div>`;
+}
+async function votar(ref){
+  const [id, op] = ref.split(":").map(Number);
+  const p = D.posts.find(x => x.id === id); if(!p) return;
+  vibrar("leve");
+  p.enquete.meu = op; p.enquete.votos[op]++;                    // resposta otimista
+  const el = document.querySelector(`[data-enq="${id}"]`); if(el) el.outerHTML = enquete(p);
+  const r = await api("/api/loja/votar", {post_id: id, opcao: op});
+  if(r.ok){ p.enquete.meu = r.meu; p.enquete.votos = r.votos; const el2 = document.querySelector(`[data-enq="${id}"]`); if(el2) el2.outerHTML = enquete(p) }
 }
 function inicio(){
   let itens = [...D.combos.map(x => ({...x, combo:true})), ...D.packs];
@@ -817,7 +865,53 @@ function inicio(){
       <div class="veu"><b>${esc(x.titulo)}</b><small>${x.comprado ? "Comprado" : esc(x.preco_fmt)}</small></div>
     </div>`).join("")}</div>`;
   const todos = [...posts, ...itens].sort((a, b) => (b.combo ? 1 : 0) - (a.combo ? 1 : 0) || String(b.criado_em || "").localeCompare(String(a.criado_em || "")));
-  return cab + avisoFila() + `<div class="feed">${todos.map(x => x.texto_post ? postTexto(x) : cardPack(x)).join("")}</div>`;
+  const lanc = ["todos", "packs"].includes(FILTRO) ? (D.lancamentos || []) : [];
+  return cab + avisoFila() + `<div class="feed">${lanc.map(cardLancamento).join("")}${todos.map(x => x.texto_post ? postTexto(x) : cardPack(x)).join("")}</div>`;
+}
+const DATA_HORA = iso => new Date(iso).toLocaleString("pt-BR", {weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"}).replace(".", "");
+function cardLancamento(x){
+  return `<article class="post lancamento">
+    ${cabPost({data: "🔥 Lançamento", acao: criadora() ? `ag:pack:${x.id}` : ""})}
+    ${x.legenda ? `<div class="legenda ${x.legenda.length > 220 ? "mais" : ""}">${esc(x.legenda)}</div>` : ""}
+    <div class="midia" style="cursor:default">
+      <img src="/api/loja/previa/${x.id}" loading="lazy" alt="">
+      <div class="veu"><span class="selo-lanc">Em breve</span>${relogio(x.quando)}<span class="quando">${esc(DATA_HORA(x.quando))}</span></div>
+      <div class="contagem">${midias(x).map(m => `<span class="pill">${m}</span>`).join("")}</div>
+    </div>
+    <div class="rodape">
+      <div><b>${esc(x.titulo)}</b><small>${esc(x.preco_fmt)} no lançamento</small></div>
+      ${criadora() ? `<span class="btn-aviso on">🔔 ${x.avisos} esperando</span>`
+        : `<button class="btn-aviso ${x.avisar ? "on" : ""}" data-avisar="${x.id}">${x.avisar ? "✓ Vou te avisar" : `<span class="sino">🔔</span> Me avise`}</button>`}
+    </div>
+  </article>`;
+}
+function partesTempo(iso){
+  const s = Math.max(0, Math.floor((new Date(iso) - Date.now()) / 1000));
+  return {s, d: Math.floor(s / 86400), h: Math.floor(s % 86400 / 3600), m: Math.floor(s % 3600 / 60), seg: s % 60};
+}
+function relogio(iso){
+  const t = partesTempo(iso), dd = n => String(n).padStart(2, "0");
+  const blocos = t.d ? [[t.d, "dias"], [dd(t.h), "horas"], [dd(t.m), "min"]] : [[dd(t.h), "horas"], [dd(t.m), "min"], [dd(t.seg), "seg"]];
+  return `<div class="relogio" data-cd="${esc(iso)}">${blocos.map(([v, r]) => `<div><b>${v}</b><small>${r}</small></div>`).join("")}</div>`;
+}
+const faltaTexto = iso => { const t = partesTempo(iso); return !t.s ? "saindo agora" : t.d ? `em ${t.d}d ${t.h}h` : t.h ? `em ${t.h}h ${t.m}min` : `em ${t.m}min` };
+let RECARGA_LANC = null;
+setInterval(() => {
+  document.querySelectorAll("[data-cd]").forEach(el => {
+    const iso = el.dataset.cd;
+    el.outerHTML = relogio(iso);
+    if(new Date(iso) <= Date.now() && !RECARGA_LANC) RECARGA_LANC = setTimeout(() => { RECARGA_LANC = null; carregar() }, 25000);
+  });
+  document.querySelectorAll("[data-falta]").forEach(el => el.textContent = faltaTexto(el.dataset.falta));
+}, 1000);
+async function avisar(id, el){
+  const r = await api("/api/loja/avise", {pack_id: id});
+  if(!r.ok) return toast(r.erro || "Não consegui agora");
+  const x = D.lancamentos.find(l => l.id === id); if(x) x.avisar = r.avisar;
+  vibrar(r.avisar ? "success" : "leve");
+  el.classList.toggle("on", r.avisar);
+  el.innerHTML = r.avisar ? "✓ Vou te avisar" : `<span class="sino">🔔</span> Me avise`;
+  if(r.avisar){ faiscas(el); toast("Combinado! Te aviso no chat quando sair 🔔") }
 }
 function cardPack(x){
   return `
@@ -1059,6 +1153,7 @@ function painel(){
       <div class="kpi"><small>Packs à venda</small><b>${R.packs}</b><span>no catálogo</span></div>
     </div>
     ${filaRevisao()}
+    ${agendadosPainel()}
     ${estatisticas()}
     <div class="secao-titulo"><h2>Criar</h2></div>
     <div class="acoes">
@@ -1369,6 +1464,52 @@ async function acaoFila(ref, acao){
 }
 
 
+/* ── Agendados ─────────────────────────────────────────────────────────── */
+function agendadosPainel(){
+  const A = D.agendados; if(!A || !(A.posts.length + A.packs.length)) return "";
+  const itens = [...A.packs.map(p => ({...p, pack: true})), ...A.posts.map(p => ({...p, quando: p.agendado_para}))].sort((a, b) => String(a.quando).localeCompare(String(b.quando)));
+  return `<div class="secao-titulo"><h2>Agendados<span class="contador-fila" style="background:#7b5cff">${itens.length}</span></h2><small class="muted">vão ao ar sozinhos</small></div>
+    <div class="fila">${itens.map(x => {
+      const ref = `${x.pack ? "pack" : "post"}:${x.id}`;
+      return `<div class="fila-item ag-item">
+        <div class="topo-f">
+          ${x.pack ? `<img src="/api/loja/previa/${x.id}" alt="">` : x.foto ? `<img src="/api/loja/post_foto/${x.id}" alt="">` : `<div class="thumb">${x.enquete ? "📊" : "📝"}</div>`}
+          <div class="txt"><small><span class="quando-ag">🗓️ ${esc(DATA_HORA(x.quando))}</span> · <span data-falta="${esc(x.quando)}">${faltaTexto(x.quando)}</span></small>
+            <b>${esc(x.pack ? x.titulo : (x.texto || "Foto"))}</b>
+            <p>${x.pack ? `📦 ${esc(x.preco_fmt)} · ${x.contagem ? `contagem regressiva ligada · 🔔 ${x.avisos} fã(s) esperando` : "sem contagem regressiva"}${x.canal ? " · vai pro canal" : ""}` : x.enquete ? `Enquete com ${x.enquete.opcoes.length} opções` : "Publicação grátis"}</p></div>
+        </div>
+        <div class="acoes-f">
+          <button class="btn mini brilho" data-ag="${ref}:publicar">Publicar agora</button>
+          <button class="btn mini sec" data-ag="${ref}:horario" aria-label="Mudar horário">🕑</button>
+          <button class="btn mini sec perigo" data-ag="${ref}:cancelar" aria-label="Cancelar">🗑</button>
+        </div></div>`;
+    }).join("")}</div>`;
+}
+function inputQuando(id, iso){
+  const local = d => new Date(d.getTime() - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 16);
+  const min = new Date(Date.now() + 2 * 6e4), padrao = iso ? new Date(iso) : new Date(Date.now() + 864e5);
+  if(!iso){ padrao.setMinutes(0, 0, 0); padrao.setHours(20) }
+  return `<input type="datetime-local" id="${id}" min="${local(min)}" value="${local(padrao)}">`;
+}
+const isoDe = v => v ? new Date(v).toISOString() : "";
+async function acaoAgendado(ref, acao){
+  const [tipo, id] = ref.split(":");
+  const fazer = async (corpo = {}) => {
+    const r = await api(`/api/criadora/agendado/${tipo}/${id}/${acao}`, corpo);
+    if(!r.ok) return toast(r.erro || "Não consegui concluir");
+    fecharFolha(true); vibrar("success");
+    toast(acao === "publicar" ? (r.no_canal ? "Publicado e postado no canal ✓" : "Publicado ✓") : acao === "cancelar" ? "Agendamento cancelado" : `Reagendado para ${r.agendado}`);
+    if(acao === "publicar") confete(40);
+    PAINEL = null; carregar();
+  };
+  if(acao === "cancelar") return confirmar(tipo === "pack" ? "Cancelar este lançamento? O pack não vai ao ar." : "Cancelar esta publicação agendada?", () => fazer());
+  if(acao === "publicar") return confirmar("Publicar agora, sem esperar o horário?", () => fazer());
+  const x = tipo === "pack" ? D.agendados.packs.find(p => p.id === id) : D.agendados.posts.find(p => String(p.id) === id);
+  abrirFolha(`<h2>Mudar horário</h2><p class="sub">Quando deve ir ao ar?</p>${inputQuando("ag-quando", x?.quando || x?.agendado_para)}
+    <div class="gap"></div><button class="btn" id="ag-salvar">Salvar</button>`);
+  $("#ag-salvar").onclick = () => fazer({agendar: isoDe($("#ag-quando").value)});
+}
+
 /* ── Aba Ajustes (só criadora) ───────────────────────────────────────── */
 async function carregarConfig(){
   const r = await api("/api/criadora/config");
@@ -1608,6 +1749,9 @@ function novaPublicacao(pago){
     <div class="troca" style="margin:12px 0 0"><div><b>🔒 Conteúdo pago</b><br><small class="muted" id="pub-dica"></small></div><span class="chave" id="pub-pago"></span></div>
     <span class="rotulo" id="pub-rot-texto"></span><textarea id="pub-texto" maxlength="4000"></textarea>
     <div class="gap"></div>
+    <div id="pub-enq-wrap"><button class="btn sec" id="pub-enq-bt" style="padding:11px">📊 Adicionar enquete</button>
+      <div class="ed-enq ocultar" id="pub-enq">${[1,2,3,4].map(i => `<input type="text" class="pub-op" maxlength="60" placeholder="Opção ${i}${i > 2 ? " (opcional)" : ""}">`).join("")}
+        <p class="dica" style="margin:0">O texto acima vira a pergunta. Cada fã vota uma vez.</p></div><div class="gap"></div></div>
     <label class="escolher" for="pub-arqs" id="pub-escolher"></label><input type="file" id="pub-arqs" hidden>
     <div class="miniaturas" id="pub-mini"></div>
     <div id="pub-pagos">
@@ -1615,6 +1759,9 @@ function novaPublicacao(pago){
       <span class="rotulo">Preço</span><input type="text" id="pub-preco" inputmode="decimal" placeholder="29,90">
       ${canal ? `<div class="troca" style="margin:14px 0 0"><div><b>Postar prévia no canal</b><br><small class="muted">Canal de amostras, com botão de compra</small></div><span class="chave ${CONFIG && !CONFIG.canal_padrao ? "" : "on"}" id="pub-canal"></span></div>` : ""}
     </div>
+    <div class="troca" style="margin:14px 0 0"><div><b>🗓️ Agendar</b><br><small class="muted">Vai ao ar sozinho no dia e hora</small></div><span class="chave" id="pub-agendar"></span></div>
+    <div id="pub-ag" class="ocultar"><div class="gap"></div>${inputQuando("pub-quando")}
+      <div class="troca ocultar" id="pub-cd-linha" style="margin:10px 0 0"><div><b>⏳ Contagem regressiva</b><br><small class="muted">Fãs veem o lançamento e pedem para ser avisados</small></div><span class="chave on" id="pub-contagem"></span></div></div>
     <div id="pub-prog" class="ocultar"><div class="progresso"><i id="pub-barra"></i></div><p class="dica" id="pub-etapa">Enviando…</p></div>
     <div class="gap"></div><button class="btn" id="pub-publicar"></button>`);
   const modo = () => {
@@ -1627,10 +1774,17 @@ function novaPublicacao(pago){
     const inp = $("#pub-arqs"); inp.multiple = pago; inp.accept = pago ? "image/*,video/*" : "image/*";
     if(!pago){ const f = arqs.find(x => x.type.startsWith("image")); arqs = f ? [f] : [] }
     miniaturas(arqs, "#pub-mini");
-    $("#pub-publicar").textContent = pago ? "Publicar pack" : "Publicar";
+    $("#pub-enq-wrap").classList.toggle("ocultar", pago);
+    $("#pub-cd-linha").classList.toggle("ocultar", !pago);
+    $("#pub-publicar").textContent = agendar ? (pago ? "Agendar lançamento" : "Agendar") : pago ? "Publicar pack" : "Publicar";
   };
+  let agendar = false;
   modo();
   $("#pub-pago").onclick = () => { pago = !pago; vibrar("leve"); modo() };
+  $("#pub-agendar").onclick = e => { agendar = !agendar; e.currentTarget.classList.toggle("on", agendar); $("#pub-ag").classList.toggle("ocultar", !agendar); vibrar("leve"); modo() };
+  $("#pub-contagem").onclick = e => { e.currentTarget.classList.toggle("on"); vibrar("leve") };
+  $("#pub-enq-bt").onclick = () => { $("#pub-enq").classList.remove("ocultar"); $("#pub-enq-bt").classList.add("ocultar"); $(".pub-op").focus(); vibrar("leve") };
+  const quando = () => agendar ? isoDe($("#pub-quando").value) : "";
   $("#pub-arqs").onchange = e => { arqs = pago ? [...arqs, ...e.target.files].slice(0, 30) : [...e.target.files].slice(0, 1); miniaturas(arqs, "#pub-mini"); e.target.value = "" };
   $("#pub-mini").onclick = async e => {
     const i = e.target.dataset.tirar, ed = e.target.dataset.editar;
@@ -1640,13 +1794,18 @@ function novaPublicacao(pago){
   $("#pub-canal") && ($("#pub-canal").onclick = e => e.currentTarget.classList.toggle("on"));
   $("#pub-publicar").onclick = async () => {
     const texto = $("#pub-texto").value.trim(), b = $("#pub-publicar");
+    if(agendar && !$("#pub-quando").value) return toast("Escolha o dia e a hora");
     if(!pago){
+      const ops = [...document.querySelectorAll(".pub-op")].map(i => i.value.trim()).filter(Boolean);
+      if(ops.length === 1) return toast("A enquete precisa de pelo menos 2 opções");
+      if(ops.length && !texto) return toast("Escreva a pergunta da enquete no texto");
       if(!texto && !arqs.length) return toast("Escreva algo ou escolha uma foto");
       b.disabled = true; b.textContent = "Publicando…";
-      const r = await enviarForm("/api/criadora/post", {texto}, arqs.length ? [["foto", arqs[0]]] : []);
-      if(!r.ok){ b.disabled = false; b.textContent = "Publicar"; return toast(r.erro || "Não consegui publicar") }
+      const r = await enviarForm("/api/criadora/post", {texto, enquete: ops.length ? JSON.stringify(ops) : "", agendar: quando()}, arqs.length ? [["foto", arqs[0]]] : []);
+      if(!r.ok){ b.disabled = false; b.textContent = agendar ? "Agendar" : "Publicar"; return toast(r.erro || "Não consegui publicar") }
       vibrar("success"); fecharFolha(true); PAINEL = null; ANIMAR = true;
-      if(r.fila){ toast("Na fila de revisão 📝"); ABA = "painel" } else { toast("Publicado ✓"); confete(40); ABA = "inicio"; FILTRO = "todos" }
+      if(r.agendado){ toast(`Agendado para ${r.agendado} 🗓️`); ABA = "painel" }
+      else if(r.fila){ toast("Na fila de revisão 📝"); ABA = "painel" } else { toast("Publicado ✓"); confete(40); ABA = "inicio"; FILTRO = "todos" }
       carregar();
       return;
     }
@@ -1657,21 +1816,31 @@ function novaPublicacao(pago){
     if(arqs.find(f => f.type.startsWith("video") && f.size > 49 * 1024 * 1024)) return toast("Um vídeo passa de 50 MB, o limite do Telegram. Envie esse pelo bot.");
     b.disabled = true; b.textContent = "Publicando…"; $("#pub-prog").classList.remove("ocultar");
     const r = await enviarForm("/api/criadora/pack",
-      {titulo, preco, legenda: texto, canal: $("#pub-canal")?.classList.contains("on") ? "1" : "0"},
+      {titulo, preco, legenda: texto, canal: $("#pub-canal")?.classList.contains("on") ? "1" : "0",
+       agendar: quando(), contagem: $("#pub-contagem").classList.contains("on") ? "1" : "0"},
       arqs.map(f => ["arquivos", f]),
       p => { $("#pub-barra").style.width = `${Math.round(p * 100)}%`; $("#pub-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : "Gerando as prévias com desfoque…" });
     if(!r.ok){ b.disabled = false; b.textContent = "Publicar pack"; $("#pub-prog").classList.add("ocultar"); return toast(r.erro || "Não consegui publicar") }
     vibrar("success"); fecharFolha(true); PAINEL = null; ANIMAR = true;
-    if(r.fila){ toast("Pack na fila de revisão 📝"); ABA = "painel" }
+    if(r.agendado){ toast(`Lançamento agendado para ${r.agendado} 🗓️`); ABA = "painel" }
+    else if(r.fila){ toast("Pack na fila de revisão 📝"); ABA = "painel" }
     else { toast(r.no_canal ? "Pack publicado e postado no canal ✓" : "Pack publicado ✓"); confete(); ABA = "inicio"; FILTRO = "todos" }
     carregar();
   };
 }
 
 function menuItem(alvo){
+  if(alvo.startsWith("ag:")){
+    const ref = alvo.slice(3);
+    return abrirFolha(`<h2>Lançamento agendado</h2><p class="sub">Os fãs estão vendo a contagem regressiva.</p>
+      <button class="btn brilho" data-ag="${ref}:publicar">Publicar agora</button><div class="gap"></div>
+      <button class="btn sec" data-ag="${ref}:horario">🕑 Mudar horário</button><div class="gap"></div>
+      <button class="btn sec" data-menu="${ref}">✎ Editar título, preço e legenda</button><div class="gap"></div>
+      <button class="btn fantasma perigo" data-ag="${ref}:cancelar">Cancelar lançamento</button>`);
+  }
   const [tipo, id] = alvo.split(":");
   if(tipo === "post"){
-    const p = [...D.posts, ...(D.fila?.posts || [])].find(x => String(x.id) === id); if(!p) return;
+    const p = [...D.posts, ...(D.fila?.posts || []), ...(D.agendados?.posts || [])].find(x => String(x.id) === id); if(!p) return;
     abrirFolha(`<h2>Editar publicação</h2>
       <textarea id="ed-texto" maxlength="4000">${esc(p.texto)}</textarea>
       <div class="gap"></div><button class="btn" id="ed-salvar">Salvar</button><div class="gap"></div>
@@ -1683,7 +1852,7 @@ function menuItem(alvo){
     $("#ed-apagar").onclick = () => confirmar("Apagar esta publicação?", async () => { await api(`/api/criadora/post/${id}/apagar`, {}); toast("Apagada"); fecharFolha(); carregar() });
     return;
   }
-  const p = [...D.packs, ...(D.fila?.packs || [])].find(x => x.id === id); if(!p) return;
+  const p = [...D.packs, ...(D.fila?.packs || []), ...(D.agendados?.packs || [])].find(x => x.id === id); if(!p) return;
   abrirFolha(`<h2>Editar pack</h2>
     <span class="rotulo">Título</span><input type="text" id="ed-titulo" maxlength="80" value="${esc(p.titulo)}">
     <span class="rotulo">Preço</span><input type="text" id="ed-preco" inputmode="decimal" value="${esc(p.preco_fmt.replace("R$ ", ""))}">
@@ -1799,10 +1968,13 @@ document.addEventListener("click", e => {
     TOQUE = {el: duplo, t: agora, timer: duplo.dataset.item ? setTimeout(() => { TOQUE = {}; detalhes(duplo.dataset.item) }, 260) : null};
     return;
   }
-  const el = e.target.closest("[data-renovar],[data-fa],[data-desbloq],#ed-promo,#ed-limite,#ed-bloq,#notif-chave,#resumo-chave,#marca-chave,[data-plano-ed],[data-cupom-ed],#cupom-novo,#ed-mimos,#canal-chave,[data-fila],[data-previa],#rev-chave,[data-volta],[data-mais],[data-col],[data-curtir],[data-mimo],[data-mimo-outro],[data-periodo],[data-modo],[data-menu],[data-criar],[data-msg],#ed-perfil,#ed-perfil2,#ed-msgs,#como-fa,[data-reenviar],[data-ver],[data-aba],[data-vista],[data-filtro],[data-plano],[data-item],#pagar,#assinar,#gorjeta-ok");
+  const el = e.target.closest("[data-votar],[data-avisar],[data-ag],[data-renovar],[data-fa],[data-desbloq],#ed-promo,#ed-limite,#ed-bloq,#notif-chave,#resumo-chave,#marca-chave,[data-plano-ed],[data-cupom-ed],#cupom-novo,#ed-mimos,#canal-chave,[data-fila],[data-previa],#rev-chave,[data-volta],[data-mais],[data-col],[data-curtir],[data-mimo],[data-mimo-outro],[data-periodo],[data-modo],[data-menu],[data-criar],[data-msg],#ed-perfil,#ed-perfil2,#ed-msgs,#como-fa,[data-reenviar],[data-ver],[data-aba],[data-vista],[data-filtro],[data-plano],[data-item],#pagar,#assinar,#gorjeta-ok");
   if(!el) return;
   if(el.dataset.modo){ COMO_FA = el.dataset.modo === "cliente"; ABA = "inicio"; vibrar("leve");
     if(!PLANO_SEL) PLANO_SEL = (D.planos.find(p => p.economia) || D.planos[0])?.id; return render() }
+  if(el.dataset.votar){ return votar(el.dataset.votar) }
+  if(el.dataset.avisar){ return avisar(el.dataset.avisar, el) }
+  if(el.dataset.ag){ const [t, id, acao] = el.dataset.ag.split(":"); return acao ? acaoAgendado(`${t}:${id}`, acao) : acaoAgendado(`${t}:${id}`, "horario") }
   if(el.dataset.renovar){ e.stopPropagation(); ULTIMO = el.dataset.renovar; return pagar(el.dataset.renovar) }
   if(el.dataset.fa){ return abrirFa(el.dataset.fa) }
   if(el.dataset.desbloq){ return bloquearFa(el.dataset.desbloq, false) }

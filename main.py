@@ -27,6 +27,7 @@ from remarketing import loop_remarketing
 import criadora
 import loja
 import mensagens
+import agenda
 import notificacoes
 import protecao
 from webhook import criar_app_web
@@ -100,7 +101,8 @@ async def run(cfg: Config) -> None:
     logging.info("Bot @%s online | webhook PIX em %s", me.username, cfg.webhook_url.split("?")[0])   # sem o token no log
 
     jobs = [asyncio.create_task(loop_remarketing(bot, db, cfg)),
-            asyncio.create_task(notificacoes.loop_resumo(bot, db, cfg))]
+            asyncio.create_task(notificacoes.loop_resumo(bot, db, cfg)),
+            asyncio.create_task(agenda.loop_agenda(bot, db, cfg))]
     if cfg.backup_ativo:
         jobs.append(asyncio.create_task(loop_backup(bot, db, cfg)))
     try:

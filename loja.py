@@ -107,7 +107,7 @@ async def dados(request: web.Request) -> web.Response:
                       "fotos": sum(m["tipo"] == "photo" for m in p.originais),
                       "videos": sum(m["tipo"] == "video" for m in p.originais),
                       "criado_em": p.criado_em, "legenda": p.legenda})
-    todos = [p for p in await db.listar_packs(tipo=None) if p.tipo != "fila"]
+    todos = [p for p in await db.listar_packs(tipo=None) if p.tipo not in ("fila", "agendado", "pedido")]
     totais = {"conteudos": len(todos),
               "fotos": sum(m["tipo"] == "photo" for p in todos for m in p.originais),
               "videos": sum(m["tipo"] == "video" for p in todos for m in p.originais)}
@@ -126,6 +126,32 @@ async def dados(request: web.Request) -> web.Response:
         info_vip = {"ativa": True, "ate": data_local(assinatura.expira_em, cfg), "dias": max(0, math.ceil(restam)),
                     "plano": plano.item_id if plano else None, "plano_nome": plano.nome if plano else None,
                     "plano_preco": plano.preco_fmt if plano else None, "plano_dias": plano.dias if plano else None}
+    criadora = user["id"] in cfg.admin_ids
+    votos = await db.resultados_enquetes(user["id"])
+
+    def post_json(p: dict) -> dict:
+        d = {"id": p["id"], "texto": p["texto"], "foto": bool(p["foto"]), "criado_em": p["criado_em"]}
+        if p.get("enquete"):
+            v = votos.get(p["id"], {"votos": {}, "meu": None})
+            d["enquete"] = {"opcoes": p["enquete"], "votos": [v["votos"].get(i, 0) for i in range(len(p["enquete"]))],
+                            "meu": v["meu"]}
+        if p.get("agendado_para"):
+            d["agendado_para"] = p["agendado_para"]
+        return d
+
+    ag = await db.agendados()
+    meus_avisos = await db.avisos_do_usuario(user["id"])
+    n_avisos = await db.contar_avisos() if criadora else {}
+
+    def pack_ag(a: dict) -> dict:
+        p = a["pack"]
+        return {"id": p.id, "titulo": p.titulo, "preco_fmt": p.preco_fmt, "preco": p.preco, "legenda": p.legenda,
+                "resumo": _resumo([p]), "fotos": sum(m["tipo"] == "photo" for m in p.originais),
+                "videos": sum(m["tipo"] == "video" for m in p.originais), "quando": a["agendado_para"],
+                "contagem": a["contagem"], "avisar": p.id in meus_avisos, "avisos": n_avisos.get(p.id, 0),
+                "canal": a["postar_canal"]}
+
+    lancamentos = [pack_ag(a) for a in ag["packs"] if a["pack"] and a["contagem"]]
     promo = {}
     for p in planos:
         pct = await desconto_primeiro_mes(db, user["id"], p)
@@ -139,8 +165,10 @@ async def dados(request: web.Request) -> web.Response:
                      "totais": totais},
         "usuario": {"nome": user["nome"]},
         "sou_criadora": user["id"] in cfg.admin_ids,
-        "posts": [{"id": p["id"], "texto": p["texto"], "foto": bool(p["foto"]), "criado_em": p["criado_em"]}
-                  for p in await db.listar_posts()],
+        "posts": [post_json(p) for p in await db.listar_posts()],
+        "lancamentos": lancamentos,
+        "agendados": {"posts": [post_json(p) for p in ag["posts"]],
+                      "packs": [pack_ag(a) for a in ag["packs"] if a["pack"]]} if criadora else None,
         "idade": await _idade_ok(db, cfg, user["id"]),
         "teste": isinstance(request.app["gateway"], MockPixGateway),
         "assinatura": info_vip,
@@ -178,6 +206,34 @@ async def curtir(request: web.Request) -> web.Response:
         return web.json_response({"ok": False}, status=404)
     curtido, total = await db.curtir(user["id"], alvo)
     return web.json_response({"ok": True, "curtido": curtido, "total": total})
+
+
+async def votar(request: web.Request) -> web.Response:
+    db: Database = request.app["db"]
+    user = _usuario(request)
+    corpo = await request.json()
+    try:
+        post_id, opcao = int(corpo.get("post_id")), int(corpo.get("opcao"))
+    except (TypeError, ValueError):
+        return web.json_response({"ok": False}, status=400)
+    post = next((p for p in await db.listar_posts() if p["id"] == post_id), None)
+    if not post or not post["enquete"] or not 0 <= opcao < len(post["enquete"]):
+        return web.json_response({"ok": False}, status=404)
+    novo = await db.votar(post_id, user["id"], opcao)
+    v = (await db.resultados_enquetes(user["id"])).get(post_id, {"votos": {}, "meu": None})
+    return web.json_response({"ok": True, "novo": novo, "meu": v["meu"],
+                              "votos": [v["votos"].get(i, 0) for i in range(len(post["enquete"]))]})
+
+
+async def avise(request: web.Request) -> web.Response:
+    """Liga/desliga o 'Me avise' de um lançamento com contagem regressiva."""
+    db: Database = request.app["db"]
+    user = _usuario(request)
+    pack_id = str((await request.json()).get("pack_id", ""))
+    pack = await db.get_pack(pack_id)
+    if not pack or pack.tipo != "agendado":
+        return web.json_response({"ok": False, "erro": "Esse lançamento já saiu."}, status=404)
+    return web.json_response({"ok": True, "avisar": await db.alternar_aviso(pack_id, user["id"])})
 
 
 async def previa(request: web.Request) -> web.Response:
@@ -302,6 +358,8 @@ def registrar_rotas(app: web.Application) -> None:
     app.router.add_get("/api/loja/foto", foto)
     app.router.add_post("/api/loja/idade", idade)
     app.router.add_post("/api/loja/curtir", curtir)
+    app.router.add_post("/api/loja/votar", votar)
+    app.router.add_post("/api/loja/avise", avise)
     app.router.add_post("/api/loja/comprar", comprar)
     app.router.add_get("/api/loja/pedido/{pix_id}", pedido)
     app.router.add_post("/api/loja/reenviar", reenviar)
