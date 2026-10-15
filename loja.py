@@ -103,7 +103,7 @@ async def dados(request: web.Request) -> web.Response:
                       "fotos": sum(m["tipo"] == "photo" for m in p.originais),
                       "videos": sum(m["tipo"] == "video" for m in p.originais),
                       "criado_em": p.criado_em, "legenda": p.legenda})
-    todos = await db.listar_packs(tipo=None)
+    todos = [p for p in await db.listar_packs(tipo=None) if p.tipo != "fila"]
     totais = {"conteudos": len(todos),
               "fotos": sum(m["tipo"] == "photo" for p in todos for m in p.originais),
               "videos": sum(m["tipo"] == "video" for p in todos for m in p.originais)}
@@ -135,10 +135,22 @@ async def dados(request: web.Request) -> web.Response:
         "combos": combos,
         "gorjetas": [int(v) * 100 for v in cfg.gorjeta_valores.split(",") if v.strip().isdigit()],
         "minhas": [{"id": p.id, "titulo": p.titulo} for p in await db.packs_do_cliente(user["id"])],
+        "fila": await _fila(db) if user["id"] in cfg.admin_ids else None,     # aguardando revisão da criadora
+        "revisao": await db.get_ajuste("revisao", "0") == "1" if user["id"] in cfg.admin_ids else False,
         "curtidas": await db.curtidas_do_feed(user["id"]),                        # {alvo: {n, eu}}
         "mimos": {a: {"qtd": m["qtd"], "total_fmt": fmt_reais(m["total"])}         # só a criadora vê os valores
                   for a, m in (await db.mimos_do_feed()).items()} if user["id"] in cfg.admin_ids else {},
     })
+
+
+async def _fila(db: Database) -> dict:
+    posts = [{"id": p["id"], "texto": p["texto"], "foto": bool(p["foto"]), "criado_em": p["criado_em"]}
+             for p in await db.listar_posts("fila")]
+    packs = [{"id": p.id, "titulo": p.titulo, "preco_fmt": p.preco_fmt, "preco": p.preco, "resumo": _resumo([p]),
+              "fotos": sum(m["tipo"] == "photo" for m in p.originais), "videos": sum(m["tipo"] == "video" for m in p.originais),
+              "criado_em": p.criado_em, "legenda": p.legenda, "comprado": True}
+             for p in await db.listar_packs(tipo="fila")]
+    return {"posts": posts, "packs": packs}
 
 
 async def curtir(request: web.Request) -> web.Response:

@@ -40,7 +40,7 @@ async def criar_pedido(db: Database, gateway: PixGateway, cfg: Config, user_id: 
     # Quem já tem todo o conteúdo não paga de novo
     if conteudo and await db.tem_todos(user_id, [p.id for p in packs]):
         return Pedido("ja_comprou", item=item, packs=packs)
-    if isinstance(item, Pack) and item.tipo == "arquivado":       # apagado da vitrine: não vende mais
+    if isinstance(item, Pack) and item.tipo in ("arquivado", "fila"):       # apagado da vitrine: não vende mais
         return Pedido("inexistente")
 
     pedido = Pedido("ok", item=item, packs=packs, preco=item.preco)

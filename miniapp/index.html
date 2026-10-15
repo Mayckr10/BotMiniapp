@@ -210,7 +210,9 @@ input::placeholder{color:var(--muted)}
 .check{width:92px;height:92px;border-radius:50%;background:var(--grad);margin:0 auto 14px;display:grid;place-items:center;color:#fff;font-size:44px;animation:pop .5s cubic-bezier(.2,1.4,.4,1);box-shadow:0 16px 40px color-mix(in srgb,var(--a1) 40%,transparent)}
 @keyframes pop{from{transform:scale(.3);opacity:0}}
 .ok-grande .emoji{font-size:60px;margin-bottom:6px}
-.toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + 28px);transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:999px;z-index:40;font-size:13.5px;font-weight:600;box-shadow:var(--sombra);animation:sobe .25s}
+.toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + 28px);transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:999px;z-index:70;font-size:13.5px;font-weight:600;box-shadow:var(--sombra);animation:toast-in .35s cubic-bezier(.2,1.2,.4,1);transition:opacity .25s,transform .25s;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+.toast.sai{opacity:0;transform:translate(-50%,10px)}
+@keyframes toast-in{from{opacity:0;transform:translate(-50%,18px) scale(.94)}}
 
 /* ── Skeleton ──────────────────────────────────────────────────────────── */
 .sk{background:linear-gradient(90deg,var(--card) 25%,color-mix(in srgb,var(--card) 70%,white 6%) 50%,var(--card) 75%);background-size:200% 100%;animation:sk 1.3s infinite;border-radius:14px}
@@ -259,9 +261,10 @@ textarea:focus{border-color:var(--a1)}
 .interacao:active{background:var(--line)}
 .interacao.on{color:var(--a1)}
 .interacao .coracao{font-size:18px;line-height:1;display:inline-block}
-.interacao.pop .coracao{animation:pop .35s ease}
+.interacao{position:relative}
+.interacao.pop .coracao{animation:pulo .4s ease}
 .interacao.info{color:var(--muted);font-size:13px;font-weight:600;margin-left:auto}
-@keyframes pop{40%{transform:scale(1.45)}100%{transform:scale(1)}}
+@keyframes pulo{40%{transform:scale(1.5)}100%{transform:scale(1)}}
 .seg{display:flex;gap:4px;margin:0 16px 10px;padding:4px;background:var(--card);border:1px solid var(--line);border-radius:14px}
 .seg button{flex:1;height:34px;border-radius:10px;font-weight:700;font-size:13.5px;color:var(--muted)}
 .seg button.on{background:var(--text);color:var(--bg)}
@@ -330,6 +333,156 @@ textarea:focus{border-color:var(--a1)}
 .seta-g.esq{left:12px}.seta-g.dir{right:12px}
 .galeria .rodape-g{display:flex;gap:8px}
 .galeria .rodape-g .btn{width:auto;padding:10px 16px;font-size:13.5px}
+
+/* ── Movimento e interação ───────────────────────────────────────────── */
+main{overflow-x:clip}
+@keyframes entra{from{opacity:0;transform:translateY(16px) scale(.985)}}
+.anima .entra,.anima.entra-raiz .entra{animation:entra .55s cubic-bezier(.2,.8,.2,1) backwards;animation-delay:calc(var(--i,0) * 45ms)}
+@keyframes vem-dir{from{opacity:0;transform:translateX(28px)}}
+@keyframes vem-esq{from{opacity:0;transform:translateX(-28px)}}
+#conteudo.vai-dir{animation:vem-dir .38s cubic-bezier(.2,.8,.2,1)}
+#conteudo.vai-esq{animation:vem-esq .38s cubic-bezier(.2,.8,.2,1)}
+.acao,.kpi,.plano,.chip,.mimo,.item,.card,.cta-vip,.vip-ativo,.ranking .linha,.interacao,.preco-tag,.seg button,.btn,.beneficio{transition:transform .2s cubic-bezier(.2,.8,.2,1),background .25s,border-color .25s,box-shadow .25s,color .25s}
+.acao:active,.kpi:active,.plano:active,.chip:active,.item:active,.card:active,.cta-vip:active,.vip-ativo:active,.ranking .linha:active,.preco-tag:active,.beneficio:active{transform:scale(.97)}
+.btn:active{transform:scale(.97)}
+img.fade{opacity:0;transition:opacity .55s ease,transform .6s}
+img.fade.ok{opacity:1}
+/* avatar com anel de stories girando */
+@property --ang{syntax:"<angle>";inherits:false;initial-value:0deg}
+.anel{position:relative;padding:3px;border-radius:50%;background:conic-gradient(from var(--ang),#ff2e7e,#ff7a3d,#ffd23d,#7b5cff,#ff2e7e);animation:anel 5s linear infinite;box-shadow:0 12px 36px color-mix(in srgb,var(--a1) 30%,transparent)}
+@keyframes anel{to{--ang:360deg}}
+.anel .avatar{box-shadow:none}
+.avatar-wrap .lapis{z-index:2;transition:transform .2s}
+.avatar-wrap:active .lapis{transform:scale(.85) rotate(-12deg)}
+/* gradiente vivo e brilho passando */
+.vivo{background:linear-gradient(120deg,var(--a1),var(--a2),#ff4fa3,#7b5cff,var(--a1)) !important;background-size:400% 400% !important;animation:grad 14s ease infinite}
+@keyframes grad{50%{background-position:100% 50%}}
+.brilho{position:relative;overflow:hidden;isolation:isolate}
+.brilho::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.38) 50%,transparent 65%);transform:translateX(-120%);animation:brilho 3.6s ease-in-out infinite;pointer-events:none}
+.desbloq.brilho::after{background:linear-gradient(110deg,transparent 35%,color-mix(in srgb,var(--a1) 28%,transparent) 50%,transparent 65%);z-index:0}
+@keyframes brilho{55%,100%{transform:translateX(120%)}}
+.cadeado{animation:respira 2.8s ease-in-out infinite}
+@keyframes respira{50%{transform:scale(1.07)}}
+.midia .veu .desbloq{transition:transform .25s}
+.midia:active .veu .desbloq{transform:scale(.95)}
+/* barra inferior com pílula deslizante */
+.barra nav{position:relative}
+.barra nav .pilula{position:absolute;top:6px;bottom:6px;left:6px;border-radius:16px;background:color-mix(in srgb,var(--text) 9%,transparent);transition:transform .45s cubic-bezier(.3,1.25,.5,1);pointer-events:none}
+.barra nav button{position:relative;z-index:1}
+.barra nav button.on{background:transparent}
+.barra nav button.salta .ico{animation:pula .5s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pula{40%{transform:translateY(-6px) scale(1.22)}}
+/* topo fixo que aparece ao rolar */
+.topo-fixo{position:fixed;top:0;left:0;right:0;z-index:9;display:flex;align-items:center;gap:10px;padding:10px 16px;background:color-mix(in srgb,var(--bg) 80%,transparent);backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);border-bottom:1px solid var(--line);transform:translateY(-110%);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.rolou .topo-fixo{transform:none}
+.rolou #volta-criadora{opacity:0;pointer-events:none}
+#volta-criadora{transition:opacity .2s}
+.topo-fixo .av{width:32px;height:32px;border-radius:50%;object-fit:cover;background:var(--grad);display:grid;place-items:center;color:#fff;font-size:14px;flex:none}
+.topo-fixo b{font-size:15px;display:flex;align-items:center;gap:5px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topo-fixo .verif{width:16px;height:16px;font-size:10px;flex:none}
+.topo-fixo .btn{margin-left:auto;flex:none}
+/* curtida: coração gigante no toque duplo + faíscas */
+.foto-wrap{position:relative}
+.coracao-grande{position:absolute;left:50%;top:50%;font-size:104px;line-height:1;transform:translate(-50%,-50%) scale(0);z-index:3;pointer-events:none;filter:drop-shadow(0 10px 30px rgba(255,46,126,.55));animation:coracao 1s cubic-bezier(.2,1.3,.4,1) forwards}
+@keyframes coracao{15%{transform:translate(-50%,-50%) scale(1.25)}30%{transform:translate(-50%,-50%) scale(.92)}45%,70%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-110%) scale(.55);opacity:0}}
+.faisca{position:absolute;left:24px;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;pointer-events:none;animation:faisca .65s cubic-bezier(.2,.8,.3,1) forwards}
+@keyframes faisca{to{transform:translate(var(--x),var(--y)) scale(.2);opacity:0}}
+/* confete e emoji voando */
+.confete{position:fixed;top:-14px;z-index:80;width:8px;height:13px;border-radius:2px;pointer-events:none;animation:cai var(--d,2s) cubic-bezier(.25,.6,.4,1) forwards}
+@keyframes cai{to{transform:translate(var(--x),108vh) rotate(var(--r))}}
+.emoji-voa{position:fixed;z-index:80;font-size:34px;pointer-events:none;animation:voa 1.1s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes voa{to{transform:translate(var(--x),-220px) scale(1.6) rotate(var(--r));opacity:0}}
+/* folha: sai deslizando e pode ser arrastada para baixo */
+.fundo.saindo{animation:some .22s forwards}
+.fundo.saindo .folha{animation:desce .22s forwards}
+@keyframes some{to{opacity:0}}
+@keyframes desce{to{transform:translateY(40%)}}
+.folha .alca{cursor:grab;touch-action:none}
+/* painel */
+.ola{margin:6px 16px 0;border-radius:var(--r);padding:18px 18px 16px;color:#fff;position:relative;overflow:hidden;box-shadow:0 16px 40px color-mix(in srgb,var(--a1) 30%,transparent)}
+.ola small{opacity:.92;font-size:13px;font-weight:700}
+.ola b{display:block;font-size:30px;letter-spacing:-.03em;margin:2px 0 2px;font-variant-numeric:tabular-nums}
+.ola span{opacity:.92;font-size:13px}
+.ola .deco{position:absolute;right:16px;top:12px;font-size:44px;opacity:.3;animation:respira 3s ease-in-out infinite}
+.kpi b{font-variant-numeric:tabular-nums}
+.grafico .col{transform-origin:bottom;animation:cresce .8s cubic-bezier(.2,.9,.3,1) backwards;animation-delay:calc(var(--i,0) * 35ms);cursor:pointer;transition:filter .2s}
+.grafico .col.sel{filter:brightness(1.35)}
+.grafico .col.sel::after{content:attr(data-v);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);font-size:11px;font-weight:700;padding:4px 8px;border-radius:8px;white-space:nowrap;z-index:2}
+.grafico .col:first-child.sel::after,.grafico .col:nth-child(2).sel::after{left:0;transform:none}
+.grafico .col:last-child.sel::after,.grafico .col:nth-last-child(2).sel::after{left:auto;right:0;transform:none}
+@keyframes cresce{from{transform:scaleY(0)}}
+.divisao span{transform-origin:left;animation:cresce-x .9s cubic-bezier(.2,.9,.3,1) backwards}
+@keyframes cresce-x{from{transform:scaleX(0)}}
+.seg button{transition:background .3s,color .3s,transform .2s}
+.fab{animation:fab-in .5s cubic-bezier(.3,1.5,.5,1) backwards}
+.fab:active{transform:scale(.9) rotate(90deg)}
+@keyframes fab-in{from{transform:scale(0) rotate(-90deg)}}
+.plano.on .radio::after{animation:pop .35s cubic-bezier(.2,1.4,.4,1)}
+.legenda.mais{cursor:pointer;position:relative}
+.legenda.mais{padding-bottom:0;margin-bottom:6px}
+.ver-mais{color:var(--muted);font-weight:700;font-size:13.5px;padding:0 14px 12px;display:block;cursor:pointer}
+.chave::after{transition:transform .3s cubic-bezier(.3,1.4,.5,1)}
+#pub-pagos.abre{animation:entra .4s cubic-bezier(.2,.8,.2,1)}
+
+/* ── Editor de fotos ─────────────────────────────────────────────────── */
+.ed{position:fixed;inset:0;z-index:60;background:#000;color:#fff;display:flex;flex-direction:column;animation:surge .2s;-webkit-user-select:none;user-select:none}
+.ed header{display:flex;align-items:center;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top)) 12px 10px}
+.ed header b{font-size:15px}
+.ed header button{padding:8px 12px;border-radius:12px;font-weight:700;font-size:15px}
+.ed header .pronto{background:var(--grad);color:#fff}
+.palco{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;touch-action:none;margin:0 12px}
+.palco canvas{display:block;max-width:100%;max-height:100%}
+.recorte{position:absolute;box-shadow:0 0 0 9999px rgba(0,0,0,.6);border:1.5px solid #fff;touch-action:none;cursor:move}
+.recorte.circulo{border-radius:50%}
+.recorte::before,.recorte::after{content:"";position:absolute;inset:0;pointer-events:none;border:0 solid rgba(255,255,255,.35)}
+.recorte::before{left:33.33%;right:33.33%;border-left-width:1px;border-right-width:1px}
+.recorte::after{top:33.33%;bottom:33.33%;border-top-width:1px;border-bottom-width:1px}
+.recorte .h{position:absolute;width:26px;height:26px;border:3.5px solid #fff;touch-action:none}
+.recorte .tl{left:-4px;top:-4px;border-right:0;border-bottom:0;cursor:nwse-resize}
+.recorte .tr{right:-4px;top:-4px;border-left:0;border-bottom:0;cursor:nesw-resize}
+.recorte .bl{left:-4px;bottom:-4px;border-right:0;border-top:0;cursor:nesw-resize}
+.recorte .br{right:-4px;bottom:-4px;border-left:0;border-top:0;cursor:nwse-resize}
+.ed .painel-ed{padding:12px 12px calc(12px + env(safe-area-inset-bottom));display:grid;grid-template-columns:minmax(0,1fr);gap:12px;min-height:150px}
+.ed .abas-ed{display:flex;justify-content:center;gap:6px}
+.ed .abas-ed button{padding:7px 14px;border-radius:999px;font-size:13.5px;font-weight:700;color:rgba(255,255,255,.6)}
+.ed .abas-ed button.on{background:rgba(255,255,255,.14);color:#fff}
+.ed .linha-ed{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:2px}
+.ed .linha-ed>:first-child{margin-left:auto}.ed .linha-ed>:last-child{margin-right:auto}
+.ed .linha-ed::-webkit-scrollbar{display:none}
+.ed .bt-ed{flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 10px;border-radius:14px;font-size:12px;font-weight:600;color:rgba(255,255,255,.75);min-width:58px;transition:background .2s,transform .15s}
+.ed .bt-ed:active{transform:scale(.93)}
+.ed .bt-ed .i{font-size:20px;line-height:1}
+.ed .bt-ed.on{background:rgba(255,255,255,.14);color:#fff}
+.ed .filtro img{width:58px;height:58px;border-radius:12px;object-fit:cover;border:2px solid transparent}
+.ed .filtro.on img{border-color:var(--a1)}
+.ed .ajuste{display:grid;grid-template-columns:86px 1fr 40px;align-items:center;gap:10px;font-size:13px;color:rgba(255,255,255,.8)}
+.ed .ajuste span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.ed input[type=range]{width:100%;accent-color:var(--a1)}
+.ed .salvando{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.55);z-index:3}
+.miniaturas .lapis-m{position:absolute;bottom:4px;right:4px;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.92);color:#111;font-size:12px;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+
+/* ── Fila de revisão ─────────────────────────────────────────────────── */
+.contador-fila{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 7px;border-radius:999px;background:var(--grad);color:#fff;font-size:12px;font-weight:800;margin-left:8px;vertical-align:middle}
+.fila{display:grid;gap:10px;padding:0 16px}
+.fila-item{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;position:relative}
+.fila-item::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--warn)}
+.fila-item .topo-f{display:flex;gap:12px;padding:12px 14px 10px 16px;cursor:pointer}
+.fila-item img,.fila-item .thumb{width:64px;height:64px;border-radius:14px;object-fit:cover;flex:none;background:color-mix(in srgb,var(--a1) 14%,transparent);display:grid;place-items:center;font-size:26px}
+.fila-item .txt{flex:1;min-width:0}
+.fila-item small{color:var(--muted);font-size:12px;font-weight:600}
+.fila-item b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.fila-item p{margin:2px 0 0;color:var(--muted);font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fila-item .acoes-f{display:flex;gap:8px;padding:0 14px 12px 16px}
+.fila-item .acoes-f .btn{flex:1}
+.fila-item .acoes-f .btn.sec{flex:none;width:44px;padding:9px 0}
+.fila-item.some{animation:fila-sai .35s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes fila-sai{to{opacity:0;transform:translateX(60px) scale(.96)}}
+.aviso-fila{display:flex;align-items:center;gap:10px;margin:0 16px 12px;padding:12px 14px;border-radius:var(--rs);background:color-mix(in srgb,var(--warn) 13%,var(--card));border:1px solid color-mix(in srgb,var(--warn) 35%,transparent);font-size:13.5px;font-weight:600;cursor:pointer}
+.aviso-fila span:last-child{margin-left:auto;color:var(--muted)}
+.barra nav .bolinha{position:absolute;top:4px;right:calc(50% - 22px);min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--a1);color:#fff;font-size:10.5px;font-weight:800;display:grid;place-items:center;box-shadow:0 0 0 2px var(--bg2);animation:pop .4s cubic-bezier(.2,1.4,.4,1)}
+.previa-fa{pointer-events:none;margin:6px -2px 10px}
+.previa-fa .post{box-shadow:none}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}}
 </style>
 </head>
 <body>
@@ -349,11 +502,12 @@ try{ tg?.ready(); tg?.expand(); tg?.setHeaderColor?.("bg_color"); tg?.setBackgro
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const criadora = () => D && D.sou_criadora && !COMO_FA;
+let PREVIA = false;
+const criadora = () => D && D.sou_criadora && !COMO_FA && !PREVIA;
 const avatarSrc = () => `/api/loja/foto?v=${encodeURIComponent(D.criadora.foto_v || "")}`;
 const reais = c => "R$ " + (c/100).toFixed(2).replace(".", ",");
 const EMOJI_MIMO = ["☕","🌹","💎","👑","🚀","🔥"];
-let PERIODO = "7d";
+let PERIODO = "7d", ANIMAR = true, DIR = "", SALTA = false, PILULA = null, TOQUE = {};
 let COMO_FA = false, PAINEL = null, ULTIMO = null, D = null, ABA = "inicio", FILTRO = "todos", VISTA = "feed", PLANO_SEL = null, POLL = null, TIMER = null;
 
 async function api(caminho, corpo){
@@ -379,7 +533,69 @@ function enviarForm(caminho, campos, arquivos = [], aoProgresso){
     x.send(fd);
   });
 }
-function toast(t){ const d=document.createElement("div"); d.className="toast"; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(),2600) }
+function toast(t){
+  document.querySelectorAll(".toast").forEach(x => x.remove());
+  const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d);
+  setTimeout(() => { d.classList.add("sai"); setTimeout(() => d.remove(), 300) }, 2400);
+}
+const SEM_MOVIMENTO = matchMedia("(prefers-reduced-motion: reduce)").matches;
+// Entrada em cascata dos blocos da tela
+function animarEntrada(raiz){
+  if(!raiz || SEM_MOVIMENTO) return;
+  raiz.querySelectorAll(".post,.grade .card,.kpi,.acao,.plano,.beneficio,.lista .item,.mimo,.ranking,.grafico,.seg,.troca,.chips,.secao-titulo,.hero-vip,.ola,.vazio,.fixo-cta,.campo")
+    .forEach((el, i) => { el.style.setProperty("--i", Math.min(i, 12)); el.classList.add("entra") });
+  raiz.classList.remove("anima"); void raiz.offsetWidth; raiz.classList.add("anima");
+}
+// Números sobem do zero (R$ 1.234,56 · 12 · 35%)
+function contar(raiz){
+  if(!raiz || SEM_MOVIMENTO) return;
+  raiz.querySelectorAll(".kpi b,.stats b,.grafico .topo b,.ola b").forEach(el => {
+    const t = el.textContent.trim(), m = t.match(/^(R\$\s)?([\d.]+)(,(\d+))?(%?)$/);
+    if(!m) return;
+    const alvo = parseFloat(m[2].replace(/\./g, "") + "." + (m[4] || "0")), dec = m[4] ? m[4].length : 0;
+    if(!alvo) return;
+    const fmt = v => (m[1] || "") + v.toLocaleString("pt-BR", {minimumFractionDigits: dec, maximumFractionDigits: dec}) + m[5];
+    const ini = performance.now(), dur = 900;
+    const passo = agora => { const p = Math.min(1, (agora - ini) / dur); el.textContent = fmt(alvo * (1 - Math.pow(1 - p, 3))); if(p < 1) requestAnimationFrame(passo); else el.textContent = t };
+    requestAnimationFrame(passo);
+  });
+}
+// Imagens aparecem com fade quando terminam de carregar
+function suavizarImagens(raiz){
+  raiz.querySelectorAll("img:not(.fade)").forEach(img => {
+    if(img.complete && img.naturalWidth) return;
+    img.classList.add("fade");
+    const ok = () => img.classList.add("ok");
+    img.addEventListener("load", ok, {once:true}); img.addEventListener("error", ok, {once:true});
+  });
+}
+const CORES = ["#ff2e7e","#ff7a3d","#ffd23d","#7b5cff","#2fd27a","#4fc3ff"];
+function confete(qtd = 70){
+  if(SEM_MOVIMENTO) return;
+  for(let i = 0; i < qtd; i++){
+    const c = document.createElement("i"); c.className = "confete";
+    c.style.cssText = `left:${Math.random()*100}vw;background:${CORES[i % CORES.length]};--x:${(Math.random()-.5)*160}px;--r:${(Math.random()-.5)*1080}deg;--d:${1.6 + Math.random()*1.4}s;animation-delay:${Math.random()*.35}s;${Math.random() < .3 ? "border-radius:50%;width:9px;height:9px;" : ""}`;
+    document.body.appendChild(c); setTimeout(() => c.remove(), 3600);
+  }
+}
+function voarEmoji(el, emoji){
+  if(SEM_MOVIMENTO) return;
+  const r = el.getBoundingClientRect();
+  for(let i = 0; i < 5; i++){
+    const e = document.createElement("span"); e.className = "emoji-voa"; e.textContent = emoji;
+    e.style.cssText = `left:${r.left + r.width/2 - 17}px;top:${r.top + r.height/2 - 17}px;--x:${(Math.random()-.5)*140}px;--r:${(Math.random()-.5)*60}deg;animation-delay:${i*70}ms`;
+    document.body.appendChild(e); setTimeout(() => e.remove(), 1600);
+  }
+}
+function faiscas(el){
+  if(SEM_MOVIMENTO) return;
+  for(let i = 0; i < 9; i++){
+    const a = i / 9 * Math.PI * 2, d = 22 + Math.random() * 10, f = document.createElement("i"); f.className = "faisca";
+    f.style.cssText = `background:${CORES[i % CORES.length]};--x:${Math.cos(a)*d}px;--y:${Math.sin(a)*d}px`;
+    el.appendChild(f); setTimeout(() => f.remove(), 700);
+  }
+}
+function saudacao(){ const h = new Date().getHours(); return h < 5 ? "Boa madrugada" : h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite" }
 function vibrar(tipo){ try{ tipo === "leve" ? tg?.HapticFeedback?.impactOccurred("light") : tg?.HapticFeedback?.notificationOccurred(tipo) }catch(e){} }
 function relativo(iso){
   if(!iso) return "";
@@ -410,7 +626,7 @@ function render(){
       <div class="capa">${c.tem_foto ? `<img src="${avatarSrc()}" alt="">` : `<span class="bolha b1"></span><span class="bolha b2"></span><span class="bolha b3"></span>`}</div>
       <div class="perfil">
         <div class="${criadora() ? "avatar-wrap" : ""}" ${criadora() ? 'id="ed-perfil"' : ""}>
-          ${c.tem_foto ? `<img class="avatar" src="${avatarSrc()}" alt="">` : `<div class="avatar">✨</div>`}
+          <div class="anel">${c.tem_foto ? `<img class="avatar" src="${avatarSrc()}" alt="">` : `<div class="avatar">✨</div>`}</div>
           ${criadora() ? `<span class="lapis">✎</span>` : ""}
         </div>
         <div class="nome">${esc(c.nome)} <span class="verif" title="Perfil oficial">✓</span></div>
@@ -423,28 +639,53 @@ function render(){
         </div>
       </div>
       ${criadora() ? "" : D.assinatura ? vipAtivo() : mensal && ABA !== "vip" ? `
-      <div class="cta-vip" data-aba="vip">
+      <div class="cta-vip vivo brilho" data-aba="vip">
         <div><b>Assinar VIP</b><small>Canal privado exclusivo · a partir de ${esc(mensal.preco_fmt)}/mês</small></div>
         <span class="seta">›</span>
       </div>` : ""}
     </header>
     <section id="conteudo">${aba()}</section>`;
+  const abas = criadora() ? [["inicio","🏠","Início"],["painel","📊","Painel"],["vip","⭐","VIP"],["gorjeta","💝","Mimos"]]
+                          : [["inicio","🏠","Início"],["vip","⭐","VIP"],["minhas","🗂️","Minhas"],["gorjeta","💝","Mimos"]];
+  const idx = Math.max(0, abas.findIndex(a => a[0] === ABA));
   $("#barra").innerHTML = `<nav>
-    ${(criadora() ? [["inicio","🏠","Início"],["painel","📊","Painel"],["vip","⭐","VIP"],["gorjeta","💝","Mimos"]]
-                  : [["inicio","🏠","Início"],["vip","⭐","VIP"],["minhas","🗂️","Minhas"],["gorjeta","💝","Mimos"]])
-      .map(([id,i,t]) => `<button data-aba="${id}" class="${ABA===id?"on":""}"><span class="ico">${i}</span>${t}</button>`).join("")}
+    <span class="pilula" style="width:calc((100% - 12px) / ${abas.length});transform:translateX(${(PILULA ?? idx) * 100}%)"></span>
+    ${abas.map(([id,i,t]) => `<button data-aba="${id}" class="${ABA===id ? "on" + (SALTA ? " salta" : "") : ""}"><span class="ico">${i}</span>${t}${id === "painel" && qtdFila() ? `<span class="bolinha">${qtdFila()}</span>` : ""}</button>`).join("")}
   </nav>`;
+  requestAnimationFrame(() => requestAnimationFrame(() => { const p = $("#barra .pilula"); if(p) p.style.transform = `translateX(${idx * 100}%)` }));
+  PILULA = idx; SALTA = false;
+  // barra do topo que aparece quando rola a página
+  $("#topo-fixo")?.remove();
+  const acaoTopo = criadora() ? `<button class="btn mini" data-criar="post">＋ Publicar</button>`
+    : D.sou_criadora ? `<button class="btn mini sec" data-volta="1">👑 Criadora</button>`
+    : !D.assinatura && D.planos.length ? `<button class="btn mini brilho" data-aba="vip">⭐ Assinar</button>` : "";
+  const topo = document.createElement("div"); topo.className = "topo-fixo"; topo.id = "topo-fixo";
+  topo.innerHTML = `${c.tem_foto ? `<img class="av" src="${avatarSrc()}" alt="">` : `<div class="av">✨</div>`}<b>${esc(c.nome)} <span class="verif">✓</span></b>${acaoTopo}`;
+  topo.querySelector(".av").onclick = () => window.scrollTo({top:0, behavior:"smooth"});
+  document.body.appendChild(topo);
   $("#fab")?.remove();
   if(criadora() && ABA === "inicio"){ const f = document.createElement("button"); f.className = "fab"; f.id = "fab"; f.textContent = "+"; f.onclick = () => novaPublicacao(false); document.body.appendChild(f) }
   if(criadora() && ABA === "painel" && !PAINEL) carregarPainel();
   $("#volta-criadora")?.remove();
   if(D.sou_criadora && COMO_FA){
-    const v = document.createElement("button"); v.id = "volta-criadora"; v.className = "selo-criadora";
+    const v = document.createElement("button"); v.id = "volta-criadora"; v.className = "selo-criadora"; v.dataset.volta = "1";
     v.style.cssText = "position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:12;margin:0;box-shadow:var(--sombra);background:var(--bg)";
-    v.textContent = "👑 Entrar como criadora"; v.onclick = () => { COMO_FA = false; ABA = "painel"; render() };
+    v.textContent = "👑 Entrar como criadora";
     document.body.appendChild(v);
   }
+  const cont = $("#conteudo");
+  if(DIR){ cont.classList.add(DIR); DIR = "" }
+  if(ANIMAR){ animarEntrada(cont); contar($("#app")); ANIMAR = false }
+  suavizarImagens($("#app"));
 }
+function irPara(nova){
+  const ordem = [...document.querySelectorAll("#barra [data-aba]")].map(b => b.dataset.aba);
+  const a = ordem.indexOf(ABA), b = ordem.indexOf(nova);
+  DIR = a < 0 || b < 0 || a === b ? "" : b > a ? "vai-dir" : "vai-esq";
+  SALTA = nova !== ABA; ANIMAR = nova !== ABA; ABA = nova; vibrar("leve"); render();
+  window.scrollTo({top: ABA === "inicio" ? 0 : Math.min(window.scrollY, 120), behavior:"smooth"});
+}
+addEventListener("scroll", () => document.body.classList.toggle("rolou", scrollY > 240), {passive:true});
 
 function vipAtivo(){
   const a = D.assinatura;
@@ -482,7 +723,7 @@ function postTexto(p){
   return `<article class="post post-texto">
     ${cabPost({data: esc(relativo(p.criado_em)), acao: `post:${p.id}`})}
     ${p.texto ? `<div class="corpo">${esc(p.texto)}</div>` : ""}
-    ${p.foto ? `<img class="foto-post" src="/api/loja/post_foto/${p.id}" loading="lazy" alt="">` : ""}
+    ${p.foto ? `<div class="foto-wrap" data-duplo="post_${p.id}"><img class="foto-post" src="/api/loja/post_foto/${p.id}" loading="lazy" alt=""></div>` : ""}
     <div style="height:8px"></div>${interacoes(`post_${p.id}`)}
   </article>`;
 }
@@ -508,16 +749,19 @@ function inicio(){
       <div class="veu"><b>${esc(x.titulo)}</b><small>${x.comprado ? "Comprado" : esc(x.preco_fmt)}</small></div>
     </div>`).join("")}</div>`;
   const todos = [...posts, ...itens].sort((a, b) => (b.combo ? 1 : 0) - (a.combo ? 1 : 0) || String(b.criado_em || "").localeCompare(String(a.criado_em || "")));
-  return cab + `<div class="feed">${todos.map(x => x.texto_post ? postTexto(x) : `
+  return cab + avisoFila() + `<div class="feed">${todos.map(x => x.texto_post ? postTexto(x) : cardPack(x)).join("")}</div>`;
+}
+function cardPack(x){
+  return `
     <article class="post">
       ${cabPost({data: x.combo ? "Combo especial" : esc(relativo(x.criado_em)) || "Pack", acao: x.combo ? "" : `pack:${x.id}`})}
-      ${x.legenda ? `<div class="legenda ${x.legenda.length > 220 ? "mais" : ""}">${esc(x.legenda)}</div>` : ""}
-      <div class="midia card" data-item="${x.id}">
+      ${x.legenda ? `<div class="legenda ${x.legenda.length > 220 ? "mais" : ""}" ${x.legenda.length > 220 ? "data-mais" : ""}>${esc(x.legenda)}</div>${x.legenda.length > 220 ? `<span class="ver-mais" data-mais>ver mais</span>` : ""}` : ""}
+      <div class="midia" data-item="${x.id}" data-duplo="${x.id}">
         <img src="/api/loja/previa/${x.id}" loading="lazy" alt="">
         ${criadora() ? `<span class="comprado-selo">${esc(x.preco_fmt)}</span>` : x.comprado ? `<span class="comprado-selo">✓ Comprado</span>` : ""}
         ${x.combo ? `<span class="tag-combo">🎁 ${x.packs.length} packs</span>` : ""}
         <div class="veu">
-          ${criadora() ? `<span class="desbloq">👁 Ver conteúdo</span>` : x.comprado ? `<span class="desbloq">▶ Ver agora</span>` : `<span class="cadeado">🔒</span><span class="desbloq">Desbloquear por ${esc(x.preco_fmt)}</span>`}
+          ${criadora() ? `<span class="desbloq">👁 Ver conteúdo</span>` : x.comprado ? `<span class="desbloq">▶ Ver agora</span>` : `<span class="cadeado">🔒</span><span class="desbloq brilho">Desbloquear por ${esc(x.preco_fmt)}</span>`}
         </div>
         <div class="contagem">${midias(x).map(m => `<span class="pill">${m}</span>`).join("")}</div>
       </div>
@@ -526,7 +770,7 @@ function inicio(){
         ${criadora() ? `<span class="preco-tag ok" data-menu="pack:${x.id}">Editar</span>` : x.comprado ? `<span class="preco-tag ok" data-ver="${x.id}">Abrir</span>` : `<span class="preco-tag" data-item="${x.id}">${esc(x.preco_fmt)}</span>`}
       </div>
       ${interacoes(x.id)}
-    </article>`).join("")}</div>`;
+    </article>`;
 }
 
 function vip(){
@@ -535,7 +779,7 @@ function vip(){
   const melhor = D.planos.reduce((m,p) => (p.economia||0) > (m?.economia||0) ? p : m, null);
   const a = D.assinatura;
   return `
-    <div class="hero-vip"><h2>${a ? "Renovar VIP" : "Seja VIP"}</h2>
+    <div class="hero-vip vivo"><h2>${a ? "Renovar VIP" : "Seja VIP"}</h2>
       <p>${a ? `Você é VIP até ${esc(a.ate)}. Renovando agora, os dias são somados.` : `Todo o conteúdo exclusivo de ${esc(D.criadora.nome)}, sem censura, em um canal só para assinantes.`}</p></div>
     <div class="beneficios">
       ${[["🔐","Canal privado com conteúdo exclusivo"],["🎬","Novidades toda semana e pay per view"],["🔄","Sem renovação automática: você escolhe quando renovar"]]
@@ -548,7 +792,7 @@ function vip(){
         <div class="txt"><b>${esc(p.nome)}</b>${p.economia ? `<span class="eco">-${p.economia}%</span>` : ""}<small>${p.dias} dias de acesso</small></div>
         <div class="valor"><b>${esc(p.preco_fmt)}</b><small class="muted">${reais(Math.round(p.preco_fmt.replace(/[^\d,]/g,"").replace(",",".")*100/ p.dias * 30))}/mês</small></div>
       </div>`).join("")}</div>
-    <div class="fixo-cta"><button class="btn" id="assinar" data-item="${sel.id}">${a ? "Renovar" : "Assinar"} ${esc(sel.nome)} · ${esc(sel.preco_fmt)}</button></div>`;
+    <div class="fixo-cta"><button class="btn brilho" id="assinar" data-item="${sel.id}">${a ? "Renovar" : "Assinar"} ${esc(sel.nome)} · ${esc(sel.preco_fmt)}</button></div>`;
 }
 
 function minhas(){
@@ -564,7 +808,7 @@ function minhas(){
 
 function mimos(){
   return `
-    <div class="hero-vip" style="background:linear-gradient(135deg,#7b5cff,#ff2e7e)"><h2>Mande um mimo 💝</h2>
+    <div class="hero-vip vivo" style="--a1:#7b5cff;--a2:#ff2e7e"><h2>Mande um mimo 💝</h2>
       <p>Um agrado para ${esc(D.criadora.nome)}. Ela recebe na hora e vê que foi você.</p></div>
     <div class="mimos">${D.gorjetas.map((v,i) => `<button class="mimo" data-item="gorjeta_${v}"><span class="emoji">${EMOJI_MIMO[i % EMOJI_MIMO.length]}</span><b>${reais(v)}</b><small>toque para enviar</small></button>`).join("")}</div>
     <div class="campo"><input type="text" id="gorjeta-outro" inputmode="decimal" placeholder="Outro valor (ex: 15,00)"><button class="btn mini" id="gorjeta-ok" style="padding:0 18px">Enviar</button></div>`;
@@ -575,11 +819,28 @@ function abrirFolha(html){
   fecharFolha();
   const f = document.createElement("div"); f.className = "fundo"; f.id = "fundo";
   f.innerHTML = `<div class="folha"><div class="alca"></div><button class="fechar" id="fechar">✕</button>${html}</div>`;
-  f.addEventListener("click", e => { if(e.target === f || e.target.id === "fechar") fecharFolha() });
+  f.addEventListener("click", e => { if(e.target === f || e.target.id === "fechar") fecharFolha(true) });
   document.body.appendChild(f);
+  arrastavel(f.querySelector(".folha"));
+  suavizarImagens(f);
   try{ tg?.BackButton?.show(); tg?.BackButton?.onClick(fecharFolha) }catch(e){}
 }
-function fecharFolha(){ clearInterval(POLL); clearInterval(TIMER); POLL = TIMER = null; $("#fundo")?.remove(); try{ tg?.BackButton?.hide() }catch(e){} }
+function fecharFolha(animado){
+  clearInterval(POLL); clearInterval(TIMER); POLL = TIMER = null;
+  const f = $("#fundo"); if(f){ f.id = ""; if(animado && !SEM_MOVIMENTO){ f.classList.add("saindo"); setTimeout(() => f.remove(), 220) } else f.remove() }
+  try{ tg?.BackButton?.hide() }catch(e){}
+}
+// Arrastar a folha para baixo fecha (como nos apps nativos)
+function arrastavel(folha){
+  let y0 = null, dy = 0;
+  folha.addEventListener("touchstart", e => { if(folha.scrollTop > 0 || e.target.closest("textarea,input")) return; y0 = e.touches[0].clientY; dy = 0; folha.style.transition = "none" }, {passive:true});
+  folha.addEventListener("touchmove", e => { if(y0 === null) return; dy = Math.max(0, e.touches[0].clientY - y0); folha.style.transform = dy ? `translateY(${dy}px)` : "" }, {passive:true});
+  folha.addEventListener("touchend", () => {
+    if(y0 === null) return; y0 = null;
+    folha.style.transition = "transform .28s cubic-bezier(.2,.8,.2,1)";
+    if(dy > 110){ folha.style.transform = "translateY(100%)"; vibrar("leve"); setTimeout(() => fecharFolha(), 220) } else folha.style.transform = "";
+  });
+}
 
 function detalhes(id){
   const p = D.packs.find(x => x.id === id) || D.combos.find(x => x.id === id);
@@ -596,7 +857,7 @@ function detalhes(id){
     <div class="linha-preco"><span class="muted">Total</span><span class="v">${esc(preco)}</span></div>
     <span class="cupom-toggle" id="cupom-toggle">Tenho um cupom</span>
     <div class="cupom-wrap" id="cupom-wrap"><input type="text" id="cupom" placeholder="Código do cupom" autocapitalize="characters"></div>
-    <button class="btn" id="pagar" data-item="${id}">💠 Pagar com PIX</button>
+    <button class="btn brilho" id="pagar" data-item="${id}">💠 Pagar com PIX</button>
     <p class="sub" style="text-align:center;margin:10px 0 0;font-size:12.5px">Aprovação na hora · entregue no seu chat com o bot</p>`);
   $("#cupom-toggle").onclick = () => { $("#cupom-wrap").classList.add("on"); $("#cupom-toggle").classList.add("ocultar"); $("#cupom").focus() };
 }
@@ -664,8 +925,9 @@ function sucesso(texto){
     ${ver ? `<button class="btn" id="ver-agora">▶ Ver agora</button><div class="gap"></div>` : ""}
     <button class="btn ${ver ? "sec" : ""}" id="voltar-chat">Ir para o chat</button><div class="gap"></div>
     <button class="btn sec" id="continuar">Continuar na loja</button>`);
+  confete();
   $("#voltar-chat").onclick = () => tg ? tg.close() : fecharFolha();
-  $("#continuar").onclick = fecharFolha;
+  $("#continuar").onclick = () => fecharFolha(true);
   if(ver) $("#ver-agora").onclick = () => { const id = ULTIMO; fecharFolha(); abrirGaleria(id) };
 }
 
@@ -680,7 +942,7 @@ function escolherModo(){
   $("#app").innerHTML = `
     <div class="capa"><span class="bolha b1"></span><span class="bolha b2"></span><span class="bolha b3"></span></div>
     <div class="perfil">
-      ${D.criadora.tem_foto ? `<img class="avatar" src="${avatarSrc()}" alt="">` : `<div class="avatar">✨</div>`}
+      <div class="anel">${D.criadora.tem_foto ? `<img class="avatar" src="${avatarSrc()}" alt="">` : `<div class="avatar">✨</div>`}</div>
       <div class="nome">Olá, ${esc(D.usuario.nome || D.criadora.nome)} 👋</div>
       <p class="bio">Como você quer abrir a loja?</p>
     </div>
@@ -689,24 +951,28 @@ function escolherModo(){
       <button class="acao" data-modo="cliente"><span class="ico">🛍️</span><div><b>Cliente</b><small>Ver e comprar como um fã vê</small></div><span class="seta">›</span></button>
     </div>
     <p class="dica" style="text-align:center;margin:18px">Dá para trocar depois: no Painel ou pelo botão no topo.</p>`;
+  animarEntrada($("#app"));
 }
 
 /* ── Painel da criadora ────────────────────────────────────────────────── */
 async function carregarPainel(){
   const r = await api("/api/criadora/painel");
-  if(r.ok){ PAINEL = r; if(ABA === "painel") $("#conteudo").innerHTML = painel() }
+  if(r.ok){ PAINEL = r; if(ABA === "painel"){ const c = $("#conteudo"); c.innerHTML = painel(); animarEntrada(c); contar(c); suavizarImagens(c) } }
 }
 function painel(){
   if(!PAINEL) return `<div class="kpis" style="margin-top:20px"><div class="sk" style="height:84px"></div><div class="sk" style="height:84px"></div></div>`;
   const R = PAINEL.resumo;
   return `
+    <div class="ola vivo"><span class="deco">✨</span><small>${saudacao()}, ${esc((D.criadora.nome || "").split(" ")[0])}!</small>
+      <b>${esc(R.hoje.valor)}</b><span>${R.hoje.vendas ? `hoje em ${R.hoje.vendas} venda(s)` : "hoje, ainda sem vendas. Bora publicar? 💋"}${PAINEL.stats ? ` · ❤️ ${PAINEL.stats.periodos.hoje.curtidas}` : ""}</span></div>
     <div class="secao-titulo"><h2>Resumo</h2><small class="muted">vendas pagas</small></div>
     <div class="kpis">
-      <div class="kpi destaque"><small>Hoje</small><b>${esc(R.hoje.valor)}</b><span>${R.hoje.vendas} venda(s)</span></div>
       <div class="kpi"><small>Últimos 7 dias</small><b>${esc(R.semana.valor)}</b><span>${R.semana.vendas} venda(s)</span></div>
       <div class="kpi"><small>Últimos 30 dias</small><b>${esc(R.mes.valor)}</b><span>${R.mes.vendas} venda(s)</span></div>
       <div class="kpi"><small>Assinantes VIP</small><b>${R.assinantes}</b><span>${R.vencendo} vencem em 7 dias</span></div>
+      <div class="kpi"><small>Packs à venda</small><b>${R.packs}</b><span>no catálogo</span></div>
     </div>
+    ${filaRevisao()}
     ${estatisticas()}
     <div class="secao-titulo"><h2>Criar</h2></div>
     <div class="acoes">
@@ -717,6 +983,8 @@ function painel(){
       <button class="acao" id="ed-perfil2"><span class="ico">👤</span><div><b>Perfil</b><small>Foto, nome e bio</small></div><span class="seta">›</span></button>
       <button class="acao" id="ed-msgs"><span class="ico">💬</span><div><b>Mensagens do bot</b><small>Boas-vindas, pós-compra e VIP</small></div><span class="seta">›</span></button>
     </div>
+    <div class="gap"></div>
+    <div class="troca"><div><b>📝 Revisar antes de publicar</b><br><small class="muted">Tudo entra numa fila e só aparece para os fãs quando você aprovar</small></div><span class="chave ${D.revisao ? "on" : ""}" id="rev-chave"></span></div>
     <div class="gap"></div><div class="gap"></div>
     <div class="troca"><div><b>Ver a loja como fã</b><br><small class="muted">Esconde as ferramentas de criadora</small></div><span class="chave" id="como-fa"></span></div>
     <p class="dica" style="text-align:center;margin:16px">O bot continua com todos os comandos (/admin) como plano B.</p>`;
@@ -743,7 +1011,7 @@ function estatisticas(){
     <div class="gap"></div>
     <div class="grafico">
       <div class="topo"><div><small class="muted">Faturamento · 14 dias</small><br><b>${reais(total14)}</b></div><small class="muted">por dia</small></div>
-      <div class="barras">${S.grafico.map((g, i) => `<div class="col ${i === S.grafico.length - 1 ? "hoje" : ""}" style="height:${Math.max(2, Math.round(g.v / max * 100))}%" title="${g.dia}: ${reais(g.v)}"></div>`).join("")}</div>
+      <div class="barras">${S.grafico.map((g, i) => `<div class="col ${i === S.grafico.length - 1 ? "hoje" : ""}" data-col style="--i:${i};height:${Math.max(2, Math.round(g.v / max * 100))}%" data-v="${i === S.grafico.length - 1 ? "Hoje" : g.dia} · ${reais(g.v)}"></div>`).join("")}</div>
       <div class="eixo"><span>${S.grafico[0].dia}</span><span>${S.grafico[7].dia}</span><span>Hoje</span></div>
     </div>
     <div class="gap"></div>
@@ -772,9 +1040,258 @@ async function curtir(el){
   c.eu = !c.eu; c.n += c.eu ? 1 : -1;
   const pintar = () => { el.classList.toggle("on", c.eu); el.querySelector(".coracao").textContent = c.eu ? "❤️" : "🤍"; el.querySelector(".n").textContent = c.n || "" };
   pintar(); vibrar("leve");
-  if(c.eu){ el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop") }
+  if(c.eu){ el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); faiscas(el) }
   const r = await api("/api/loja/curtir", {alvo});
   if(r.ok){ c.eu = r.curtido; c.n = r.total; pintar() }
+}
+
+
+/* ── Editor de fotos: cortar, girar, espelhar, ajustes e filtros ─────────── */
+// Filtros como matrizes de cor (mesma matemática dos filtros CSS), assim o arquivo final
+// sai igual à prévia em qualquer celular, mesmo sem suporte a ctx.filter.
+const FILTROS = [
+  ["Original", []],
+  ["Vívido", [["saturate", 1.35], ["contrast", 1.08]]],
+  ["Quente", [["sepia", .22], ["saturate", 1.25], ["hue-rotate", -8]]],
+  ["Frio", [["saturate", .92], ["hue-rotate", 12], ["brightness", 1.03]]],
+  ["Suave", [["brightness", 1.08], ["contrast", .9], ["saturate", .95]]],
+  ["Vintage", [["sepia", .45], ["contrast", .95], ["brightness", 1.05], ["saturate", .85]]],
+  ["P&B", [["grayscale", 1], ["contrast", 1.12]]],
+];
+const cssFiltro = ops => ops.map(([n, v]) => `${n}(${n === "hue-rotate" ? v + "deg" : v})`).join(" ");
+function matrizDe([n, v]){
+  const I = [1,0,0,0, 0,1,0,0, 0,0,1,0];
+  if(n === "brightness") return [v,0,0,0, 0,v,0,0, 0,0,v,0];
+  if(n === "contrast"){ const o = (.5 - .5 * v) * 255; return [v,0,0,o, 0,v,0,o, 0,0,v,o] }
+  if(n === "saturate" || n === "grayscale"){
+    const s = n === "saturate" ? v : 1 - v, [r, g, b] = n === "saturate" ? [.213,.715,.072] : [.2126,.7152,.0722];
+    return [r+(1-r)*s, g-g*s, b-b*s, 0,  r-r*s, g+(1-g)*s, b-b*s, 0,  r-r*s, g-g*s, b+(1-b)*s, 0];
+  }
+  if(n === "sepia"){ const a = 1 - v;
+    return [.393+.607*a, .769-.769*a, .189-.189*a, 0,  .349-.349*a, .686+.314*a, .168-.168*a, 0,  .272-.272*a, .534-.534*a, .131+.869*a, 0] }
+  if(n === "hue-rotate"){ const t = v * Math.PI / 180, c = Math.cos(t), s = Math.sin(t);
+    return [.213+c*.787-s*.213, .715-c*.715-s*.715, .072-c*.072+s*.928, 0,
+            .213-c*.213+s*.143, .715+c*.285+s*.140, .072-c*.072-s*.283, 0,
+            .213-c*.213-s*.787, .715-c*.715+s*.715, .072+c*.928+s*.072, 0] }
+  return I;
+}
+function compor(a, b){   // b depois de a
+  const r = [];
+  for(let i = 0; i < 3; i++){
+    for(let j = 0; j < 3; j++) r[i*4+j] = b[i*4]*a[j] + b[i*4+1]*a[4+j] + b[i*4+2]*a[8+j];
+    r[i*4+3] = b[i*4]*a[3] + b[i*4+1]*a[7] + b[i*4+2]*a[11] + b[i*4+3];
+  }
+  return r;
+}
+function aplicarMatriz(ctx, w, h, ops){
+  if(!ops.length) return;
+  const m = ops.map(matrizDe).reduce(compor), img = ctx.getImageData(0, 0, w, h), d = img.data;
+  for(let i = 0; i < d.length; i += 4){
+    const r = d[i], g = d[i+1], b = d[i+2];
+    d[i]   = m[0]*r + m[1]*g + m[2]*b + m[3];
+    d[i+1] = m[4]*r + m[5]*g + m[6]*b + m[7];
+    d[i+2] = m[8]*r + m[9]*g + m[10]*b + m[11];
+  }
+  ctx.putImageData(img, 0, 0);
+}
+async function carregarImagem(file){
+  const url = URL.createObjectURL(file);
+  try{
+    if(window.createImageBitmap){ try{ return await createImageBitmap(file, {imageOrientation: "from-image"}) }catch(e){} }
+    return await new Promise((ok, erro) => { const i = new Image(); i.onload = () => ok(i); i.onerror = erro; i.src = url });
+  } finally { setTimeout(() => URL.revokeObjectURL(url), 4000) }
+}
+
+function editarFoto(file, opc = {}){
+  return new Promise(async resolver => {
+    let img;
+    try{ img = await carregarImagem(file) }catch(e){ toast("Não consegui abrir essa imagem"); return resolver(null) }
+    // fonte já reduzida (até 2560px) para o editor ficar leve no celular
+    const LADO = 2560, esc0 = Math.min(1, LADO / Math.max(img.width, img.height));
+    let fonte = document.createElement("canvas");
+    fonte.width = Math.round(img.width * esc0); fonte.height = Math.round(img.height * esc0);
+    fonte.getContext("2d").drawImage(img, 0, 0, fonte.width, fonte.height);
+    let aspecto = opc.aspecto || null, crop, filtro = 0, aba = "cortar";
+    const aj = {brightness: 1, contrast: 1, saturate: 1};
+    const opsAtuais = () => [...Object.entries(aj).filter(([, v]) => v !== 1), ...FILTROS[filtro][1]];
+
+    const el = document.createElement("div"); el.className = "ed";
+    el.innerHTML = `<header><button id="ed-cancelar">Cancelar</button><b>Editar foto</b><button class="pronto" id="ed-pronto">Pronto</button></header>
+      <div class="palco" id="ed-palco"><canvas id="ed-cv"></canvas><div class="recorte ${opc.circulo ? "circulo" : ""}" id="ed-rec"><i class="h tl" data-c="tl"></i><i class="h tr" data-c="tr"></i><i class="h bl" data-c="bl"></i><i class="h br" data-c="br"></i></div></div>
+      <div class="painel-ed"><div id="ed-corpo"></div>
+        <div class="abas-ed">${[["cortar","✂️ Cortar"],["ajustes","🎚️ Ajustes"],["filtros","✨ Filtros"]].map(([k,t]) => `<button data-aba-ed="${k}" class="${k===aba?"on":""}">${t}</button>`).join("")}</div></div>`;
+    document.body.appendChild(el);
+    const cv = el.querySelector("#ed-cv"), palco = el.querySelector("#ed-palco"), rec = el.querySelector("#ed-rec");
+
+    const recorteMax = a => {
+      const W = fonte.width, H = fonte.height;
+      if(!a) return {x: 0, y: 0, w: W, h: H};
+      let w = W, h = w / a; if(h > H){ h = H; w = h * a }
+      return {x: (W - w) / 2, y: (H - h) / 2, w, h};
+    };
+    let escala = 1;
+    const desenhar = () => {
+      const pw = palco.clientWidth, ph = palco.clientHeight;
+      escala = Math.min(pw / fonte.width, ph / fonte.height);
+      cv.width = fonte.width; cv.height = fonte.height;
+      cv.style.width = fonte.width * escala + "px"; cv.style.height = fonte.height * escala + "px";
+      cv.getContext("2d").drawImage(fonte, 0, 0);
+      cv.style.filter = cssFiltro(opsAtuais());
+      posicionar();
+    };
+    const posicionar = () => {
+      const ox = (palco.clientWidth - fonte.width * escala) / 2, oy = (palco.clientHeight - fonte.height * escala) / 2;
+      Object.assign(rec.style, {left: ox + crop.x * escala + "px", top: oy + crop.y * escala + "px", width: crop.w * escala + "px", height: crop.h * escala + "px"});
+      rec.style.display = aba === "cortar" ? "" : "none";
+    };
+    const corpo = () => {
+      const c = el.querySelector("#ed-corpo");
+      if(aba === "cortar") c.innerHTML = `<div class="linha-ed">
+        <button class="bt-ed" data-ed="girar"><span class="i">⟳</span>Girar</button>
+        <button class="bt-ed" data-ed="espelhar"><span class="i">⇋</span>Espelhar</button>
+        ${opc.aspecto ? "" : [["Livre", 0], ["1:1", 1], ["4:5", .8], ["9:16", 9/16], ["16:9", 16/9]].map(([t, a]) => `<button class="bt-ed ${(aspecto || 0) === a ? "on" : ""}" data-asp="${a}"><span class="i">${a === 0 ? "⬚" : a === 1 ? "◻️" : a < 1 ? "▯" : "▭"}</span>${t}</button>`).join("")}
+        <button class="bt-ed" data-ed="resetar"><span class="i">↺</span>Desfazer</button></div>`;
+      if(aba === "ajustes") c.innerHTML = [["brightness","☀️ Brilho"],["contrast","◐ Contraste"],["saturate","🎨 Cor"]].map(([k,t]) =>
+        `<label class="ajuste"><span>${t}</span><input type="range" min="50" max="150" value="${Math.round(aj[k]*100)}" data-aj="${k}"><span>${Math.round(aj[k]*100 - 100)}</span></label>`).join("");
+      if(aba === "filtros"){
+        const mini = document.createElement("canvas"), k = 120 / Math.max(fonte.width, fonte.height);
+        mini.width = fonte.width * k; mini.height = fonte.height * k; mini.getContext("2d").drawImage(fonte, 0, 0, mini.width, mini.height);
+        const u = mini.toDataURL("image/jpeg", .7);
+        c.innerHTML = `<div class="linha-ed">${FILTROS.map(([n, ops], i) => `<button class="bt-ed filtro ${i===filtro?"on":""}" data-filtro-ed="${i}"><img src="${u}" style="filter:${cssFiltro(ops)}" alt="">${n}</button>`).join("")}</div>`;
+      }
+    };
+    const girar = () => {
+      const n = document.createElement("canvas"); n.width = fonte.height; n.height = fonte.width;
+      const x = n.getContext("2d"); x.translate(n.width, 0); x.rotate(Math.PI / 2); x.drawImage(fonte, 0, 0);
+      fonte = n; if(aspecto && aspecto !== 1 && !opc.aspecto) aspecto = 1 / aspecto; crop = recorteMax(aspecto); desenhar(); corpo();
+    };
+    const espelhar = () => {
+      const n = document.createElement("canvas"); n.width = fonte.width; n.height = fonte.height;
+      const x = n.getContext("2d"); x.translate(n.width, 0); x.scale(-1, 1); x.drawImage(fonte, 0, 0);
+      fonte = n; crop = {...crop, x: fonte.width - crop.x - crop.w}; desenhar();
+    };
+    crop = recorteMax(aspecto); corpo(); requestAnimationFrame(desenhar);
+    const aoRedimensionar = () => desenhar(); addEventListener("resize", aoRedimensionar);
+
+    // arrastar o recorte e os cantos
+    let arraste = null;
+    rec.addEventListener("pointerdown", e => {
+      e.preventDefault(); rec.setPointerCapture(e.pointerId);
+      arraste = {c: e.target.dataset.c || "mover", x: e.clientX, y: e.clientY, crop: {...crop}};
+    });
+    rec.addEventListener("pointermove", e => {
+      if(!arraste) return;
+      const W = fonte.width, H = fonte.height, dx = (e.clientX - arraste.x) / escala, dy = (e.clientY - arraste.y) / escala, o = arraste.crop, MIN = Math.max(40, Math.min(W, H) * .08);
+      if(arraste.c === "mover"){ crop = {...o, x: Math.min(Math.max(0, o.x + dx), W - o.w), y: Math.min(Math.max(0, o.y + dy), H - o.h)} }
+      else {
+        const esq = arraste.c[1] === "l", cima = arraste.c[0] === "t";
+        const ax = esq ? o.x + o.w : o.x, ay = cima ? o.y + o.h : o.y;          // canto fixo (oposto)
+        let px = Math.min(Math.max(0, (esq ? o.x : o.x + o.w) + dx), W), py = Math.min(Math.max(0, (cima ? o.y : o.y + o.h) + dy), H);
+        let w = Math.max(MIN, Math.abs(px - ax)), h = Math.max(MIN, Math.abs(py - ay));
+        if(aspecto){ if(w / h > aspecto) w = h * aspecto; else h = w / aspecto }
+        w = Math.min(w, esq ? ax : W - ax); h = Math.min(h, cima ? ay : H - ay);
+        if(aspecto){ if(w / h > aspecto) w = h * aspecto; else h = w / aspecto }
+        crop = {x: esq ? ax - w : ax, y: cima ? ay - h : ay, w, h};
+      }
+      posicionar();
+    });
+    const soltar = () => { if(arraste){ arraste = null; vibrar("leve") } };
+    rec.addEventListener("pointerup", soltar); rec.addEventListener("pointercancel", soltar);
+
+    const fechar = res => { removeEventListener("resize", aoRedimensionar); el.remove(); resolver(res) };
+    el.addEventListener("input", e => {
+      const k = e.target.dataset.aj; if(!k) return;
+      aj[k] = +e.target.value / 100; e.target.nextElementSibling.textContent = Math.round(aj[k] * 100 - 100);
+      cv.style.filter = cssFiltro(opsAtuais());
+    });
+    el.addEventListener("click", async e => {
+      const b = e.target.closest("button"); if(!b) return;
+      if(b.id === "ed-cancelar") return fechar(null);
+      if(b.dataset.abaEd){ aba = b.dataset.abaEd; el.querySelectorAll("[data-aba-ed]").forEach(x => x.classList.toggle("on", x === b)); corpo(); posicionar(); vibrar("leve"); return }
+      if(b.dataset.ed === "girar"){ vibrar("leve"); return girar() }
+      if(b.dataset.ed === "espelhar"){ vibrar("leve"); return espelhar() }
+      if(b.dataset.ed === "resetar"){ vibrar("leve"); fonte = document.createElement("canvas"); fonte.width = Math.round(img.width * esc0); fonte.height = Math.round(img.height * esc0); fonte.getContext("2d").drawImage(img, 0, 0, fonte.width, fonte.height); aspecto = opc.aspecto || null; aj.brightness = aj.contrast = aj.saturate = 1; filtro = 0; crop = recorteMax(aspecto); desenhar(); corpo(); return }
+      if(b.dataset.asp !== undefined){ aspecto = +b.dataset.asp || null; crop = recorteMax(aspecto); posicionar(); corpo(); vibrar("leve"); return }
+      if(b.dataset.filtroEd !== undefined){ filtro = +b.dataset.filtroEd; cv.style.filter = cssFiltro(opsAtuais()); corpo(); vibrar("leve"); return }
+      if(b.id === "ed-pronto"){
+        const aviso = document.createElement("div"); aviso.className = "salvando"; aviso.innerHTML = `<div class="carregando"><i style="display:block;width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;animation:gira .8s linear infinite"></i></div>`;
+        palco.appendChild(aviso);
+        await new Promise(r => setTimeout(r, 30));
+        const out = document.createElement("canvas"); out.width = Math.round(crop.w); out.height = Math.round(crop.h);
+        const x = out.getContext("2d"); x.drawImage(fonte, crop.x, crop.y, crop.w, crop.h, 0, 0, out.width, out.height);
+        aplicarMatriz(x, out.width, out.height, opsAtuais());
+        out.toBlob(blob => {
+          if(!blob){ toast("Não consegui salvar a edição"); return fechar(null) }
+          vibrar("success");
+          fechar(new File([blob], (file.name || "foto").replace(/\.[^.]+$/, "") + ".jpg", {type: "image/jpeg"}));
+        }, "image/jpeg", .92);
+      }
+    });
+  });
+}
+
+
+/* ── Fila de revisão ─────────────────────────────────────────────────── */
+const qtdFila = () => D.fila ? D.fila.posts.length + D.fila.packs.length : 0;
+function avisoFila(){
+  const n = criadora() ? qtdFila() : 0;
+  return n ? `<div class="aviso-fila" data-aba="painel"><span>📝</span><span>${n} publicação(ões) aguardando sua revisão</span><span>Revisar ›</span></div>` : "";
+}
+function filaRevisao(){
+  if(!qtdFila()) return "";
+  const itens = [...D.fila.packs.map(p => ({...p, pack: true})), ...D.fila.posts].sort((a, b) => String(a.criado_em).localeCompare(String(b.criado_em)));
+  return `<div class="secao-titulo"><h2>Fila de revisão<span class="contador-fila">${itens.length}</span></h2><small class="muted">só você vê</small></div>
+    <div class="fila">${itens.map(x => {
+      const ref = `${x.pack ? "pack" : "post"}:${x.id}`;
+      return `<div class="fila-item" id="fila-${x.pack ? "pack" : "post"}-${x.id}">
+        <div class="topo-f" data-previa="${ref}">
+          ${x.pack ? `<img src="/api/loja/previa/${x.id}" alt="">` : x.foto ? `<img src="/api/loja/post_foto/${x.id}" alt="">` : `<div class="thumb">📝</div>`}
+          <div class="txt"><small>${x.pack ? `📦 Pack · ${esc(x.preco_fmt)} · ${esc(x.resumo)}` : "📝 Publicação grátis"} · ${esc(relativo(x.criado_em))}</small>
+            <b>${esc(x.pack ? x.titulo : (x.texto || "Foto"))}</b>${x.pack && x.legenda ? `<p>${esc(x.legenda)}</p>` : !x.pack && x.texto.length > 40 ? `<p>${esc(x.texto)}</p>` : ""}</div>
+        </div>
+        <div class="acoes-f">
+          <button class="btn mini brilho" data-fila="${ref}:aprovar">✓ Publicar</button>
+          <button class="btn mini sec" data-previa="${ref}" aria-label="Ver como fã">👁</button>
+          <button class="btn mini sec" data-menu="${ref}" aria-label="Editar">✎</button>
+          <button class="btn mini sec perigo" data-fila="${ref}:descartar" aria-label="Descartar">🗑</button>
+        </div></div>`;
+    }).join("")}</div>`;
+}
+// Mostra exatamente como o fã vai ver o post/pack, antes de aprovar
+function previaFa(ref){
+  const [tipo, id] = ref.split(":");
+  const x = tipo === "pack" ? D.fila.packs.find(p => p.id === id) : D.fila.posts.find(p => String(p.id) === id);
+  if(!x) return;
+  PREVIA = true;
+  const html = tipo === "pack" ? cardPack({...x, comprado: false}) : postTexto(x);
+  PREVIA = false;
+  abrirFolha(`<h2>Como seus fãs vão ver</h2><p class="sub">Confira antes de publicar.</p>
+    <div class="previa-fa">${html}</div>
+    <button class="btn brilho" data-fila="${ref}:aprovar">✓ Publicar agora</button><div class="gap"></div>
+    <button class="btn sec" data-menu="${ref}">✎ Editar</button>`);
+}
+async function acaoFila(ref, acao){
+  const [tipo, id] = ref.split(":");
+  const feito = async () => {
+    const r = await api(`/api/criadora/fila/${tipo}/${id}/${acao}`, {});
+    if(!r.ok) return toast(r.erro || "Não consegui concluir");
+    fecharFolha(true);
+    const card = $(`#fila-${tipo}-${id}`);
+    if(card && !SEM_MOVIMENTO){ card.classList.add("some"); await new Promise(ok => setTimeout(ok, 330)) }
+    if(acao === "aprovar"){ vibrar("success"); confete(40); toast(r.no_canal ? "Publicado e postado no canal ✓" : "Publicado ✓") }
+    else toast("Descartado");
+    PAINEL = null; carregar();
+  };
+  if(acao === "descartar") return confirmar("Descartar esta publicação? Ela não vai ao ar.", feito);
+  feito();
+}
+
+function curtirDuplo(alvoEl){
+  const alvo = alvoEl.dataset.duplo;
+  if(!SEM_MOVIMENTO){ const h = document.createElement("span"); h.className = "coracao-grande"; h.textContent = "❤️"; alvoEl.appendChild(h); setTimeout(() => h.remove(), 1000) }
+  vibrar("leve");
+  const btn = document.querySelector(`[data-curtir="${alvo}"]`);
+  if(btn && !(D.curtidas[alvo] || {}).eu) curtir(btn);
 }
 
 function seletor(id, multiplo, aceitar){
@@ -783,7 +1300,7 @@ function seletor(id, multiplo, aceitar){
 function miniaturas(lista, alvo){
   $(alvo).innerHTML = lista.map((f, i) => {
     const url = URL.createObjectURL(f), video = f.type.startsWith("video");
-    return `<div>${video ? `<video src="${url}" muted playsinline></video><span class="v">VÍDEO</span>` : `<img src="${url}" alt="">`}<button class="x" data-tirar="${i}">✕</button></div>`;
+    return `<div>${video ? `<video src="${url}" muted playsinline></video><span class="v">VÍDEO</span>` : `<img src="${url}" alt="" data-editar="${i}"><button class="lapis-m" data-editar="${i}" aria-label="Editar">✎</button>`}<button class="x" data-tirar="${i}">✕</button></div>`;
   }).join("");
 }
 
@@ -796,7 +1313,11 @@ function editarPerfil(){
     <span class="rotulo">Nome</span><input type="text" id="perfil-nome" maxlength="60" value="${esc(c.nome)}">
     <span class="rotulo">Bio</span><textarea id="perfil-bio" maxlength="700">${esc(c.bio)}</textarea>
     <div class="gap"></div><button class="btn" id="perfil-salvar">Salvar</button>`);
-  $("#perfil-foto").onchange = e => { nova = e.target.files[0]; if(nova){ const u = URL.createObjectURL(nova); $("#prev-av").outerHTML = `<img class="foto-perfil-ed" id="prev-av" src="${u}" alt="">` } };
+  $("#perfil-foto").onchange = async e => {
+    const f = e.target.files[0]; e.target.value = ""; if(!f) return;
+    const editada = await editarFoto(f, {aspecto: 1, circulo: true}); if(!editada) return;
+    nova = editada; $("#prev-av").outerHTML = `<img class="foto-perfil-ed" id="prev-av" src="${URL.createObjectURL(nova)}" alt="">`;
+  };
   $("#perfil-salvar").onclick = async () => {
     const b = $("#perfil-salvar"); b.disabled = true; b.textContent = "Salvando…";
     const r = await enviarForm("/api/criadora/perfil", {nome: $("#perfil-nome").value.trim(), bio: $("#perfil-bio").value.trim()}, nova ? [["foto", nova]] : []);
@@ -823,7 +1344,7 @@ function novaPublicacao(pago){
     <div class="gap"></div><button class="btn" id="pub-publicar"></button>`);
   const modo = () => {
     $("#pub-pago").classList.toggle("on", pago);
-    $("#pub-pagos").classList.toggle("ocultar", !pago);
+    $("#pub-pagos").classList.toggle("ocultar", !pago); $("#pub-pagos").classList.toggle("abre", pago);
     $("#pub-dica").textContent = pago ? "Prévia embaçada até o fã pagar" : "Grátis no feed, visível para todos";
     $("#pub-rot-texto").textContent = pago ? "Legenda" : "Texto";
     $("#pub-texto").placeholder = pago ? "Conte o que tem nesse pack…" : "Escreva algo para seus fãs…";
@@ -836,7 +1357,11 @@ function novaPublicacao(pago){
   modo();
   $("#pub-pago").onclick = () => { pago = !pago; vibrar("leve"); modo() };
   $("#pub-arqs").onchange = e => { arqs = pago ? [...arqs, ...e.target.files].slice(0, 30) : [...e.target.files].slice(0, 1); miniaturas(arqs, "#pub-mini"); e.target.value = "" };
-  $("#pub-mini").onclick = e => { const i = e.target.dataset.tirar; if(i !== undefined){ arqs.splice(+i, 1); miniaturas(arqs, "#pub-mini") } };
+  $("#pub-mini").onclick = async e => {
+    const i = e.target.dataset.tirar, ed = e.target.dataset.editar;
+    if(i !== undefined){ arqs.splice(+i, 1); miniaturas(arqs, "#pub-mini") }
+    if(ed !== undefined){ const novo = await editarFoto(arqs[+ed]); if(novo){ arqs[+ed] = novo; miniaturas(arqs, "#pub-mini") } }
+  };
   $("#pub-canal") && ($("#pub-canal").onclick = e => e.currentTarget.classList.toggle("on"));
   $("#pub-publicar").onclick = async () => {
     const texto = $("#pub-texto").value.trim(), b = $("#pub-publicar");
@@ -845,7 +1370,9 @@ function novaPublicacao(pago){
       b.disabled = true; b.textContent = "Publicando…";
       const r = await enviarForm("/api/criadora/post", {texto}, arqs.length ? [["foto", arqs[0]]] : []);
       if(!r.ok){ b.disabled = false; b.textContent = "Publicar"; return toast(r.erro || "Não consegui publicar") }
-      vibrar("success"); toast("Publicado ✓"); fecharFolha(); ABA = "inicio"; FILTRO = "todos"; PAINEL = null; carregar();
+      vibrar("success"); fecharFolha(true); PAINEL = null; ANIMAR = true;
+      if(r.fila){ toast("Na fila de revisão 📝"); ABA = "painel" } else { toast("Publicado ✓"); confete(40); ABA = "inicio"; FILTRO = "todos" }
+      carregar();
       return;
     }
     if(!arqs.length) return toast("Escolha pelo menos uma foto ou vídeo");
@@ -859,15 +1386,17 @@ function novaPublicacao(pago){
       arqs.map(f => ["arquivos", f]),
       p => { $("#pub-barra").style.width = `${Math.round(p * 100)}%`; $("#pub-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : "Gerando as prévias com desfoque…" });
     if(!r.ok){ b.disabled = false; b.textContent = "Publicar pack"; $("#pub-prog").classList.add("ocultar"); return toast(r.erro || "Não consegui publicar") }
-    vibrar("success"); toast(r.no_canal ? "Pack publicado e postado no canal ✓" : "Pack publicado ✓");
-    fecharFolha(); ABA = "inicio"; FILTRO = "todos"; PAINEL = null; carregar();
+    vibrar("success"); fecharFolha(true); PAINEL = null; ANIMAR = true;
+    if(r.fila){ toast("Pack na fila de revisão 📝"); ABA = "painel" }
+    else { toast(r.no_canal ? "Pack publicado e postado no canal ✓" : "Pack publicado ✓"); confete(); ABA = "inicio"; FILTRO = "todos" }
+    carregar();
   };
 }
 
 function menuItem(alvo){
   const [tipo, id] = alvo.split(":");
   if(tipo === "post"){
-    const p = D.posts.find(x => String(x.id) === id); if(!p) return;
+    const p = [...D.posts, ...(D.fila?.posts || [])].find(x => String(x.id) === id); if(!p) return;
     abrirFolha(`<h2>Editar publicação</h2>
       <textarea id="ed-texto" maxlength="4000">${esc(p.texto)}</textarea>
       <div class="gap"></div><button class="btn" id="ed-salvar">Salvar</button><div class="gap"></div>
@@ -879,7 +1408,7 @@ function menuItem(alvo){
     $("#ed-apagar").onclick = () => confirmar("Apagar esta publicação?", async () => { await api(`/api/criadora/post/${id}/apagar`, {}); toast("Apagada"); fecharFolha(); carregar() });
     return;
   }
-  const p = D.packs.find(x => x.id === id); if(!p) return;
+  const p = [...D.packs, ...(D.fila?.packs || [])].find(x => x.id === id); if(!p) return;
   abrirFolha(`<h2>Editar pack</h2>
     <span class="rotulo">Título</span><input type="text" id="ed-titulo" maxlength="80" value="${esc(p.titulo)}">
     <span class="rotulo">Preço</span><input type="text" id="ed-preco" inputmode="decimal" value="${esc(p.preco_fmt.replace("R$ ", ""))}">
@@ -891,7 +1420,7 @@ function menuItem(alvo){
   $("#ed-ver").onclick = () => abrirGaleria(id);
   $("#ed-salvar").onclick = async () => {
     const r = await api(`/api/criadora/pack/${id}`, {titulo: $("#ed-titulo").value.trim(), preco: $("#ed-preco").value.trim(), legenda: $("#ed-legenda").value.trim()});
-    if(!r.ok) return toast(r.erro || "Não consegui salvar"); toast("Salvo ✓"); fecharFolha(); carregar();
+    if(!r.ok) return toast(r.erro || "Não consegui salvar"); toast("Salvo ✓"); fecharFolha(); PAINEL = null; carregar();
   };
   $("#ed-apagar").onclick = () => confirmar(`Tirar "${p.titulo}" da vitrine?`, async () => { await api(`/api/criadora/pack/${id}/apagar`, {}); toast("Removido da vitrine"); fecharFolha(); PAINEL = null; carregar() });
 }
@@ -925,7 +1454,7 @@ function editarMensagem(chave){
   };
   $("#msg-texto").oninput = prev; prev();
   if(comFoto){
-    $("#msg-foto").onchange = e => { foto = e.target.files[0] || null; remover = false; prev() };
+    $("#msg-foto").onchange = async e => { const f = e.target.files[0]; e.target.value = ""; if(!f) return; const ed = await editarFoto(f); if(ed){ foto = ed; remover = false; prev() } };
     $("#msg-sem-foto") && ($("#msg-sem-foto").onclick = () => { remover = true; foto = null; prev(); toast("A foto será removida ao salvar") });
   }
   $("#msg-salvar").onclick = async () => {
@@ -986,10 +1515,31 @@ function fecharGaleria(){
 
 /* ── Eventos ───────────────────────────────────────────────────────────── */
 document.addEventListener("click", e => {
-  const el = e.target.closest("[data-curtir],[data-mimo],[data-mimo-outro],[data-periodo],[data-modo],[data-menu],[data-criar],[data-msg],#ed-perfil,#ed-perfil2,#ed-msgs,#como-fa,[data-reenviar],[data-ver],[data-aba],[data-vista],[data-filtro],[data-plano],[data-item],#pagar,#assinar,#gorjeta-ok");
+  // toque duplo na foto curte (estilo Instagram); toque simples segue o normal
+  const duplo = e.target.closest("[data-duplo]");
+  if(duplo && !e.target.closest("[data-menu],[data-ver],[data-curtir]")){
+    const agora = Date.now();
+    if(TOQUE.el === duplo && agora - TOQUE.t < 320){ clearTimeout(TOQUE.timer); TOQUE = {}; return curtirDuplo(duplo) }
+    clearTimeout(TOQUE.timer);
+    TOQUE = {el: duplo, t: agora, timer: duplo.dataset.item ? setTimeout(() => { TOQUE = {}; detalhes(duplo.dataset.item) }, 260) : null};
+    return;
+  }
+  const el = e.target.closest("[data-fila],[data-previa],#rev-chave,[data-volta],[data-mais],[data-col],[data-curtir],[data-mimo],[data-mimo-outro],[data-periodo],[data-modo],[data-menu],[data-criar],[data-msg],#ed-perfil,#ed-perfil2,#ed-msgs,#como-fa,[data-reenviar],[data-ver],[data-aba],[data-vista],[data-filtro],[data-plano],[data-item],#pagar,#assinar,#gorjeta-ok");
   if(!el) return;
   if(el.dataset.modo){ COMO_FA = el.dataset.modo === "cliente"; ABA = "inicio"; vibrar("leve");
     if(!PLANO_SEL) PLANO_SEL = (D.planos.find(p => p.economia) || D.planos[0])?.id; return render() }
+  if(el.dataset.fila){ const [t, id, acao] = el.dataset.fila.split(":"); return acaoFila(`${t}:${id}`, acao) }
+  if(el.dataset.previa){ return previaFa(el.dataset.previa) }
+  if(el.id === "rev-chave"){
+    D.revisao = !D.revisao; el.classList.toggle("on", D.revisao); vibrar("leve");
+    api("/api/criadora/ajustes", {revisao: D.revisao}).then(r => r.ok
+      ? toast(D.revisao ? "Revisão ligada: novas publicações vão para a fila" : "Revisão desligada: publica na hora")
+      : toast("Não consegui salvar"));
+    return;
+  }
+  if(el.dataset.volta){ COMO_FA = false; ABA = "painel"; ANIMAR = true; SALTA = true; vibrar("leve"); render(); return }
+  if(el.dataset.mais !== undefined){ const art = el.closest(".post"); art.querySelector(".legenda")?.classList.remove("mais"); art.querySelector(".ver-mais")?.remove(); return }
+  if(el.dataset.col !== undefined){ const on = el.classList.contains("sel"); el.parentNode.querySelectorAll(".sel").forEach(x => x.classList.remove("sel")); if(!on) el.classList.add("sel"); vibrar("leve"); return }
   if(el.dataset.curtir){ return curtir(el) }
   if(el.dataset.mimo){ return mimoPara(el.dataset.mimo) }
   if(el.dataset.mimoOutro){
@@ -997,16 +1547,16 @@ document.addEventListener("click", e => {
     if(!v || v < 100){ toast("Valor mínimo: R$ 1,00"); return }
     return pagar(`gorjeta_${v}_${el.dataset.mimoOutro}`);
   }
-  if(el.dataset.periodo){ PERIODO = el.dataset.periodo; vibrar("leve"); $("#conteudo").innerHTML = painel(); return }
+  if(el.dataset.periodo){ PERIODO = el.dataset.periodo; vibrar("leve"); const c = $("#conteudo"); c.innerHTML = painel(); contar(c); suavizarImagens(c); return }
   if(el.dataset.menu){ e.stopPropagation(); return menuItem(el.dataset.menu) }
   if(el.dataset.criar){ return novaPublicacao(el.dataset.criar === "pack") }
   if(el.dataset.msg){ return editarMensagem(el.dataset.msg) }
   if(el.id === "ed-perfil" || el.id === "ed-perfil2"){ return editarPerfil() }
   if(el.id === "ed-msgs"){ return PAINEL ? editarMensagens() : carregarPainel().then(editarMensagens) }
   if(el.id === "como-fa"){ COMO_FA = true; ABA = "inicio"; vibrar("leve"); render(); toast("Vendo a loja como seus fãs"); return }
-  if(el.dataset.aba){ ABA = el.dataset.aba; vibrar("leve"); render(); window.scrollTo({top: ABA === "inicio" ? 0 : 120, behavior:"smooth"}); return }
-  if(el.dataset.vista){ VISTA = el.dataset.vista; render(); return }
-  if(el.dataset.filtro){ FILTRO = el.dataset.filtro; render(); return }
+  if(el.dataset.aba){ return irPara(el.dataset.aba) }
+  if(el.dataset.vista){ VISTA = el.dataset.vista; ANIMAR = true; vibrar("leve"); render(); return }
+  if(el.dataset.filtro){ FILTRO = el.dataset.filtro; ANIMAR = true; vibrar("leve"); render(); return }
   if(el.dataset.plano){ PLANO_SEL = el.dataset.plano; vibrar("leve"); render(); return }
   if(el.id === "pagar"){ pagar(el.dataset.item, $("#cupom")?.value.trim()); return }
   if(el.id === "assinar"){ detalhes(el.dataset.item); return }
@@ -1019,7 +1569,7 @@ document.addEventListener("click", e => {
   if(el.dataset.ver){ abrirGaleria(el.dataset.ver); return }
   if(el.dataset.item){
     const id = el.dataset.item;
-    if(id.startsWith("gorjeta_")) return pagar(id);
+    if(id.startsWith("gorjeta_")){ if(el.classList.contains("mimo")) voarEmoji(el, el.querySelector(".emoji")?.textContent || "💝"); return pagar(id) }
     detalhes(id);
   }
 });

@@ -150,7 +150,11 @@ MIGRACOES = {
         "remarketing_etapa": "INTEGER NOT NULL DEFAULT 0",  # 0 nada | 1 lembrete | 2 cupom enviado
         "expira_em": "TEXT",                            # validade do PIX
     },
+    "posts": {
+        "status": "TEXT NOT NULL DEFAULT 'publicado'",  # publicado | fila (aguardando revisão da criadora)
+    },
     "packs": {
+        "postar_canal": "INTEGER NOT NULL DEFAULT 0",   # na fila: posta no canal quando for aprovado
         "tipo": "TEXT NOT NULL DEFAULT 'pack'",        # pack (canal/catálogo) | ppv (mensagem paga no privado)
         "legenda": "TEXT",                              # texto da postagem no feed da loja
     },
@@ -234,7 +238,7 @@ class Plano:
 @dataclass
 class Gorjeta:
     preco: int
-    titulo: str = "Gorjeta 💝"
+    titulo: str = "Mimo 💝"
     alvo: str = ""          # pack/combo/post que recebeu o mimo (id gorjeta_<valor>_<alvo>)
 
     @property
@@ -557,9 +561,38 @@ class Database:
         await self.conn.commit()
         return cur.lastrowid
 
-    async def listar_posts(self) -> list[dict]:
-        rows = await self._todos("SELECT id, texto, foto, criado_em FROM posts WHERE ativo = 1 ORDER BY id DESC")
+    async def listar_posts(self, status: str = "publicado") -> list[dict]:
+        rows = await self._todos("SELECT id, texto, foto, criado_em FROM posts WHERE ativo = 1 AND status = ? "
+                                 "ORDER BY id DESC", (status,))
         return [dict(r) for r in rows]
+
+    # ── Fila de revisão ────────────────────────────────────────────────────
+    async def mandar_post_para_fila(self, post_id: int) -> None:
+        await self.conn.execute("UPDATE posts SET status = 'fila' WHERE id = ?", (post_id,))
+        await self.conn.commit()
+
+    async def mandar_pack_para_fila(self, pack_id: str, postar_canal: bool) -> None:
+        await self.conn.execute("UPDATE packs SET tipo = 'fila', postar_canal = ? WHERE id = ?", (int(postar_canal), pack_id))
+        await self.conn.commit()
+
+    async def aprovar_post(self, post_id: int) -> bool:
+        cur = await self.conn.execute("UPDATE posts SET status = 'publicado', criado_em = ? WHERE id = ? AND status = 'fila'",
+                                      (_agora(), post_id))
+        await self.conn.commit()
+        return cur.rowcount > 0
+
+    async def aprovar_pack(self, pack_id: str) -> bool:
+        """Publica o pack da fila. Devolve se ele pediu para ser postado no canal."""
+        row = await self._um("SELECT postar_canal FROM packs WHERE id = ? AND tipo = 'fila' AND ativo = 1", (pack_id,))
+        if not row:
+            return False
+        await self.conn.execute("UPDATE packs SET tipo = 'pack', criado_em = ? WHERE id = ?", (_agora(), pack_id))
+        await self.conn.commit()
+        return bool(row["postar_canal"])
+
+    async def descartar_pack(self, pack_id: str) -> None:
+        await self.conn.execute("UPDATE packs SET ativo = 0 WHERE id = ? AND tipo = 'fila'", (pack_id,))
+        await self.conn.commit()
 
     async def get_post(self, post_id: int) -> dict | None:
         row = await self._um("SELECT id, texto, foto, criado_em FROM posts WHERE id = ? AND ativo = 1", (post_id,))

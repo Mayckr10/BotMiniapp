@@ -214,7 +214,11 @@ async def novo_post(request: web.Request) -> web.Response:
         except Exception:
             return _erro("Não consegui ler essa imagem.")
         foto = await _subir(request.app["bot"], user["id"], "photo", jpg, "post.jpg")
-    return _ok(id=await db.criar_post(texto, foto))
+    post_id = await db.criar_post(texto, foto)
+    if await _revisao(db):
+        await db.mandar_post_para_fila(post_id)
+        return _ok(id=post_id, fila=True)
+    return _ok(id=post_id)
 
 
 async def editar_post(request: web.Request) -> web.Response:
@@ -276,6 +280,9 @@ async def novo_pack(request: web.Request) -> web.Response:
 
     pack_id = await db.criar_pack(titulo, preco, originais, blur)
     await db.editar_pack(pack_id, titulo, preco, campos.get("legenda", "")[:2000])
+    if await _revisao(db):                    # fica na fila: nada aparece nem vai para o canal até aprovar
+        await db.mandar_pack_para_fila(pack_id, campos.get("canal") == "1")
+        return _ok(id=pack_id, fila=True)
     no_canal = False
     if campos.get("canal") == "1" and cfg.channel_id:
         try:
@@ -344,7 +351,51 @@ async def post_foto(request: web.Request) -> web.Response:
                         headers={"Cache-Control": "public, max-age=86400"})
 
 
+async def _revisao(db: Database) -> bool:
+    return await db.get_ajuste("revisao", "0") == "1"
+
+
+async def ajustes(request: web.Request) -> web.Response:
+    _admin(request)
+    corpo = await request.json()
+    if "revisao" in corpo:
+        await request.app["db"].set_ajuste("revisao", "1" if corpo["revisao"] else "0")
+    return _ok()
+
+
+async def aprovar(request: web.Request) -> web.Response:
+    """Fila de revisão: publica (ou descarta) um post/pack que estava aguardando."""
+    _admin(request)
+    db: Database = request.app["db"]
+    cfg: Config = request.app["cfg"]
+    tipo, item_id, acao = request.match_info["tipo"], request.match_info["id"], request.match_info["acao"]
+    if tipo == "post":
+        if not item_id.isdigit():
+            return _erro("Publicação não encontrada.", 404)
+        if acao == "descartar":
+            await db.apagar_post(int(item_id))
+            return _ok()
+        return _ok() if await db.aprovar_post(int(item_id)) else _erro("Essa publicação não está na fila.", 404)
+    if acao == "descartar":
+        await db.descartar_pack(item_id)
+        return _ok()
+    pack = await db.get_pack(item_id)
+    if not pack or pack.tipo != "fila":
+        return _erro("Esse pack não está na fila.", 404)
+    canal = await db.aprovar_pack(item_id)
+    no_canal = False
+    if canal and cfg.channel_id:
+        try:
+            await postar_no_canal(request.app["bot"], cfg, await db.get_pack(item_id))
+            no_canal = True
+        except Exception:
+            log.exception("Fila: não consegui postar no canal")
+    return _ok(no_canal=no_canal)
+
+
 def registrar_rotas(app: web.Application) -> None:
+    app.router.add_post("/api/criadora/ajustes", ajustes)
+    app.router.add_post("/api/criadora/fila/{tipo:post|pack}/{id}/{acao:aprovar|descartar}", aprovar)
     app.router.add_get("/api/criadora/painel", painel)
     app.router.add_post("/api/criadora/perfil", perfil)
     app.router.add_post("/api/criadora/post", novo_post)
