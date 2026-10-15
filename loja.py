@@ -223,9 +223,13 @@ async def dados(request: web.Request) -> web.Response:
         "usuario": {"nome": user["nome"]},
         "sou_criadora": user["id"] in cfg.admin_ids,
         "posts": [post_json(p) for p in publicados] if ve_posts else [],
-        "posts_bloqueados": 0 if ve_posts else len(publicados),       # quem não é VIP só vê quantos existem
+        # Sem VIP não aparece nada do conteúdo na loja: só a quantidade de cada coisa (para o convite de assinar).
+        # Os packs continuam à venda pelo canal de amostras e pelo bot; o que já foi comprado fica em Minhas.
+        "bloqueio": None if ve_posts else {"posts": len(publicados), "stories": len(todos_stories),
+                                           "packs": len(packs) + len(combos), "lancamentos": len(lancamentos)},
+        "posts_bloqueados": 0 if ve_posts else len(publicados),
         "stories_bloqueados": 0 if ve_posts else len(todos_stories),
-        "lancamentos": lancamentos,
+        "lancamentos": lancamentos if ve_posts else [],
         "stories": stories,
         "meta": criadora_mod.meta_json(await db.meta_ativa()),
         "pedidos_cfg": cfg_pedidos if cfg_pedidos["ativo"] or criadora else None,
@@ -240,8 +244,8 @@ async def dados(request: web.Request) -> web.Response:
         "assinatura": info_vip,
         "planos": [{"id": p.item_id, "nome": p.nome, "dias": p.dias, "preco_fmt": p.preco_fmt,
                     "economia": economia(p), "promo": promo.get(p.item_id)} for p in planos],
-        "packs": packs,
-        "combos": combos,
+        "packs": packs if ve_posts else [],
+        "combos": combos if ve_posts else [],
         "gorjetas": [v * 100 for v in await mensagens.valores_gorjeta()],
         "minhas": [{"id": p.id, "titulo": p.titulo} for p in await db.packs_do_cliente(user["id"])],
         "fila": await _fila(db, cfg, user["id"]) if user["id"] in cfg.admin_ids else None,     # aguardando revisão da criadora
