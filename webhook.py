@@ -25,7 +25,7 @@ from aiohttp import web
 import mensagens
 from config import Config
 from assinaturas import ativar_assinatura
-from notificacoes import avisar_venda
+from notificacoes import avisar_pedido, avisar_venda, checar_meta
 from database import Database, Pack, fmt_reais
 from payments import GatewaySeletor, MockPixGateway, PixGateway
 
@@ -95,6 +95,32 @@ async def processar_pagamento(bot: Bot, db: Database, gateway: PixGateway, pix_i
     if venda.pack_id.startswith("gorjeta_"):
         await bot.send_message(venda.user_id, f"💝 Recebi sua gorjeta de <b>{fmt_reais(venda.valor)}</b>. "
                                               "Muito obrigada pelo carinho! 🥰")
+        await avisar_venda(bot, db, cfg, venda)
+        await checar_meta(bot, db, cfg)
+        return "entregue"
+
+    # Pedido personalizado: a criadora produz e entrega depois, pelo painel
+    if venda.pack_id.startswith("pedido_"):
+        pedido = await db.get_pedido(int(venda.pack_id[7:]))
+        if pedido and await db.marcar_pedido_pago(pedido.id):
+            prazo = (await db.get_ajuste("pedidos_prazo", "") or "").strip()
+            await bot.send_message(
+                venda.user_id,
+                f"✅ <b>Pagamento confirmado!</b> Seu pedido personalizado #{pedido.id} foi para "
+                f"{html.escape(cfg.criadora_nome or 'a criadora')}."
+                + (f"\n⏳ Prazo: {html.escape(prazo)}." if prazo else "")
+                + "\nQuando ficar pronto, chega aqui no chat e em <b>Minhas compras</b> na loja.")
+            await avisar_pedido(bot, db, cfg, await db.get_pedido(pedido.id))
+        else:                                   # o mesmo pedido pago duas vezes (dois PIX): avisa para devolver
+            log.warning("Pedido %s pago de novo (venda %s)", venda.pack_id, venda.id)
+            await bot.send_message(venda.user_id, f"⚠️ Recebemos um segundo pagamento de {fmt_reais(venda.valor)} "
+                                                  "para o mesmo pedido. A criadora foi avisada para devolver.")
+            for admin_id in cfg.admin_ids:
+                try:
+                    await bot.send_message(admin_id, f"⚠️ O {html.escape(venda.pack_id.replace('_', ' #'))} foi pago duas "
+                                                     f"vezes. Devolva {fmt_reais(venda.valor)} ao fã <code>{venda.user_id}</code>.")
+                except Exception:
+                    pass
         await avisar_venda(bot, db, cfg, venda)
         return "entregue"
 

@@ -13,10 +13,11 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from aiogram import Bot
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 
 from config import Config
-from database import Database, Venda, agora, fmt_reais, iso
+from database import Database, PedidoPersonalizado, Venda, agora, fmt_reais, iso
+from envio import enviar_em_massa
 
 log = logging.getLogger(__name__)
 
@@ -63,6 +64,50 @@ async def avisar_venda(bot: Bot, db: Database, cfg: Config, venda: Venda, detalh
         await _enviar(bot, cfg, "\n".join(linhas), teclado)
     except Exception:
         log.exception("Erro ao avisar a venda %s", venda.id)
+
+
+def _teclado_loja(cfg: Config, texto: str) -> InlineKeyboardMarkup | None:
+    from loja import url_loja                 # evita import circular
+    url = url_loja(cfg)
+    if not url:
+        return None
+    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text=texto, web_app=WebAppInfo(url=url))]])
+
+
+async def avisar_pedido(bot: Bot, db: Database, cfg: Config, pedido: PedidoPersonalizado) -> None:
+    """Pedido personalizado pago: a criadora sempre recebe (é trabalho a fazer, não dá para desligar)."""
+    u = await db.get_usuario(pedido.user_id) or {}
+    quem = html.escape(u.get("nome") or "Fã") + (f" (@{html.escape(u['username'])})" if u.get("username") else "")
+    texto = (f"✍️ <b>Novo pedido personalizado #{pedido.id} · {pedido.preco_fmt}</b>\n"
+             f"👤 {quem} · <code>{pedido.user_id}</code>\n\n"
+             f"<blockquote>{html.escape(pedido.texto)}</blockquote>\n"
+             "Entregue ou recuse pela loja, em <b>Painel › Pedidos</b>.")
+    await _enviar(bot, cfg, texto, _teclado_loja(cfg, "✍️ Abrir pedidos"))
+
+
+async def checar_meta(bot: Bot, db: Database, cfg: Config) -> None:
+    """Depois de cada mimo pago: se a meta foi batida agora, avisa a criadora e agradece quem ajudou."""
+    try:
+        meta = await db.meta_ativa()
+        if not meta or meta["batida_em"] or meta["arrecadado"] < meta["alvo"]:
+            return
+        if not await db.marcar_meta_batida(meta["id"]):
+            return
+        titulo = html.escape(meta["titulo"])
+        await _enviar(bot, cfg, f"🎉 <b>Meta batida: {titulo}</b>\n{fmt_reais(meta['arrecadado'])} de "
+                                f"{fmt_reais(meta['alvo'])}, com a ajuda de {meta['fas']} fã(s). "
+                                "Quem ajudou recebeu um agradecimento. Encerre ou crie outra em Ajustes › Meta de mimos.")
+        fas = [u for u in await db.apoiadores_meta(meta["criado_em"]) if u not in cfg.admin_ids]
+        nome = (cfg.criadora_nome or "").split(" ")[0] or "a criadora"
+
+        async def agradecer(user_id: int):
+            await bot.send_message(user_id, f"🎉 A meta <b>{titulo}</b> foi batida, e você ajudou! "
+                                            f"Muito obrigada pelo carinho 💖\n— {html.escape(nome)}")
+
+        if fas:
+            asyncio.create_task(enviar_em_massa(db, cfg, fas, agradecer))
+    except Exception:
+        log.exception("Erro ao checar a meta de mimos")
 
 
 def _variacao(hoje: int, ontem: int) -> str:

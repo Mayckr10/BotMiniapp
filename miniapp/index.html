@@ -567,6 +567,112 @@ img.fade.ok{opacity:1}
 .ag-item .quando-ag{color:#7b5cff;font-weight:800}
 input[type=datetime-local]{width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;color:var(--text);font:15px inherit;font-family:inherit;outline:none;color-scheme:dark light;min-height:48px}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}}
+
+/* ── Stories ───────────────────────────────────────────────────────────── */
+.anel.story{cursor:pointer;animation-duration:2.6s}
+.anel.story::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid color-mix(in srgb,var(--a1) 60%,transparent);animation:story-pulso 2.2s ease-out infinite;pointer-events:none}
+@keyframes story-pulso{from{transform:scale(.93);opacity:1}to{transform:scale(1.13);opacity:0}}
+.anel.story.visto{background:color-mix(in srgb,var(--muted) 60%,transparent);animation:none;box-shadow:none}
+.anel.story.visto::after{display:none}
+.selo-story{position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);z-index:3;background:var(--grad);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.05em;padding:2px 9px;border-radius:999px;border:2px solid var(--bg);white-space:nowrap;pointer-events:none}
+.selo-story.cinza{background:var(--card);color:var(--muted);border-color:var(--bg)}
+.stories{position:fixed;inset:0;z-index:60;background:#000;color:#fff;animation:surge .2s;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.stories .barras{position:absolute;top:calc(8px + env(safe-area-inset-top));left:10px;right:10px;z-index:4;display:flex;gap:4px}
+.stories .barras span{flex:1;height:3px;border-radius:3px;background:rgba(255,255,255,.32);overflow:hidden}
+.stories .barras i{display:block;height:100%;width:0;background:#fff}
+.stories .cab-s{position:absolute;top:calc(16px + env(safe-area-inset-top));left:0;right:0;z-index:4;display:flex;align-items:center;gap:10px;padding:8px 12px 22px;background:linear-gradient(180deg,rgba(0,0,0,.55),transparent)}
+.stories .cab-s .av{width:32px;height:32px;border-radius:50%;object-fit:cover;background:var(--grad);display:grid;place-items:center;font-size:14px;flex:none}
+.stories .cab-s b{font-size:14px}
+.stories .cab-s small{opacity:.75;font-size:12px;margin-left:6px}
+.stories .cab-s .acoes-s{margin-left:auto;display:flex;gap:8px}
+.stories .cab-s button{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.16);color:#fff;display:grid;place-items:center;font-size:15px}
+.stories .palco{position:absolute;inset:0;display:grid;place-items:center}
+.stories .palco img,.stories .palco video{width:100%;height:100%;object-fit:contain;-webkit-user-drag:none}
+.stories .zona{position:absolute;top:70px;bottom:90px;z-index:3}
+.stories .zona.esq{left:0;width:33%}
+.stories .zona.dir{right:0;width:67%}
+.stories .legenda-s{position:absolute;left:16px;right:16px;bottom:calc(86px + env(safe-area-inset-bottom));z-index:4;text-align:center;font-size:15.5px;font-weight:600;line-height:1.35;text-shadow:0 1px 10px rgba(0,0,0,.85);pointer-events:none}
+.stories .rodape-s{position:absolute;left:0;right:0;bottom:0;z-index:4;display:flex;gap:8px;justify-content:center;padding:22px 16px calc(16px + env(safe-area-inset-bottom));background:linear-gradient(0deg,rgba(0,0,0,.65),transparent)}
+.stories .rodape-s .btn{width:auto;padding:10px 16px;font-size:13.5px}
+.stories .rodape-s .btn.sec{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.2)}
+.stories .carregando-s{position:absolute;inset:0;display:grid;place-items:center;z-index:1}
+.stories .carregando-s i{width:34px;height:34px;border-radius:50%;border:3px solid rgba(255,255,255,.25);border-top-color:#fff;animation:gira .8s linear infinite}
+.stories.pausado .barras{opacity:.35;transition:opacity .2s}
+
+/* ── Conteúdo só para VIP ──────────────────────────────────────────────── */
+.bloqueio-vip{padding:24px 18px;border-radius:var(--r);background:var(--card);border:1.5px dashed color-mix(in srgb,var(--a1) 45%,transparent);text-align:center}
+.bloqueio-vip .ico{font-size:36px;line-height:1}
+.bloqueio-vip b{display:block;font-size:16.5px;margin-top:8px}
+.bloqueio-vip p{color:var(--muted);margin:6px auto 14px;font-size:14px;max-width:320px}
+.bloqueio-vip .btn{width:auto;margin:0 auto;padding:12px 22px}
+
+/* ── Meta de mimos ─────────────────────────────────────────────────────── */
+.meta{margin:0 16px 14px;padding:14px 16px;border-radius:var(--r);background:var(--card);border:1px solid var(--line);cursor:pointer}
+.meta .topo-m{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.meta .topo-m b{font-size:15px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.meta .topo-m span{font-weight:800;font-size:14px;flex:none}
+.meta .barra-prog{height:8px;margin-top:10px}
+.meta .barra-prog i{transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.meta small{display:block;color:var(--muted);font-size:12.5px;margin-top:8px}
+.meta p{margin:6px 0 0;color:var(--muted);font-size:13.5px}
+.meta.batida{border-color:color-mix(in srgb,var(--ok) 45%,transparent);background:color-mix(in srgb,var(--ok) 7%,var(--card))}
+.meta.batida .barra-prog i{background:var(--ok)}
+.feed .meta{margin:0}
+
+/* ── Carrinho ──────────────────────────────────────────────────────────── */
+.post .rodape .acoes-r{display:flex;align-items:center;gap:8px;flex:none}
+.btn-cart{width:38px;height:38px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;font-size:16px;flex:none;transition:transform .2s,background .25s,border-color .25s}
+.btn-cart:active{transform:scale(.9)}
+.btn-cart.on{background:color-mix(in srgb,var(--ok) 18%,var(--card));border-color:color-mix(in srgb,var(--ok) 50%,transparent)}
+.carrinho-bar{position:fixed;left:50%;bottom:calc(var(--nav-h) + 22px + env(safe-area-inset-bottom));z-index:10;transform:translateX(-50%);width:calc(100% - 32px);max-width:528px;display:flex;align-items:center;gap:12px;padding:9px 9px 9px 16px;border-radius:18px;background:var(--text);color:var(--bg);box-shadow:var(--sombra);cursor:pointer;animation:cart-in .35s cubic-bezier(.2,1.2,.4,1)}
+@keyframes cart-in{from{opacity:0;transform:translate(-50%,16px)}}
+.carrinho-bar .ico{font-size:20px}
+.carrinho-bar b{display:block;font-size:14.5px}
+.carrinho-bar small{opacity:.7;font-size:12px}
+.carrinho-bar .btn{margin-left:auto;width:auto;padding:10px 16px;font-size:14px}
+body.tem-carrinho main{padding-bottom:calc(var(--nav-h) + 96px + env(safe-area-inset-bottom))}
+body.tem-carrinho .toast{bottom:calc(var(--nav-h) + 92px)}
+.linha-total{display:flex;justify-content:space-between;align-items:center;padding:6px 2px;font-size:14px;color:var(--muted)}
+.linha-total.desc{color:var(--ok);font-weight:700}
+.linha-total.final{color:var(--text);font-size:17px;font-weight:800;border-top:1px solid var(--line);margin-top:6px;padding-top:12px}
+
+/* ── Busca e filtros ───────────────────────────────────────────────────── */
+.busca{display:flex;gap:8px;padding:0 16px 12px}
+.busca .campo-b{flex:1;position:relative;min-width:0}
+.busca .campo-b input{padding:11px 36px 11px 38px}
+.busca .lupa{position:absolute;left:13px;top:50%;transform:translateY(-50%);opacity:.55;pointer-events:none;font-size:15px}
+.busca .limpar{position:absolute;right:6px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;color:var(--muted);font-size:13px}
+.btn-filtros{flex:none;position:relative;padding:0 14px;border-radius:14px;background:var(--card);border:1.5px solid var(--line);font-weight:700;font-size:13.5px;color:var(--text)}
+.btn-filtros .n{position:absolute;top:-7px;right:-7px;background:var(--grad);color:#fff;font-size:11px;font-weight:800;min-width:19px;height:19px;border-radius:10px;display:grid;place-items:center;padding:0 5px}
+.resultado-busca{display:flex;justify-content:space-between;align-items:center;padding:0 18px 10px;color:var(--muted);font-size:13px}
+.resultado-busca button{color:var(--a1);font-weight:700;font-size:13px}
+.grupo-filtro{margin-top:14px}
+.grupo-filtro .opcoes{display:flex;flex-wrap:wrap;gap:8px;padding:0;background:none;border:0}
+.grupo-filtro .opcoes button{flex:none;padding:9px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:13.5px;font-weight:700;color:var(--muted);white-space:nowrap}
+.grupo-filtro .opcoes button.on{background:var(--text);color:var(--bg);border-color:transparent}
+
+/* ── Pedidos personalizados ────────────────────────────────────────────── */
+.st{display:inline-block;font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap}
+.st.novo{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.st.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.st.rec{background:color-mix(in srgb,var(--err) 15%,transparent);color:var(--err)}
+.card-pedido{margin:16px;padding:18px;border-radius:var(--r);background:var(--card);border:1px solid var(--line)}
+.card-pedido h2{font-size:18px}
+.card-pedido p{color:var(--muted);font-size:14px;margin:6px 0 0}
+.card-pedido .detalhes-p{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 14px}
+.card-pedido .detalhes-p span{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:5px 11px;font-size:12.5px;font-weight:600}
+.texto-pedido{background:var(--card);border:1px solid var(--line);border-radius:var(--rs);padding:12px 14px;white-space:pre-wrap;word-break:break-word;font-size:14.5px;margin:10px 0}
+.lista{grid-template-columns:minmax(0,1fr)}
+.lista .item .st{margin-top:4px}
+.lista .item small.lim{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ── Ranking de fãs ────────────────────────────────────────────────────── */
+.ranking .av-r{width:42px;height:42px;border-radius:50%;background:var(--grad);display:grid;place-items:center;color:#fff;font-weight:800;font-size:16px;flex:none}
+.ranking .pos.medalha{font-size:19px}
+.selo-rank{margin:16px 16px 0;padding:14px 16px;border-radius:var(--r);display:flex;align-items:center;gap:12px;background:linear-gradient(120deg,color-mix(in srgb,#ffd23d 22%,var(--card)),var(--card));border:1px solid color-mix(in srgb,#ffd23d 40%,transparent)}
+.selo-rank .ico{font-size:28px}
+.selo-rank b{display:block}
+.selo-rank small{color:var(--muted)}
 </style>
 </head>
 <body>
@@ -690,8 +796,11 @@ function relativo(iso){
   if(!iso) return "";
   const d = (Date.now() - new Date(iso).getTime()) / 864e5;
   if(d < 1) return "hoje"; if(d < 2) return "ontem"; if(d < 30) return `há ${Math.floor(d)} dias`;
-  if(d < 365) return `há ${Math.floor(d/30)} ${d < 60 ? "mês" : "meses"}`; return `há ${Math.floor(d/365)} ano(s)`;
+  if(d < 365) return `há ${Math.floor(d/30)} ${d < 60 ? "mês" : "meses"}`; return `há ${pl(Math.floor(d/365), "ano", "anos")}`;
 }
+const pl = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+const urlPost = (p, tipo) => `/api/loja/post_${tipo}/${p.id}?${p.q || ""}`;
+const urlStory = (st, parte) => `/api/loja/story/${st.id}/${parte}?${st.q || ""}`;
 function midias(x){
   const p = []; if(x.fotos) p.push(`📷 ${x.fotos}`); if(x.videos) p.push(`🎬 ${x.videos}`); return p;
 }
@@ -709,15 +818,15 @@ async function carregar(){
 
 /* ── Render ────────────────────────────────────────────────────────────── */
 function render(){
-  const c = D.criadora, t = c.totais || {};
+  const c = D.criadora, t = c.totais || {}, anel = anelStories();
   const mensal = D.planos.find(p => p.dias === 30) || D.planos[0];
   $("#app").innerHTML = `
     <header>
       <div class="capa">${c.tem_foto ? `<img src="${avatarSrc()}" alt="">` : `<span class="bolha b1"></span><span class="bolha b2"></span><span class="bolha b3"></span>`}</div>
       <div class="perfil">
-        <div class="${criadora() ? "avatar-wrap" : ""}" ${criadora() ? 'id="ed-perfil"' : ""}>
-          <div class="anel">${c.tem_foto ? `<img class="avatar" src="${avatarSrc()}" alt="">` : `<div class="avatar">✨</div>`}</div>
-          ${criadora() ? `<span class="lapis">✎</span>` : ""}
+        <div class="avatar-wrap" ${criadora() || anel.cls ? 'data-avatar' : 'style="cursor:default"'}>
+          <div class="anel ${anel.cls}">${c.tem_foto ? `<img class="avatar" src="${avatarSrc()}" alt="">` : `<div class="avatar">✨</div>`}</div>
+          ${criadora() ? `<span class="lapis">✎</span>` : ""}${anel.selo}
         </div>
         <div class="nome">${esc(c.nome)} <span class="verif" title="Perfil oficial">✓</span></div>
         <p class="bio">${esc(c.bio)}</p>
@@ -742,7 +851,7 @@ function render(){
   const idx = Math.max(0, abas.findIndex(a => a[0] === ABA));
   $("#barra").innerHTML = `<nav>
     <span class="pilula" style="width:calc((100% - 12px) / ${abas.length});transform:translateX(${(PILULA ?? idx) * 100}%)"></span>
-    ${abas.map(([id,i,t]) => `<button data-aba="${id}" class="${ABA===id ? "on" + (SALTA ? " salta" : "") : ""}"><span class="ico">${i}</span>${t}${id === "painel" && qtdFila() ? `<span class="bolinha">${qtdFila()}</span>` : ""}</button>`).join("")}
+    ${abas.map(([id,i,t]) => `<button data-aba="${id}" class="${ABA===id ? "on" + (SALTA ? " salta" : "") : ""}"><span class="ico">${i}</span>${t}${id === "painel" && qtdPainel() ? `<span class="bolinha">${qtdPainel()}</span>` : ""}</button>`).join("")}
   </nav>`;
   requestAnimationFrame(() => requestAnimationFrame(() => { const p = $("#barra .pilula"); if(p) p.style.transform = `translateX(${idx * 100}%)` }));
   PILULA = idx; SALTA = false;
@@ -770,6 +879,7 @@ function render(){
   if(DIR){ cont.classList.add(DIR); DIR = "" }
   if(ANIMAR){ animarEntrada(cont); contar($("#app")); ANIMAR = false }
   suavizarImagens($("#app"));
+  podarCarrinho(); barraCarrinho();
 }
 function irPara(nova){
   const ordem = [...document.querySelectorAll("#barra [data-aba]")].map(b => b.dataset.aba);
@@ -812,7 +922,7 @@ function interacoes(alvo){
   return `<div class="interacoes">
     <button class="interacao ${c.eu ? "on" : ""}" data-curtir="${alvo}" aria-pressed="${c.eu}" aria-label="Curtir"><span class="coracao">${CORACAO}</span><span class="n">${c.n || ""}</span></button>
     ${criadora()
-      ? `<span class="interacao info">💝 ${m ? `${m.qtd} mimo(s) · ${esc(m.total_fmt)}` : "nenhum mimo ainda"}</span>`
+      ? `<span class="interacao info">💝 ${m ? `${pl(m.qtd, "mimo", "mimos")} · ${esc(m.total_fmt)}` : "nenhum mimo ainda"}</span>`
       : `<button class="interacao" data-mimo="${alvo}"><span class="coracao">💝</span><span>Mimo</span></button>`}
   </div>`;
 }
@@ -821,8 +931,8 @@ function postTexto(p){
     ${cabPost({data: esc(relativo(p.criado_em)), acao: `post:${p.id}`})}
     ${p.texto ? `<div class="corpo">${esc(p.texto)}</div>` : ""}
     ${enquete(p)}
-    ${p.video ? `<div class="foto-wrap"><video class="foto-post" src="/api/loja/post_video/${p.id}" poster="/api/loja/post_foto/${p.id}" controls playsinline preload="none"></video></div>`
-      : p.foto ? `<div class="foto-wrap" data-duplo="post_${p.id}"><img class="foto-post" src="/api/loja/post_foto/${p.id}" loading="lazy" alt=""></div>` : ""}
+    ${p.video ? `<div class="foto-wrap"><video class="foto-post" src="${urlPost(p, "video")}" poster="${urlPost(p, "foto")}" controls playsinline preload="none"></video></div>`
+      : p.foto ? `<div class="foto-wrap" data-duplo="post_${p.id}"><img class="foto-post" src="${urlPost(p, "foto")}" loading="lazy" alt=""></div>` : ""}
     <div style="height:8px"></div>${interacoes(`post_${p.id}`)}
   </article>`;
 }
@@ -833,7 +943,7 @@ function enquete(p){
     const pct = total ? Math.round(E.votos[i] * 100 / total) : 0;
     return ver ? `<div class="opc ${E.meu === i ? "meu" : ""}"><i style="width:${pct}%"></i><span>${E.meu === i ? "✓ " : ""}${esc(o)}</span><b>${pct}%</b></div>`
                : `<button class="opc" data-votar="${p.id}:${i}"><span>${esc(o)}</span></button>`;
-  }).join("")}<small class="muted">📊 ${total} voto(s)${ver ? "" : " · toque numa opção para votar"}</small></div>`;
+  }).join("")}<small class="muted">📊 ${pl(total, "voto", "votos")}${ver ? "" : " · toque numa opção para votar"}</small></div>`;
 }
 async function votar(ref){
   const [id, op] = ref.split(":").map(Number);
@@ -844,31 +954,108 @@ async function votar(ref){
   const r = await api("/api/loja/votar", {post_id: id, opcao: op});
   if(r.ok){ p.enquete.meu = r.meu; p.enquete.votos = r.votos; const el2 = document.querySelector(`[data-enq="${id}"]`); if(el2) el2.outerHTML = enquete(p) }
 }
-function inicio(){
+// ── Início: busca, filtros e feed ─────────────────────────────────────────
+let BUSCA = "", FILTROS_FEED = {midia: "todas", compra: "todos", ordem: "recentes"}, T_BUSCA = null;
+const FEED_PADRAO = {midia: "todas", compra: "todos", ordem: "recentes"};
+const semAcento = t => String(t || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+const qtdFiltros = () => Object.keys(FEED_PADRAO).filter(k => FILTROS_FEED[k] !== FEED_PADRAO[k]).length;
+function bateBusca(x){
+  if(!BUSCA.trim()) return true;
+  const alvo = semAcento([x.titulo, x.legenda, x.resumo, x.texto, ...(x.packs || []), ...((x.enquete || {}).opcoes || [])].join(" "));
+  return semAcento(BUSCA).split(/\s+/).filter(Boolean).every(p => alvo.includes(p));
+}
+function itensFeed(){
   let itens = [...D.combos.map(x => ({...x, combo:true})), ...D.packs];
+  if(criadora()) itens = itens.map(x => ({...x, comprado: true}));
   if(FILTRO === "packs") itens = itens.filter(x => !x.combo);
   if(FILTRO === "combos") itens = itens.filter(x => x.combo);
   if(FILTRO === "posts") itens = [];
-  const posts = FILTRO === "todos" || FILTRO === "posts" ? D.posts.map(p => ({...p, texto_post:true})) : [];
-  if(criadora()) itens = itens.map(x => ({...x, comprado: true}));
-  const cab = `
-    <div class="secao-titulo"><h2>Conteúdos</h2>
-      <div class="alt-vista"><button data-vista="feed" class="${VISTA==="feed"?"on":""}">☰</button><button data-vista="grade" class="${VISTA==="grade"?"on":""}">▦</button></div></div>
-    <div class="chips">${[["todos","Todos"],["posts","📝 Posts"],["packs","📦 Packs"],["combos","🎁 Combos"]]
-      .map(([id,t]) => `<button class="chip ${FILTRO===id?"on":""}" data-filtro="${id}">${t}</button>`).join("")}</div>`;
-  if(!itens.length && !posts.length) return cab + (criadora()
+  if(FILTROS_FEED.midia === "video") itens = itens.filter(x => x.videos > 0 || /vídeo/.test(x.resumo || ""));
+  if(FILTROS_FEED.midia === "fotos") itens = itens.filter(x => !(x.videos > 0) && !/vídeo/.test(x.resumo || ""));
+  if(FILTROS_FEED.compra === "nao" && !criadora()) itens = itens.filter(x => !x.comprado);
+  if(FILTROS_FEED.compra === "sim" && !criadora()) itens = itens.filter(x => x.comprado);
+  // posts grátis só entram quando nenhum filtro de pack está ligado (eles não têm preço nem compra)
+  const soPacks = FILTROS_FEED.midia !== "todas" || FILTROS_FEED.compra !== "todos" || ["menor", "maior"].includes(FILTROS_FEED.ordem);
+  const posts = (FILTRO === "todos" || FILTRO === "posts") && !soPacks ? D.posts.map(p => ({...p, texto_post:true})) : [];
+  let todos = [...posts, ...itens].filter(bateBusca);
+  const curt = x => ((D.curtidas || {})[x.texto_post ? `post_${x.id}` : x.id] || {}).n || 0;
+  if(FILTROS_FEED.ordem === "menor") todos.sort((a, b) => a.preco - b.preco);
+  else if(FILTROS_FEED.ordem === "maior") todos.sort((a, b) => b.preco - a.preco);
+  else if(FILTROS_FEED.ordem === "curtidos") todos.sort((a, b) => curt(b) - curt(a) || String(b.criado_em || "").localeCompare(String(a.criado_em || "")));
+  else todos.sort((a, b) => (b.combo ? 1 : 0) - (a.combo ? 1 : 0) || String(b.criado_em || "").localeCompare(String(a.criado_em || "")));
+  return todos;
+}
+function cardBloqueioVip(){
+  const n = D.posts_bloqueados;
+  return `<div class="bloqueio-vip"><div class="ico">🔒</div>
+    <b>${n} publicaç${n === 1 ? "ão exclusiva" : "ões exclusivas"} para assinantes</b>
+    <p>Posts, fotos, vídeos e stories de ${esc(D.criadora.nome)} ficam liberados no VIP.</p>
+    <button class="btn brilho" data-aba="vip">⭐ Assinar VIP</button></div>`;
+}
+function listaFeed(){
+  const todos = itensFeed(), filtrando = BUSCA.trim() || qtdFiltros();
+  const topo = filtrando ? `<div class="resultado-busca"><span>${pl(todos.length, "resultado", "resultados")}</span><button data-limpar-busca>Limpar</button></div>` : "";
+  if(!todos.length && filtrando) return topo + `<div class="vazio"><div class="ico">🔎</div>Nada encontrado${BUSCA.trim() ? ` para “${esc(BUSCA.trim())}”` : ""}.</div>`;
+  const vazioTotal = !todos.length && !(D.lancamentos || []).length && !D.posts_bloqueados;
+  if(vazioTotal) return criadora()
     ? `<div class="vazio"><div class="ico">✨</div>Seu feed está vazio.<br>Toque no <b>+</b> para publicar o primeiro post ou pack.</div>`
-    : `<div class="vazio"><div class="ico">🫧</div>Nada por aqui ainda.<br>Dá uma olhada no VIP ⭐</div>`);
-  if(VISTA === "grade") return cab + `<div class="grade">${itens.map(x => `
+    : `<div class="vazio"><div class="ico">🫧</div>Nada por aqui ainda.<br>Dá uma olhada no VIP ⭐</div>`;
+  if(VISTA === "grade"){
+    const cards = todos.filter(x => !x.texto_post);
+    return topo + (cards.length ? `<div class="grade">${cards.map(x => `
     <div class="card" data-item="${x.id}">
       <img src="/api/loja/previa/${x.id}" loading="lazy" alt="">
       <span class="cad">${x.comprado ? "✅" : "🔒"}</span>
       <div class="veu"><b>${esc(x.titulo)}</b><small>${x.comprado ? "Comprado" : esc(x.preco_fmt)}</small></div>
-    </div>`).join("")}</div>`;
-  const todos = [...posts, ...itens].sort((a, b) => (b.combo ? 1 : 0) - (a.combo ? 1 : 0) || String(b.criado_em || "").localeCompare(String(a.criado_em || "")));
-  const lanc = ["todos", "packs"].includes(FILTRO) ? (D.lancamentos || []) : [];
-  return cab + avisoFila() + `<div class="feed">${lanc.map(cardLancamento).join("")}${todos.map(x => x.texto_post ? postTexto(x) : cardPack(x)).join("")}</div>`;
+    </div>`).join("")}</div>` : `<div class="vazio"><div class="ico">▦</div>A grade mostra só packs e combos.</div>`);
+  }
+  const lanc = !filtrando && ["todos", "packs"].includes(FILTRO) ? (D.lancamentos || []) : [];
+  const bloqueio = !filtrando && D.posts_bloqueados && ["todos", "posts"].includes(FILTRO) ? cardBloqueioVip() : "";
+  const meta = !filtrando && D.meta && FILTRO === "todos" ? metaCard(true) : "";
+  return topo + `<div class="feed">${meta}${bloqueio}${lanc.map(cardLancamento).join("")}${todos.map(x => x.texto_post ? postTexto(x) : cardPack(x)).join("")}</div>`;
 }
+function atualizarFeed(){
+  const el = $("#lista-feed"); if(!el) return;
+  el.innerHTML = listaFeed(); suavizarImagens(el);
+  const n = $("#filtros-n"); if(n){ const q = qtdFiltros(); n.textContent = q; n.classList.toggle("ocultar", !q) }
+  const lp = $("#busca-limpar"); if(lp) lp.classList.toggle("ocultar", !BUSCA);
+}
+function inicio(){
+  const q = qtdFiltros();
+  return `
+    <div class="secao-titulo"><h2>Conteúdos</h2>
+      <div class="alt-vista"><button data-vista="feed" class="${VISTA==="feed"?"on":""}" aria-label="Feed">☰</button><button data-vista="grade" class="${VISTA==="grade"?"on":""}" aria-label="Grade">▦</button></div></div>
+    <div class="chips">${[["todos","Todos"],["posts","📝 Posts"],["packs","📦 Packs"],["combos","🎁 Combos"]]
+      .map(([id,t]) => `<button class="chip ${FILTRO===id?"on":""}" data-filtro="${id}">${t}</button>`).join("")}</div>
+    <div class="busca">
+      <div class="campo-b"><span class="lupa">🔎</span><input type="text" id="busca" placeholder="Buscar conteúdo" value="${esc(BUSCA)}" enterkeyhint="search" autocomplete="off">
+        <button class="limpar ${BUSCA ? "" : "ocultar"}" id="busca-limpar" aria-label="Limpar busca">✕</button></div>
+      <button class="btn-filtros" data-filtros>Filtros<span class="n ${q ? "" : "ocultar"}" id="filtros-n">${q}</span></button>
+    </div>
+    ${avisoFila()}<div id="lista-feed">${listaFeed()}</div>`;
+}
+function abrirFiltros(){
+  const f = {...FILTROS_FEED};
+  const grupo = (k, titulo, ops) => `<div class="grupo-filtro"><span class="rotulo">${titulo}</span><div class="opcoes" data-grupo="${k}">${
+    ops.map(([v, t]) => `<button data-v="${v}" class="${f[k] === v ? "on" : ""}">${t}</button>`).join("")}</div></div>`;
+  abrirFolha(`<h2>Filtros</h2><p class="sub">Vale para packs e combos. Os posts aparecem quando só a busca está ativa.</p>
+    ${grupo("midia", "Mídia", [["todas","Todas"],["video","🎬 Com vídeo"],["fotos","📷 Só fotos"]])}
+    ${criadora() ? "" : grupo("compra", "Compra", [["todos","Todos"],["nao","🔒 Não comprados"],["sim","✅ Comprados"]])}
+    ${grupo("ordem", "Ordenar por", [["recentes","Mais recentes"],["curtidos","❤️ Mais curtidos"],["menor","Menor preço"],["maior","Maior preço"]])}
+    <div class="gap"></div><button class="btn" id="filtros-ok">Ver resultados</button>
+    <div class="gap"></div><button class="btn fantasma" id="filtros-limpar">Limpar filtros</button>`);
+  document.querySelectorAll(".folha [data-grupo]").forEach(g => g.onclick = e => {
+    const b = e.target.closest("[data-v]"); if(!b) return;
+    f[g.dataset.grupo] = b.dataset.v; g.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); vibrar("leve");
+  });
+  $("#filtros-ok").onclick = () => { FILTROS_FEED = f; fecharFolha(true); atualizarFeed() };
+  $("#filtros-limpar").onclick = () => { FILTROS_FEED = {...FEED_PADRAO}; fecharFolha(true); atualizarFeed() };
+}
+document.addEventListener("input", e => {
+  if(e.target.id !== "busca") return;
+  BUSCA = e.target.value;
+  clearTimeout(T_BUSCA); T_BUSCA = setTimeout(atualizarFeed, 140);
+});
 const DATA_HORA = iso => new Date(iso).toLocaleString("pt-BR", {weekday: "short", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit"}).replace(".", "");
 function cardLancamento(x){
   return `<article class="post lancamento">
@@ -930,10 +1117,88 @@ function cardPack(x){
       </div>
       <div class="rodape">
         <div><b>${esc(x.titulo)}</b><small>${x.combo ? `Separados ${esc(x.separados_fmt)}` : esc(x.resumo)}</small></div>
-        ${criadora() ? `<span class="preco-tag ok" data-menu="pack:${x.id}">Editar</span>` : x.comprado ? `<span class="preco-tag ok" data-ver="${x.id}">Abrir</span>` : `<span class="preco-tag" data-item="${x.id}">${esc(x.preco_fmt)}</span>`}
+        ${criadora() ? `<span class="preco-tag ok" data-menu="pack:${x.id}">Editar</span>` : x.comprado ? `<span class="preco-tag ok" data-ver="${x.id}">Abrir</span>`
+          : x.combo ? `<span class="preco-tag" data-item="${x.id}">${esc(x.preco_fmt)}</span>`
+          : `<div class="acoes-r">${botaoCarrinho(x.id)}<span class="preco-tag" data-item="${x.id}">${esc(x.preco_fmt)}</span></div>`}
       </div>
       ${interacoes(x.id)}
     </article>`;
+}
+
+// ── Carrinho (vários packs num PIX só) ────────────────────────────────────
+// Fica salvo neste aparelho; o servidor confere tudo de novo na hora de pagar.
+let CARRINHO = (() => { try{ return JSON.parse(localStorage.getItem("carrinho") || "[]").filter(x => typeof x === "string") }catch(e){ return [] } })();
+function salvarCarrinho(){ try{ localStorage.setItem("carrinho", JSON.stringify(CARRINHO)) }catch(e){} }
+function podarCarrinho(){        // tira o que saiu da vitrine ou já foi comprado
+  if(!D) return;
+  const ok = new Set(D.packs.filter(p => !p.comprado).map(p => p.id));
+  const antes = CARRINHO.length; CARRINHO = CARRINHO.filter(id => ok.has(id));
+  if(CARRINHO.length !== antes) salvarCarrinho();
+}
+const botaoCarrinho = id => { const on = CARRINHO.includes(id);
+  return `<button class="btn-cart ${on ? "on" : ""}" data-cart="${id}" aria-label="${on ? "Tirar do carrinho" : "Adicionar ao carrinho"}">${on ? "✓" : "🛒"}</button>` };
+function totaisCarrinho(){
+  const itens = CARRINHO.map(id => D.packs.find(p => p.id === id)).filter(Boolean);
+  const cheio = itens.reduce((a, p) => a + p.preco, 0), C = D.carrinho_cfg || {pct: 0, min: 3};
+  const desconto = C.pct && itens.length >= C.min ? Math.floor(cheio * C.pct / 100) : 0;
+  return {itens, cheio, desconto, total: Math.max(100, cheio - desconto), C};
+}
+function alternarCarrinho(id, el){
+  const i = CARRINHO.indexOf(id);
+  if(i >= 0) CARRINHO.splice(i, 1); else CARRINHO.push(id);
+  salvarCarrinho(); vibrar(i >= 0 ? "leve" : "success");
+  document.querySelectorAll(`[data-cart="${id}"]`).forEach(b => b.outerHTML = botaoCarrinho(id));
+  if(i < 0){ const {itens, C} = totaisCarrinho(); const faltam = C.pct ? C.min - itens.length : 0;
+    toast(faltam > 0 ? `No carrinho 🛒 · mais ${pl(faltam, "pack", "packs")} para ganhar ${C.pct}% OFF` : C.pct && itens.length >= C.min ? `No carrinho 🛒 · ${C.pct}% OFF aplicado` : "Adicionado ao carrinho 🛒") }
+  barraCarrinho();
+}
+function barraCarrinho(){
+  $("#carrinho-bar")?.remove();
+  const mostrar = D && !criadora() && ABA === "inicio" && CARRINHO.length && !$("#galeria") && !$("#stories");
+  document.body.classList.toggle("tem-carrinho", !!mostrar);
+  if(!mostrar) return;
+  const {itens, total, desconto} = totaisCarrinho();
+  const b = document.createElement("div"); b.className = "carrinho-bar"; b.id = "carrinho-bar";
+  b.innerHTML = `<span class="ico">🛒</span><div><b>${pl(itens.length, "pack", "packs")} · ${reais(total)}</b><small>${desconto ? `você economiza ${reais(desconto)}` : "um PIX só para tudo"}</small></div><button class="btn mini" tabindex="-1">Ver carrinho</button>`;
+  b.onclick = abrirCarrinho;
+  document.body.appendChild(b);
+}
+function abrirCarrinho(){
+  podarCarrinho();
+  const {itens, cheio, desconto, total, C} = totaisCarrinho();
+  if(!itens.length){ fecharFolha(); barraCarrinho(); return toast("Seu carrinho está vazio") }
+  const faltam = C.pct ? C.min - itens.length : 0;
+  abrirFolha(`<h2>Seu carrinho</h2><p class="sub">Pague tudo com um PIX só. Cada pack chega no chat com o bot.</p>
+    <div class="lista" style="padding:0">${itens.map(p => `<div class="item"><img src="/api/loja/previa/${p.id}" alt="">
+      <div class="txt"><b>${esc(p.titulo)}</b><small>${esc(p.resumo)}</small></div><b style="flex:none">${esc(p.preco_fmt)}</b>
+      <button class="btn mini sec" data-tirar-cart="${p.id}" aria-label="Tirar">✕</button></div>`).join("")}</div>
+    ${faltam > 0 ? `<div class="aviso ok" style="margin:12px 0 0;text-align:center">🎁 Coloque mais ${pl(faltam, "pack", "packs")} e ganhe ${C.pct}% OFF</div>` : ""}
+    <div class="gap"></div>
+    <div class="linha-total"><span>Subtotal</span><span>${reais(cheio)}</span></div>
+    ${desconto ? `<div class="linha-total desc"><span>Desconto do carrinho (${C.pct}%)</span><span>− ${reais(desconto)}</span></div>` : ""}
+    <div class="linha-total final"><span>Total</span><span>${reais(total)}</span></div>
+    <div class="gap"></div><button class="btn brilho" id="pagar-cart">💠 Pagar ${reais(total)} com PIX</button>`);
+  $("#pagar-cart").onclick = fecharCarrinho;
+}
+async function fecharCarrinho(){
+  if(D.idade === "menor") return pagar();
+  if(D.idade !== "ok") return pedirIdade(fecharCarrinho);
+  const b = $("#pagar-cart"); if(b){ b.disabled = true; b.textContent = "Gerando PIX…" }
+  const r = await api("/api/loja/carrinho", {pack_ids: CARRINHO});
+  if(r.remover){ CARRINHO = CARRINHO.filter(id => !r.remover.includes(id)); salvarCarrinho(); toast("Tirei do carrinho o que não está mais disponível"); await carregar(); return abrirCarrinho() }
+  if(!r.ok){ if(b){ b.disabled = false; b.textContent = "💠 Pagar com PIX" } return toast(r.erro || "Não consegui fechar o carrinho") }
+  pagar(r.item_id);
+}
+
+// ── Meta de mimos ─────────────────────────────────────────────────────────
+function metaCard(compacto){
+  const M = D.meta; if(!M) return "";
+  return `<div class="meta ${M.batida ? "batida" : ""}" ${criadora() ? "" : 'data-aba="gorjeta"'}>
+    <div class="topo-m"><b>🎯 ${esc(M.titulo)}</b><span>${M.pct}%</span></div>
+    ${!compacto && M.descricao ? `<p>${esc(M.descricao)}</p>` : ""}
+    <div class="barra-prog"><i style="width:${M.pct}%"></i></div>
+    <small>${M.batida ? `🎉 Meta batida! ${esc(M.arrecadado_fmt)} de ${esc(M.alvo_fmt)}` : `${esc(M.arrecadado_fmt)} de ${esc(M.alvo_fmt)}`}${M.fas ? ` · ${pl(M.fas, "fã ajudou", "fãs ajudaram")}` : ""}${compacto && !criadora() && !M.batida ? " · toque para ajudar" : ""}</small>
+  </div>`;
 }
 
 function vip(){
@@ -945,7 +1210,7 @@ function vip(){
     <div class="hero-vip vivo"><h2>${a ? "Renovar VIP" : "Seja VIP"}</h2>
       <p>${a ? `Você é VIP até ${esc(a.ate)}. Renovando agora, os dias são somados.` : `Todo o conteúdo exclusivo de ${esc(D.criadora.nome)}, sem censura, em um canal só para assinantes.`}</p></div>
     ${a && a.plano ? `<div class="renovar">
-      <div class="topo-r"><span>Seu plano: <b>${esc(a.plano_nome)}</b></span><span>${a.dias} dia(s) restante(s)</span></div>
+      <div class="topo-r"><span>Seu plano: <b>${esc(a.plano_nome)}</b></span><span>${a.dias === 1 ? "1 dia restante" : `${a.dias} dias restantes`}</span></div>
       <div class="barra-prog"><i style="width:${Math.min(100, Math.round(a.dias / Math.max(1, a.plano_dias) * 100))}%"></i></div>
       <p class="dica" style="margin-top:10px">Escolha o plano e renove em 1 toque: o PIX sai na hora e os dias são somados ao que você já tem.</p></div>` : ""}
     <div class="beneficios">
@@ -964,26 +1229,258 @@ function vip(){
       : `<button class="btn brilho" id="assinar" data-item="${sel.id}">Assinar ${esc(sel.nome)} · ${esc(sel.promo ? sel.promo.preco_fmt : sel.preco_fmt)}</button>`}</div>`;
 }
 
+const ST_PEDIDO = {NOVO: ["novo", "⏳ Em produção"], ENTREGUE: ["ok", "✓ Entregue"], RECUSADO: ["rec", "Recusado"]};
+const stPedido = st => { const [c, t] = ST_PEDIDO[st] || ["novo", st]; return `<span class="st ${c}">${t}</span>` };
 function minhas(){
-  const a = D.assinatura;
-  if(!D.minhas.length && !a) return `<div class="vazio"><div class="ico">🗂️</div>Suas compras aparecem aqui.<br>Tudo que você comprar fica salvo no chat com o bot.</div>`;
-  return `<div class="secao-titulo"><h2>Minhas compras</h2><small class="muted">${D.minhas.length} item(ns)</small></div>
+  const a = D.assinatura, P = D.meus_pedidos || [];
+  const rank = D.meu_rank ? `<div class="selo-rank"><span class="ico">${["🥇","🥈","🥉"][D.meu_rank.pos - 1] || "🏆"}</span>
+    <div><b>Você é o fã nº ${D.meu_rank.pos} de ${esc(D.criadora.nome)}</b><small>no ranking dos últimos 30 dias</small></div></div>` : "";
+  if(!D.minhas.length && !a && !P.length) return rank + `<div class="vazio"><div class="ico">🗂️</div>Suas compras aparecem aqui.<br>Tudo que você comprar fica salvo no chat com o bot.</div>`;
+  const pedidosFeitos = new Set(P.map(p => p.pack_id).filter(Boolean));
+  const packs = D.minhas.filter(p => !pedidosFeitos.has(p.id));
+  return rank + `${P.length ? `<div class="secao-titulo"><h2>Meus pedidos</h2><small class="muted">${pl(P.length, "pedido", "pedidos")}</small></div>
+    <div class="lista">${P.map(p => `<div class="item" ${p.status === "ENTREGUE" && p.pack_id ? `data-ver="${p.pack_id}"` : `data-meu-pedido="${p.id}"`}>
+      ${p.status === "ENTREGUE" && p.pack_id ? `<img src="/api/loja/previa/${p.pack_id}" alt="">` : `<div class="thumb">✍️</div>`}
+      <div class="txt"><b>Pedido #${p.id} · ${esc(p.valor_fmt)}</b><small class="lim">${esc(p.texto)}</small>${stPedido(p.status)}</div>
+      ${p.status === "ENTREGUE" && p.pack_id ? `<button class="btn mini sec" data-reenviar="${p.pack_id}">No chat</button>` : ""}</div>`).join("")}</div>` : ""}
+    <div class="secao-titulo"><h2>Minhas compras</h2><small class="muted">${pl(packs.length, "item", "itens")}</small></div>
     <div class="lista">
       ${a ? `<div class="item"><div class="thumb">⭐</div><div class="txt"><b>Assinatura VIP</b><small>Ativa até ${esc(a.ate)}</small></div><button class="btn mini sec" data-aba="vip">Renovar</button></div>` : ""}
-      ${D.minhas.map(p => `<div class="item" data-ver="${p.id}"><img src="/api/loja/previa/${p.id}" alt=""><div class="txt"><b>${esc(p.titulo)}</b><small>Toque para ver · sem desfoque</small></div>
+      ${packs.map(p => `<div class="item" data-ver="${p.id}"><img src="/api/loja/previa/${p.id}" alt=""><div class="txt"><b>${esc(p.titulo)}</b><small>Toque para ver · sem desfoque</small></div>
         <button class="btn mini sec" data-reenviar="${p.id}">No chat</button></div>`).join("")}
+      ${!packs.length && !a ? `<div class="vazio" style="padding:20px">Nenhum pack comprado ainda.</div>` : ""}
     </div>`;
+}
+function verMeuPedido(id){
+  const p = (D.meus_pedidos || []).find(x => x.id === +id); if(!p) return;
+  abrirFolha(`<h2>Pedido #${p.id}</h2><p class="sub">${esc(p.valor_fmt)} · pago em ${esc(p.quando)} ${stPedido(p.status)}</p>
+    <div class="texto-pedido">${esc(p.texto)}</div>
+    ${p.resposta ? `<span class="rotulo">Resposta de ${esc(D.criadora.nome)}</span><div class="texto-pedido">${esc(p.resposta)}</div>` : ""}
+    <p class="dica">${p.status === "NOVO" ? `Assim que ficar pronto, chega no seu chat com o bot e aparece aqui.${D.pedidos_cfg?.prazo ? ` Prazo: ${esc(D.pedidos_cfg.prazo)}.` : ""}`
+      : p.status === "RECUSADO" ? "Este pedido foi recusado e o valor será devolvido." : ""}</p>`);
 }
 
 function mimos(){
+  const P = D.pedidos_cfg;
   return `
     <div class="hero-vip vivo" style="--a1:#7b5cff;--a2:#ff2e7e"><h2>Mande um mimo 💝</h2>
       <p>Um agrado para ${esc(D.criadora.nome)}. Ela recebe na hora e vê que foi você.</p></div>
+    ${D.meta ? metaCard(false) : ""}
     <div class="mimos">${D.gorjetas.map((v,i) => `<button class="mimo" data-item="gorjeta_${v}"><span class="emoji">${EMOJI_MIMO[i % EMOJI_MIMO.length]}</span><b>${reais(v)}</b><small>toque para enviar</small></button>`).join("")}</div>
-    <div class="campo"><input type="text" id="gorjeta-outro" inputmode="decimal" placeholder="Outro valor (ex: 15,00)"><button class="btn mini" id="gorjeta-ok" style="padding:0 18px">Enviar</button></div>`;
+    <div class="campo"><input type="text" id="gorjeta-outro" inputmode="decimal" placeholder="Outro valor (ex: 15,00)"><button class="btn mini" id="gorjeta-ok" style="padding:0 18px">Enviar</button></div>
+    ${P && P.ativo ? `<div class="card-pedido"><h2>✍️ Pedido personalizado</h2>
+      <p>Peça um conteúdo feito só para você. ${esc(D.criadora.nome)} produz e entrega no seu chat com o bot.</p>
+      ${P.info ? `<p style="color:var(--text);margin-top:10px">${esc(P.info)}</p>` : ""}
+      <div class="detalhes-p"><span>💰 a partir de ${esc(P.min_fmt)}</span>${P.prazo ? `<span>⏳ ${esc(P.prazo)}</span>` : ""}<span>🔒 só você recebe</span></div>
+      <button class="btn brilho" id="pedido-novo">Fazer um pedido</button></div>` : ""}`;
+}
+function novoPedido(){
+  const P = D.pedidos_cfg; if(!P || !P.ativo) return;
+  if(D.idade === "menor") return pagar();                  // mostra o aviso de 18+
+  if(D.idade !== "ok") return pedirIdade(novoPedido);      // confirma a idade antes de escrever o pedido
+  abrirFolha(`<h2>Pedido personalizado</h2><p class="sub">Descreva o que você quer. Você paga agora e recebe no chat quando ficar pronto${P.prazo ? ` (prazo: ${esc(P.prazo)})` : ""}.</p>
+    <span class="rotulo">O que você gostaria?</span>
+    <textarea id="pd-texto" maxlength="1000" placeholder="Ex: 3 fotos com a lingerie vermelha, em pé, com luz natural"></textarea>
+    <p class="dica" id="pd-cont">0/1000</p>
+    <span class="rotulo">Quanto você oferece?</span>
+    <input type="text" id="pd-valor" inputmode="decimal" placeholder="Mínimo ${esc(P.min_fmt)}">
+    <p class="dica">Valores maiores costumam ser atendidos mais rápido. Se ${esc(D.criadora.nome)} não puder fazer, o valor é devolvido.</p>
+    <div class="gap"></div><button class="btn brilho" id="pd-enviar">💠 Pagar com PIX e enviar</button>`);
+  $("#pd-texto").oninput = e => $("#pd-cont").textContent = `${e.target.value.length}/1000`;
+  $("#pd-enviar").onclick = enviarPedido;
+}
+async function enviarPedido(){
+  const texto = $("#pd-texto")?.value.trim() || "", valor = $("#pd-valor")?.value.trim() || "";
+  if(texto.length < 10) return toast("Descreva o pedido com um pouco mais de detalhe");
+  const v = Math.round(parseFloat(valor.replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", ".")) * 100);
+  if(!v || v < D.pedidos_cfg.min) return toast(`O valor mínimo é ${D.pedidos_cfg.min_fmt}`);
+  const b = $("#pd-enviar"); b.disabled = true; b.textContent = "Gerando PIX…";
+  const r = await api("/api/loja/pedido_personalizado", {texto, valor});
+  if(!r.ok){ b.disabled = false; b.textContent = "💠 Pagar com PIX e enviar"; return toast(r.erro || "Não consegui registrar o pedido") }
+  pagar(r.item_id);
 }
 
 /* ── Folha (bottom sheet) ──────────────────────────────────────────────── */
+// ── Stories ───────────────────────────────────────────────────────────────
+let SV = null;                                  // estado do visualizador aberto
+const DUR_FOTO = 5000;
+function anelStories(){
+  const L = D.stories || [];
+  if(L.length) return {cls: `story ${L.every(x => x.visto) ? "visto" : ""}`, selo: `<span class="selo-story ${L.every(x => x.visto) ? "cinza" : ""}">STORY</span>`};
+  if(D.stories_bloqueados) return {cls: "story", selo: `<span class="selo-story">🔒 STORY</span>`};
+  return {cls: "", selo: ""};
+}
+function pintarAnel(){
+  const a = $(".perfil .anel"), sel = $(".perfil .selo-story"); if(!a) return;
+  const vistos = (D.stories || []).length && D.stories.every(x => x.visto);
+  a.classList.toggle("visto", !!vistos); sel?.classList.toggle("cinza", !!vistos);
+}
+function tocarAvatar(){
+  if(criadora()) return menuAvatar();
+  if((D.stories || []).length) return abrirStories();
+  if(D.stories_bloqueados){ vibrar("leve");
+    abrirFolha(`<div class="ok-grande"><div class="emoji">🔒</div><h2>Stories só para assinantes</h2>
+      <p class="sub">${esc(D.criadora.nome)} tem ${D.stories_bloqueados} stor${D.stories_bloqueados === 1 ? "y" : "ies"} no ar agora. Assine o VIP para ver, junto com todas as publicações.</p></div>
+      <button class="btn brilho" data-aba="vip">⭐ Assinar VIP</button>`); }
+}
+function menuAvatar(){
+  const n = (D.stories || []).length;
+  abrirFolha(`<h2>Seu perfil</h2><p class="sub">${n ? `${pl(n, "story", "stories")} no ar agora.` : "Nenhum story no ar."}</p>
+    <div class="acoes" style="padding:0">
+      ${n ? `<button class="acao" id="av-ver"><span class="ico">▶</span><div><b>Ver meus stories</b><small>E quem visualizou cada um</small></div><span class="seta">›</span></button>` : ""}
+      <button class="acao" id="av-novo"><span class="ico">📸</span><div><b>Novo story</b><small>Foto ou vídeo que some em 24h</small></div><span class="seta">›</span></button>
+      <button class="acao" id="av-perfil"><span class="ico">✎</span><div><b>Foto, nome e bio</b><small>Editar o perfil</small></div><span class="seta">›</span></button>
+    </div>`);
+  if(n) $("#av-ver").onclick = () => abrirStories(0);
+  $("#av-novo").onclick = novoStory;
+  $("#av-perfil").onclick = editarPerfil;
+}
+function abrirStories(inicio){
+  const L = D.stories || []; if(!L.length) return;
+  if(inicio == null){ const i = L.findIndex(x => !x.visto); inicio = i >= 0 ? i : 0 }
+  fecharFolha(); fecharStories();
+  const el = document.createElement("div"); el.className = "stories"; el.id = "stories";
+  el.innerHTML = `<div class="barras">${L.map(() => "<span><i></i></span>").join("")}</div>
+    <div class="cab-s">${D.criadora.tem_foto ? `<img class="av" src="${avatarSrc()}" alt="">` : `<div class="av">✨</div>`}
+      <div style="min-width:0"><b>${esc(D.criadora.nome)}</b><small id="sv-tempo"></small></div>
+      <div class="acoes-s"><button id="sv-som" class="ocultar" aria-label="Ligar o som">🔇</button>${criadora() ? `<button id="sv-apagar" aria-label="Apagar story">🗑</button>` : ""}<button id="sv-fechar" aria-label="Fechar">✕</button></div></div>
+    <div class="palco" id="sv-palco"></div>
+    <div class="zona esq" id="sv-esq"></div><div class="zona dir" id="sv-dir"></div>
+    <div class="legenda-s" id="sv-legenda"></div>
+    <div class="rodape-s" id="sv-rodape"></div>`;
+  el.addEventListener("contextmenu", e => e.preventDefault());
+  document.body.appendChild(el); document.body.style.overflow = "hidden";
+  SV = {i: inicio, inicioT: 0, acumulado: 0, pausado: false, raf: null, segurando: null, y0: null};
+  $("#sv-fechar").onclick = fecharStories;
+  if(criadora()) $("#sv-apagar").onclick = apagarStoryAtual;
+  $("#sv-som").onclick = () => { const v = $("#sv-palco video"); if(v){ v.muted = false; v.play().catch(() => {}); $("#sv-som").classList.add("ocultar") } };
+  // tocar à esquerda volta, à direita avança; segurar pausa; arrastar para baixo fecha
+  ["sv-esq", "sv-dir"].forEach(id => {
+    const z = $("#" + id);
+    z.addEventListener("pointerdown", e => { SV.y0 = e.clientY; SV.segurando = setTimeout(() => { SV.segurando = "ok"; pausarStory(true) }, 200) });
+    z.addEventListener("pointerup", e => {
+      const segurou = SV.segurando === "ok"; clearTimeout(SV.segurando); SV.segurando = null;
+      if(SV.y0 != null && e.clientY - SV.y0 > 90){ SV.y0 = null; return fecharStories() }
+      SV.y0 = null;
+      if(segurou) return pausarStory(false);
+      vibrar("leve"); mostrarStory(SV.i + (id === "sv-esq" ? -1 : 1));
+    });
+    z.addEventListener("pointercancel", () => { clearTimeout(SV.segurando); if(SV.segurando === "ok") pausarStory(false); SV.segurando = null; SV.y0 = null });
+  });
+  try{ tg?.BackButton?.show(); tg?.BackButton?.onClick(fecharStories) }catch(e){}
+  mostrarStory(inicio);
+}
+function mostrarStory(i){
+  if(!SV) return;
+  const L = D.stories || [];
+  if(i < 0) i = 0;
+  if(i >= L.length) return fecharStories();
+  cancelAnimationFrame(SV.raf);
+  SV.i = i; SV.acumulado = 0; SV.inicioT = 0; SV.pausado = false;
+  const st = L[i];
+  document.querySelectorAll("#stories .barras i").forEach((b, j) => b.style.width = j < i ? "100%" : "0");
+  $("#sv-tempo").textContent = relativo(st.criado_em);
+  $("#sv-legenda").textContent = st.legenda || "";
+  $("#sv-som").classList.add("ocultar");
+  const palco = $("#sv-palco");
+  palco.querySelector("video")?.pause();
+  palco.innerHTML = `<div class="carregando-s"><i></i></div>` + (st.tipo === "video"
+    ? `<video src="${urlStory(st, "midia")}" poster="${urlStory(st, "capa")}" playsinline preload="auto"></video>`
+    : `<img src="${urlStory(st, "midia")}" alt="" draggable="false">`);
+  const m = palco.querySelector(st.tipo === "video" ? "video" : "img");
+  const pronto = () => { palco.querySelector(".carregando-s")?.remove(); if(SV && SV.i === i){ SV.inicioT = performance.now(); SV.raf = requestAnimationFrame(passo) } };
+  if(st.tipo === "video"){
+    m.addEventListener("playing", pronto, {once: true});
+    m.addEventListener("ended", () => { if(SV && SV.i === i) mostrarStory(i + 1) });
+    m.addEventListener("error", () => { if(SV && SV.i === i){ toast("Não consegui abrir este story"); mostrarStory(i + 1) } });
+    m.play().catch(() => { m.muted = true; $("#sv-som").classList.remove("ocultar"); m.play().catch(() => {}) });
+  } else {
+    m.onload = pronto;
+    m.onerror = () => { if(SV && SV.i === i){ toast("Não consegui abrir este story"); mostrarStory(i + 1) } };
+    const prox = L[i + 1]; if(prox && prox.tipo === "photo"){ const im = new Image(); im.src = urlStory(prox, "midia") }
+  }
+  const rod = $("#sv-rodape");
+  rod.innerHTML = criadora()
+    ? `<button class="btn sec" id="sv-vistos">👁 ${st.vistos || 0} visualizaç${st.vistos === 1 ? "ão" : "ões"}</button>`
+    : `<button class="btn sec" id="sv-mimo">💝 Mandar um mimo</button>`;
+  if(criadora()) $("#sv-vistos").onclick = () => quemViu(st.id);
+  else $("#sv-mimo").onclick = () => { fecharStories(); irPara("gorjeta") };
+  if(!criadora() && !st.visto){ st.visto = true; api(`/api/loja/story/${st.id}/visto`, {}) }
+}
+function passo(agora){
+  if(!SV || SV.pausado) return;
+  const st = (D.stories || [])[SV.i]; if(!st) return;
+  let frac;
+  if(st.tipo === "video"){ const v = $("#sv-palco video"); frac = v && v.duration ? v.currentTime / v.duration : 0 }
+  else frac = (SV.acumulado + agora - SV.inicioT) / DUR_FOTO;
+  const barra = document.querySelectorAll("#stories .barras i")[SV.i]; if(barra) barra.style.width = Math.min(100, frac * 100) + "%";
+  if(st.tipo !== "video" && frac >= 1) return mostrarStory(SV.i + 1);
+  SV.raf = requestAnimationFrame(passo);
+}
+function pausarStory(pausar){
+  if(!SV || SV.pausado === pausar) return;
+  const v = $("#sv-palco video");
+  if(pausar){ SV.pausado = true; cancelAnimationFrame(SV.raf); if(SV.inicioT) SV.acumulado += performance.now() - SV.inicioT; v?.pause() }
+  else { SV.pausado = false; SV.inicioT = performance.now(); v?.play().catch(() => {}); SV.raf = requestAnimationFrame(passo) }
+  $("#stories")?.classList.toggle("pausado", pausar);
+}
+function fecharStories(){
+  const el = $("#stories"); if(!el) return;
+  if(SV) cancelAnimationFrame(SV.raf);
+  el.querySelectorAll("video").forEach(v => { v.pause(); v.removeAttribute("src"); v.load() });
+  el.remove(); SV = null; document.body.style.overflow = "";
+  try{ tg?.BackButton?.offClick(fecharStories); tg?.BackButton?.hide() }catch(e){}
+  pintarAnel();
+}
+function apagarStoryAtual(){
+  const st = (D.stories || [])[SV?.i]; if(!st) return;
+  const i = SV.i;
+  fecharStories();                      // a confirmação abre por cima da loja (o visualizador fica por cima de tudo)
+  confirmar("Apagar este story? Ele sai do ar na hora.", async () => {
+    const r = await api(`/api/criadora/story/${st.id}/apagar`, {});
+    if(!r.ok) return toast(r.erro || "Não consegui apagar");
+    D.stories = D.stories.filter(x => x.id !== st.id); toast("Story apagado"); vibrar("success");
+    render();
+    if(D.stories.length) abrirStories(Math.min(i, D.stories.length - 1));
+  });
+}
+async function quemViu(id){
+  fecharStories();
+  const r = await api(`/api/criadora/story/${id}/vistos`);
+  if(!r.ok) return toast("Não consegui carregar");
+  abrirFolha(`<h2>Quem viu</h2><p class="sub">${r.vistos.length === 1 ? "1 pessoa viu" : `${r.vistos.length} pessoas viram`} este story.</p>
+    <div class="lista" style="padding:0">${r.vistos.length ? r.vistos.map(v => `<div class="item" data-fa="${v.id}"><div class="thumb">${esc((v.nome || "?")[0].toUpperCase())}</div>
+      <div class="txt"><b>${esc(nomeFa(v))}</b><small>${esc(v.quando)}</small></div></div>`).join("") : `<div class="vazio" style="padding:20px">Ninguém viu ainda.</div>`}</div>`);
+}
+function novoStory(){
+  let arq = null;
+  abrirFolha(`<h2>Novo story</h2><p class="sub">Foto ou vídeo que fica 24h no seu perfil, só para assinantes VIP. Você vê quem visualizou.</p>
+    <label class="escolher" for="st-arq" id="st-escolher">📸 Escolher foto ou vídeo</label>${seletor("st-arq", false, "image/*,video/*")}
+    <div id="st-prev" style="margin-top:10px"></div>
+    <span class="rotulo">Legenda (opcional)</span><input type="text" id="st-legenda" maxlength="200" placeholder="Ex: bom dia ☀️">
+    <div id="st-prog" class="ocultar"><div class="progresso"><i id="st-barra"></i></div><p class="dica" id="st-etapa">Enviando…</p></div>
+    <div class="gap"></div><button class="btn brilho" id="st-publicar">Publicar story</button>`);
+  $("#st-arq").onchange = e => {
+    arq = e.target.files[0] || null; if(!arq) return;
+    const u = URL.createObjectURL(arq), video = arq.type.startsWith("video");
+    $("#st-prev").innerHTML = video ? `<video src="${u}#t=0.1" muted playsinline preload="metadata" style="width:100%;max-height:340px;border-radius:16px;background:#000;object-fit:contain"></video>`
+      : `<img src="${u}" alt="" style="width:100%;max-height:340px;border-radius:16px;object-fit:contain;background:#000">`;
+    $("#st-escolher").textContent = "Trocar arquivo";
+  };
+  $("#st-publicar").onclick = async () => {
+    if(!arq) return toast("Escolha uma foto ou um vídeo");
+    if(arq.size > 700 * 1024 * 1024) return toast("Arquivo acima de 700 MB. Corte o vídeo antes.");
+    const b = $("#st-publicar"); b.disabled = true; b.textContent = "Publicando…"; $("#st-prog").classList.remove("ocultar");
+    const r = await enviarForm("/api/criadora/story", {legenda: $("#st-legenda").value.trim()}, [["arquivo", arq]],
+      p => { $("#st-barra").style.width = `${Math.round(p * 100)}%`; $("#st-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : "Quase lá…" });
+    if(!r.ok){ b.disabled = false; b.textContent = "Publicar story"; $("#st-prog").classList.add("ocultar"); return toast(r.erro || "Não consegui publicar") }
+    vibrar("success"); fecharFolha(true);
+    if(r.processando) toast("Enviado! Te aviso no chat quando o story estiver no ar 🎬");
+    else { toast("Story no ar por 24h ✓"); confete(40) }
+    carregar();
+  };
+}
+
 function abrirFolha(html){
   fecharFolha();
   const f = document.createElement("div"); f.className = "fundo"; f.id = "fundo";
@@ -1027,6 +1524,7 @@ function detalhes(id){
     <span class="cupom-toggle" id="cupom-toggle">Tenho um cupom</span>
     <div class="cupom-wrap" id="cupom-wrap"><input type="text" id="cupom" placeholder="Código do cupom" autocapitalize="characters"></div>
     <button class="btn brilho" id="pagar" data-item="${id}">💠 Pagar com PIX</button>
+    ${p && !p.packs && !criadora() ? `<div class="gap"></div><button class="btn sec" data-cart-det="${id}">${CARRINHO.includes(id) ? "✓ No carrinho" : "🛒 Adicionar ao carrinho"}</button>` : ""}
     <p class="sub" style="text-align:center;margin:10px 0 0;font-size:12.5px">Aprovação na hora · entregue no seu chat com o bot</p>`);
   $("#cupom-toggle").onclick = () => { $("#cupom-wrap").classList.add("on"); $("#cupom-toggle").classList.add("ocultar"); $("#cupom").focus() };
 }
@@ -1058,7 +1556,7 @@ function mostrarPix(r){
   const ate = new Date(r.expira);
   abrirFolha(`
     <div class="valor-pix"><small>${esc(r.titulo)}</small><div class="v">${esc(r.valor_fmt)}</div>
-      ${r.original_fmt ? `<small><s>${esc(r.original_fmt)}</s> · cupom aplicado</small>` : ""}</div>
+      ${r.original_fmt ? `<small><s>${esc(r.original_fmt)}</s> · ${r.cupom ? "cupom aplicado" : "desconto aplicado"}</small>` : ""}</div>
     ${r.cupom ? `<div class="aviso ok" style="text-align:center">🏷️ ${esc(r.cupom.codigo)} (${esc(r.cupom.descricao)})</div>` : ""}
     ${r.cupom_erro ? `<div class="aviso" style="text-align:center">⚠️ ${esc(r.cupom_erro)}</div>` : ""}
     ${r.promo ? `<div class="aviso ok" style="text-align:center">🎁 ${esc(r.promo)}</div>` : ""}
@@ -1085,21 +1583,31 @@ function mostrarPix(r){
 
 async function verificar(pix, manual){
   const r = await api(`/api/loja/pedido/${pix}${manual ? "?verificar=1" : ""}`);
-  if(r.status === "PAGO"){ vibrar("success"); sucesso("Pagamento confirmado! O conteúdo já está no seu chat com o bot 💌"); carregar(); return }
+  if(r.status === "PAGO"){
+    vibrar("success");
+    const u = ULTIMO || "", nome = D.criadora.nome;
+    if(u.startsWith("carrinho_")){ CARRINHO = []; salvarCarrinho() }
+    else if(CARRINHO.includes(u)){ CARRINHO = CARRINHO.filter(x => x !== u); salvarCarrinho() }
+    sucesso(u.startsWith("pedido_") ? `Pedido enviado para ${nome}! Quando ficar pronto, chega no seu chat com o bot e em Minhas compras ✍️`
+      : u.startsWith("gorjeta_") ? `Mimo enviado! ${nome} já recebeu 💝`
+      : u.startsWith("carrinho_") ? "Pagamento confirmado! Seus packs já estão no chat com o bot 💌"
+      : "Pagamento confirmado! O conteúdo já está no seu chat com o bot 💌");
+    carregar(); return
+  }
   if(r.status === "EXPIRADO"){ clearInterval(POLL); clearInterval(TIMER); $("#st").textContent = "PIX expirado. Feche e gere um novo."; return }
   if(manual) toast("Ainda não identificamos o pagamento. Aguarde alguns segundos.");
 }
 
 function sucesso(texto){
-  const ver = /^(pack|combo)_/.test(ULTIMO || "");
+  const ver = /^(pack|combo|carrinho)_/.test(ULTIMO || "");
   abrirFolha(`<div class="ok-grande"><div class="check">✓</div><h2>Tudo certo!</h2><p class="sub">${esc(texto)}</p></div>
-    ${ver ? `<button class="btn" id="ver-agora">▶ Ver agora</button><div class="gap"></div>` : ""}
+    ${ver ? `<button class="btn" id="ver-agora">${(ULTIMO || "").startsWith("carrinho_") ? "🗂️ Ver minhas compras" : "▶ Ver agora"}</button><div class="gap"></div>` : ""}
     <button class="btn ${ver ? "sec" : ""}" id="voltar-chat">Ir para o chat</button><div class="gap"></div>
     <button class="btn sec" id="continuar">Continuar na loja</button>`);
   confete();
   $("#voltar-chat").onclick = () => tg ? tg.close() : fecharFolha();
   $("#continuar").onclick = () => fecharFolha(true);
-  if(ver) $("#ver-agora").onclick = () => { const id = ULTIMO; fecharFolha(); abrirGaleria(id) };
+  if(ver) $("#ver-agora").onclick = () => { const id = ULTIMO; fecharFolha(); if(id.startsWith("carrinho_")) return irPara("minhas"); abrirGaleria(id) };
 }
 
 async function reenviar(packId){
@@ -1145,20 +1653,23 @@ function painel(){
   const R = PAINEL.resumo;
   return `
     <div class="ola vivo"><span class="deco">✨</span><small>${saudacao()}, ${esc((D.criadora.nome || "").split(" ")[0])}!</small>
-      <b>${esc(R.hoje.valor)}</b><span>${R.hoje.vendas ? `hoje em ${R.hoje.vendas} venda(s)` : "hoje, ainda sem vendas. Bora publicar? 💋"}${PAINEL.stats ? ` · ❤️ ${PAINEL.stats.periodos.hoje.curtidas}` : ""}</span></div>
+      <b>${esc(R.hoje.valor)}</b><span>${R.hoje.vendas ? `hoje em ${pl(R.hoje.vendas, "venda", "vendas")}` : "hoje, ainda sem vendas. Bora publicar? 💋"}${PAINEL.stats ? ` · ❤️ ${PAINEL.stats.periodos.hoje.curtidas}` : ""}</span></div>
     <div class="secao-titulo"><h2>Resumo</h2><small class="muted">vendas pagas</small></div>
     <div class="kpis">
-      <div class="kpi"><small>Últimos 7 dias</small><b>${esc(R.semana.valor)}</b><span>${R.semana.vendas} venda(s)</span></div>
-      <div class="kpi"><small>Últimos 30 dias</small><b>${esc(R.mes.valor)}</b><span>${R.mes.vendas} venda(s)</span></div>
+      <div class="kpi"><small>Últimos 7 dias</small><b>${esc(R.semana.valor)}</b><span>${pl(R.semana.vendas, "venda", "vendas")}</span></div>
+      <div class="kpi"><small>Últimos 30 dias</small><b>${esc(R.mes.valor)}</b><span>${pl(R.mes.vendas, "venda", "vendas")}</span></div>
       <div class="kpi"><small>Assinantes VIP</small><b>${R.assinantes}</b><span>${R.vencendo} vencem em 7 dias</span></div>
       <div class="kpi"><small>Packs à venda</small><b>${R.packs}</b><span>no catálogo</span></div>
     </div>
+    ${pedidosPainel()}
     ${filaRevisao()}
     ${agendadosPainel()}
     ${estatisticas()}
+    ${topFas()}
     <div class="secao-titulo"><h2>Criar</h2></div>
     <div class="acoes">
       <button class="acao" data-criar="post"><span class="ico">✨</span><div><b>Nova publicação</b><small>Post grátis ou pack pago, escolhe na chave</small></div><span class="seta">›</span></button>
+      <button class="acao" data-criar="story"><span class="ico">📸</span><div><b>Novo story</b><small>Foto ou vídeo que some em 24h</small></div><span class="seta">›</span></button>
     </div>
     <div class="acoes" style="margin-top:10px"><button class="acao" data-aba="config"><span class="ico">⚙️</span><div><b>Ajustes</b><small>Perfil, VIP, mimos, cupons, mensagens e publicação</small></div><span class="seta">›</span></button></div>
     <div class="gap"></div>`;
@@ -1175,7 +1686,7 @@ function estatisticas(){
     <div class="secao-titulo"><h2>Estatísticas</h2></div>
     <div class="seg">${[["hoje","Hoje"],["7d","7 dias"],["30d","30 dias"]].map(([k,t]) => `<button class="${PERIODO===k?"on":""}" data-periodo="${k}">${t}</button>`).join("")}</div>
     <div class="kpis tres">
-      <div class="kpi"><small>Faturamento</small><b>${esc(P.faturamento)}</b><span>${P.vendas} venda(s)</span></div>
+      <div class="kpi"><small>Faturamento</small><b>${esc(P.faturamento)}</b><span>${pl(P.vendas, "venda", "vendas")}</span></div>
       <div class="kpi"><small>Ticket médio</small><b>${esc(P.ticket)}</b><span>${P.cupom} com cupom</span></div>
       <div class="kpi"><small>Conversão</small><b>${P.conversao == null ? "–" : P.conversao + "%"}</b><span>${P.compras}/${P.cliques} visitas</span></div>
       <div class="kpi"><small>Novos fãs</small><b>${P.novos}</b><span>abriram o bot</span></div>
@@ -1196,7 +1707,83 @@ function estatisticas(){
     </div>
     ${S.top.length ? `<div class="secao-titulo"><h2>Mais vendidos</h2><small class="muted">30 dias</small></div>
     <div class="ranking">${S.top.map((t, i) => `<div class="linha" data-ver="${t.id}"><span class="pos">${i + 1}</span><img src="/api/loja/previa/${t.id}" alt="">
-      <div class="txt"><b>${esc(t.titulo)}</b><small>${t.vendas} venda(s) · ❤️ ${t.curtidas}</small></div><span class="v">${esc(t.total_fmt)}</span></div>`).join("")}</div>` : ""}`;
+      <div class="txt"><b>${esc(t.titulo)}</b><small>${pl(t.vendas, "venda", "vendas")} · ❤️ ${t.curtidas}</small></div><span class="v">${esc(t.total_fmt)}</span></div>`).join("")}</div>` : ""}`;
+}
+
+// ── Painel: pedidos personalizados e ranking ──────────────────────────────
+let RANK = "30d";
+function pedidosPainel(){
+  const P = PAINEL.pedidos || []; if(!P.length) return "";
+  const novos = P.filter(p => p.status === "NOVO").length;
+  return `<div class="secao-titulo"><h2>✍️ Pedidos${novos ? `<span class="contador-fila">${novos}</span>` : ""}</h2><small class="muted">${novos ? `${novos} para fazer` : "todos em dia"}</small></div>
+    <div class="lista">${P.slice(0, 12).map(p => `<div class="item" data-pedido="${p.id}"><div class="thumb">✍️</div>
+      <div class="txt"><b>#${p.id} · ${esc(p.valor_fmt)} · ${esc(p.nome || "Fã")}</b><small class="lim">${esc(p.texto)}</small>${stPedido(p.status)}</div>
+      <span class="seta muted">›</span></div>`).join("")}</div>`;
+}
+function topFas(){
+  const T = (PAINEL.top_fas || {})[RANK] || [];
+  return `<div class="secao-titulo"><h2>🏆 Top fãs</h2><small class="muted">quem mais gastou</small></div>
+    <div class="seg">${[["30d","30 dias"],["sempre","Desde o início"]].map(([k, t]) => `<button class="${RANK === k ? "on" : ""}" data-rank="${k}">${t}</button>`).join("")}</div>
+    ${T.length ? `<div class="ranking">${T.map((f, i) => `<div class="linha" data-fa="${f.id}">
+      <span class="pos ${i < 3 ? "medalha" : ""}">${["🥇","🥈","🥉"][i] || i + 1}</span>
+      <div class="av-r">${esc((f.nome || "?")[0].toUpperCase())}</div>
+      <div class="txt"><b>${esc(f.nome || "Sem nome")}${f.vip ? " ⭐" : ""}</b><small>${f.username ? "@" + esc(f.username) + " · " : ""}${pl(f.compras, "compra", "compras")}</small></div>
+      <span class="v">${esc(f.total_fmt)}</span></div>`).join("")}</div>`
+      : `<div class="vazio" style="padding:22px">Ainda sem vendas ${RANK === "30d" ? "nos últimos 30 dias" : ""}.</div>`}`;
+}
+function abrirPedido(id){
+  const p = (PAINEL.pedidos || []).find(x => x.id === +id); if(!p) return;
+  abrirFolha(`<h2>Pedido #${p.id} · ${esc(p.valor_fmt)}</h2><p class="sub">Pago em ${esc(p.quando)} ${stPedido(p.status)}</p>
+    <div class="item" data-fa="${p.user_id}" style="margin:6px 0"><div class="thumb">${esc((p.nome || "?")[0].toUpperCase())}</div>
+      <div class="txt"><b>${esc(nomeFa(p))}</b><small>ID ${p.user_id} · toque para ver a ficha</small></div><span class="seta muted">›</span></div>
+    <span class="rotulo">O que o fã pediu</span><div class="texto-pedido">${esc(p.texto)}</div>
+    ${p.resposta ? `<span class="rotulo">Seu recado</span><div class="texto-pedido">${esc(p.resposta)}</div>` : ""}
+    <div class="gap"></div>
+    ${p.status === "NOVO" ? `<button class="btn brilho" id="pd-entregar">📤 Entregar o pedido</button><div class="gap"></div>
+      <button class="btn fantasma perigo" id="pd-recusar">Recusar pedido</button>`
+      : p.status === "ENTREGUE" && p.pack_id ? `<button class="btn sec" data-ver="${p.pack_id}">👁 Ver o que foi entregue</button>` : ""}`);
+  if(p.status === "NOVO"){ $("#pd-entregar").onclick = () => entregarPedido(p); $("#pd-recusar").onclick = () => recusarPedido(p) }
+}
+function entregarPedido(p){
+  let arqs = [];
+  abrirFolha(`<h2>Entregar pedido #${p.id}</h2><p class="sub">As fotos e vídeos vão só para ${esc(p.nome || "o fã")}, no chat com o bot (protegidos) e em Minhas compras na loja.</p>
+    <div class="texto-pedido" style="max-height:120px;overflow:auto">${esc(p.texto)}</div>
+    <label class="escolher" for="en-arqs" id="en-escolher">🖼️ Escolher fotos e vídeos</label>${seletor("en-arqs", true, "image/*,video/*")}
+    <div class="miniaturas" id="en-mini"></div>
+    <span class="rotulo">Recado para o fã (opcional)</span><textarea id="en-msg" maxlength="500" style="min-height:80px" placeholder="Ex: Fiz com carinho, espero que goste 💕"></textarea>
+    <div id="en-prog" class="ocultar"><div class="progresso"><i id="en-barra"></i></div><p class="dica" id="en-etapa">Enviando…</p></div>
+    <div class="gap"></div><button class="btn brilho" id="en-ok">📤 Entregar</button>`);
+  $("#en-arqs").onchange = e => { arqs = [...arqs, ...e.target.files].slice(0, 30); miniaturas(arqs, "#en-mini"); e.target.value = "" };
+  $("#en-mini").onclick = async e => {
+    const i = e.target.dataset.tirar, ed = e.target.dataset.editar;
+    if(i !== undefined){ arqs.splice(+i, 1); miniaturas(arqs, "#en-mini") }
+    if(ed !== undefined){ const novo = await editarFoto(arqs[+ed]); if(novo){ arqs[+ed] = novo; miniaturas(arqs, "#en-mini") } }
+  };
+  $("#en-ok").onclick = async () => {
+    if(!arqs.length) return toast("Escolha pelo menos uma foto ou vídeo");
+    if(arqs.find(f => f.size > 700 * 1024 * 1024)) return toast("Um arquivo passa de 700 MB. Corte o vídeo antes.");
+    const b = $("#en-ok"); b.disabled = true; b.textContent = "Enviando…"; $("#en-prog").classList.remove("ocultar");
+    const r = await enviarForm(`/api/criadora/pedido/${p.id}/entregar`, {mensagem: $("#en-msg").value.trim()}, arqs.map(f => ["arquivos", f]),
+      x => { $("#en-barra").style.width = `${Math.round(x * 100)}%`; $("#en-etapa").textContent = x < 1 ? `Enviando ${Math.round(x * 100)}%…` : "Quase lá…" });
+    if(!r.ok){ b.disabled = false; b.textContent = "📤 Entregar"; $("#en-prog").classList.add("ocultar"); return toast(r.erro || "Não consegui entregar") }
+    vibrar("success"); fecharFolha(true);
+    toast(r.processando ? "Enviado! Te aviso no chat quando o fã receber 🎬" : r.no_chat ? "Pedido entregue ✓" : "Entregue na loja do fã ✓ (não consegui mandar no chat)");
+    if(!r.processando) confete(50);
+    PAINEL = null; carregarPainel(); carregar();
+  };
+}
+function recusarPedido(p){
+  abrirFolha(`<h2>Recusar pedido #${p.id}</h2><p class="sub">O fã recebe um aviso no chat de que você não vai fazer e que o valor será devolvido.</p>
+    <div class="aviso" style="margin:0 0 12px">⚠️ O bot não devolve o dinheiro sozinho: devolva <b>${esc(p.valor_fmt)}</b> pelo app da sua conta de pagamento.</div>
+    <span class="rotulo">Recado para o fã (opcional)</span><textarea id="rc-msg" maxlength="500" style="min-height:80px" placeholder="Ex: Esse tipo de conteúdo eu não faço, desculpa 💕"></textarea>
+    <div class="gap"></div><button class="btn sec perigo" id="rc-ok">Recusar e avisar o fã</button>`);
+  $("#rc-ok").onclick = async () => {
+    const b = $("#rc-ok"); b.disabled = true;
+    const r = await api(`/api/criadora/pedido/${p.id}/recusar`, {mensagem: $("#rc-msg").value.trim()});
+    if(!r.ok){ b.disabled = false; return toast(r.erro || "Não consegui recusar") }
+    toast("Pedido recusado. Lembre de devolver o valor."); fecharFolha(true);
+    PAINEL = null; carregarPainel(); carregar();
+  };
 }
 
 function mimoPara(alvo){
@@ -1411,6 +1998,7 @@ function editarFoto(file, opc = {}){
 
 /* ── Fila de revisão ─────────────────────────────────────────────────── */
 const qtdFila = () => D.fila ? D.fila.posts.length + D.fila.packs.length : 0;
+const qtdPainel = () => qtdFila() + (D.pedidos_novos || 0);
 function avisoFila(){
   const n = criadora() ? qtdFila() : 0;
   return n ? `<div class="aviso-fila" data-aba="painel"><span>📝</span><span>${n} publicação(ões) aguardando sua revisão</span><span>Revisar ›</span></div>` : "";
@@ -1423,7 +2011,7 @@ function filaRevisao(){
       const ref = `${x.pack ? "pack" : "post"}:${x.id}`;
       return `<div class="fila-item" id="fila-${x.pack ? "pack" : "post"}-${x.id}">
         <div class="topo-f" data-previa="${ref}">
-          ${x.pack ? `<img src="/api/loja/previa/${x.id}" alt="">` : x.foto ? `<img src="/api/loja/post_foto/${x.id}" alt="">` : `<div class="thumb">📝</div>`}
+          ${x.pack ? `<img src="/api/loja/previa/${x.id}" alt="">` : x.foto ? `<img src="${urlPost(x, "foto")}" alt="">` : `<div class="thumb">📝</div>`}
           <div class="txt"><small>${x.pack ? `📦 Pack · ${esc(x.preco_fmt)} · ${esc(x.resumo)}` : "📝 Publicação grátis"} · ${esc(relativo(x.criado_em))}</small>
             <b>${esc(x.pack ? x.titulo : (x.texto || "Foto"))}</b>${x.pack && x.legenda ? `<p>${esc(x.legenda)}</p>` : !x.pack && x.texto.length > 40 ? `<p>${esc(x.texto)}</p>` : ""}</div>
         </div>
@@ -1474,10 +2062,10 @@ function agendadosPainel(){
       const ref = `${x.pack ? "pack" : "post"}:${x.id}`;
       return `<div class="fila-item ag-item">
         <div class="topo-f">
-          ${x.pack ? `<img src="/api/loja/previa/${x.id}" alt="">` : x.foto ? `<img src="/api/loja/post_foto/${x.id}" alt="">` : `<div class="thumb">${x.enquete ? "📊" : "📝"}</div>`}
+          ${x.pack ? `<img src="/api/loja/previa/${x.id}" alt="">` : x.foto ? `<img src="${urlPost(x, "foto")}" alt="">` : `<div class="thumb">${x.enquete ? "📊" : "📝"}</div>`}
           <div class="txt"><small><span class="quando-ag">🗓️ ${esc(DATA_HORA(x.quando))}</span> · <span data-falta="${esc(x.quando)}">${faltaTexto(x.quando)}</span></small>
             <b>${esc(x.pack ? x.titulo : (x.texto || "Foto"))}</b>
-            <p>${x.pack ? `📦 ${esc(x.preco_fmt)} · ${x.contagem ? `contagem regressiva ligada · 🔔 ${x.avisos} fã(s) esperando` : "sem contagem regressiva"}${x.canal ? " · vai pro canal" : ""}` : x.enquete ? `Enquete com ${x.enquete.opcoes.length} opções` : "Publicação grátis"}</p></div>
+            <p>${x.pack ? `📦 ${esc(x.preco_fmt)} · ${x.contagem ? `contagem regressiva ligada · 🔔 ${pl(x.avisos, "fã esperando", "fãs esperando")}` : "sem contagem regressiva"}${x.canal ? " · vai pro canal" : ""}` : x.enquete ? `Enquete com ${x.enquete.opcoes.length} opções` : "Publicação grátis"}</p></div>
         </div>
         <div class="acoes-f">
           <button class="btn mini brilho" data-ag="${ref}:publicar">Publicar agora</button>
@@ -1528,7 +2116,7 @@ function config(){
       ${linha('id="ed-msgs"', "💬", "Mensagens do bot", "Boas-vindas, pós-compra e VIP")}
     </div>
 
-    <div class="secao-titulo"><h2>Assinatura VIP</h2><small class="muted">${C.planos.length} plano(s)</small></div>
+    <div class="secao-titulo"><h2>Assinatura VIP</h2><small class="muted">${pl(C.planos.length, "plano", "planos")}</small></div>
     <div class="grupo">
       ${C.planos.map(p => linha(`data-plano-ed="${p.id}"`, "⭐", esc(p.nome), `${p.dias} dias · ${reais(Math.round(p.preco / p.dias * 30))}/mês`, `<span class="v">${esc(p.preco_fmt)}</span><span class="seta">›</span>`)).join("")}
       <button class="linha-c add" data-plano-ed="novo">＋ Novo plano</button>
@@ -1544,9 +2132,27 @@ function config(){
       ${linha('id="ed-mimos"', "💝", "Valores sugeridos", `<span class="chips-valor" style="margin-top:6px">${C.gorjetas.map(v => `<span>R$ ${v}</span>`).join("")}</span>`)}
     </div>
 
-    <div class="secao-titulo"><h2>Cupons de desconto</h2><small class="muted">${C.cupons.length} ativo(s)</small></div>
+    <div class="secao-titulo"><h2>Meta de mimos</h2>${C.meta ? `<small class="muted">${C.meta.pct}%</small>` : ""}</div>
     <div class="grupo">
-      ${C.cupons.length ? C.cupons.map(c => linha(`data-cupom-ed="${esc(c.codigo)}"`, "🏷️", esc(c.codigo), `${esc(c.descricao)} · ${c.usos}${c.usos_max ? `/${c.usos_max}` : ""} uso(s)${c.expira ? ` · até ${esc(c.expira)}` : ""}`, `<span class="seta perigo">✕</span>`)).join("") : `<div class="vazio-c">Nenhum cupom ativo.</div>`}
+      ${C.meta ? linha('id="ed-meta"', "🎯", esc(C.meta.titulo), `${esc(C.meta.arrecadado_fmt)} de ${esc(C.meta.alvo_fmt)}${C.meta.batida ? " · batida 🎉" : ""} · ${pl(C.meta.fas, "fã", "fãs")}`)
+        : `<button class="linha-c add" id="ed-meta">＋ Criar uma meta</button>`}
+    </div>
+    <p class="legenda-grupo">Uma barra de progresso no feed e na aba Mimos. Todo mimo pago depois que a meta é criada soma.</p>
+
+    <div class="secao-titulo"><h2>Pedidos personalizados</h2></div>
+    <div class="grupo">
+      <div class="linha-c"><span class="ico">✍️</span><span class="txt"><b>Aceitar pedidos</b><small>O fã descreve o que quer e paga antes</small></span><span class="chave ${C.pedidos.ativo ? "on" : ""}" id="pedidos-chave"></span></div>
+      ${linha('id="ed-pedidos"', "💰", "Preço mínimo, prazo e regras", `A partir de ${esc(C.pedidos.min_fmt)}${C.pedidos.prazo ? ` · ${esc(C.pedidos.prazo)}` : ""}`)}
+    </div>
+
+    <div class="secao-titulo"><h2>Carrinho</h2></div>
+    <div class="grupo">
+      ${linha('id="ed-carrinho"', "🛒", "Desconto levando vários packs", C.carrinho.pct ? `${C.carrinho.pct}% OFF a partir de ${C.carrinho.min} packs` : "Desligado (o carrinho funciona sem desconto)", `${C.carrinho.pct ? `<span class="v">-${C.carrinho.pct}%</span>` : ""}<span class="seta">›</span>`)}
+    </div>
+
+    <div class="secao-titulo"><h2>Cupons de desconto</h2><small class="muted">${pl(C.cupons.length, "ativo", "ativos")}</small></div>
+    <div class="grupo">
+      ${C.cupons.length ? C.cupons.map(c => linha(`data-cupom-ed="${esc(c.codigo)}"`, "🏷️", esc(c.codigo), `${esc(c.descricao)} · ${c.usos}${c.usos_max ? `/${c.usos_max}` : ""} ${(c.usos_max || c.usos) === 1 ? "uso" : "usos"}${c.expira ? ` · até ${esc(c.expira)}` : ""}`, `<span class="seta perigo">✕</span>`)).join("") : `<div class="vazio-c">Nenhum cupom ativo.</div>`}
       <button class="linha-c add" id="cupom-novo">＋ Novo cupom</button>
     </div>
 
@@ -1560,7 +2166,7 @@ function config(){
     <div class="grupo">
       ${linha('id="ed-limite"', "📩", "Reenvios no chat", C.limite_reenvio ? `Cada compra pode ser reenviada ${C.limite_reenvio}x` : "Sem limite", `<span class="v">${C.limite_reenvio || "∞"}</span><span class="seta">›</span>`)}
       <div class="linha-c"><span class="ico">💧</span><span class="txt"><b>Marca d'água</b><small>O @ e o ID de quem comprou nas fotos abertas na loja</small></span><span class="chave ${C.marca_dagua ? "on" : ""}" id="marca-chave"></span></div>
-      ${linha('id="ed-bloq"', "🚫", "Fãs bloqueados", C.bloqueados.length ? `${C.bloqueados.length} bloqueado(s)` : "Ninguém bloqueado", `<span class="seta">›</span>`)}
+      ${linha('id="ed-bloq"', "🚫", "Fãs bloqueados", C.bloqueados.length ? pl(C.bloqueados.length, "bloqueado", "bloqueados") : "Ninguém bloqueado", `<span class="seta">›</span>`)}
     </div>
     <p class="legenda-grupo">${C.marca_dagua ? "Se uma foto vazar, a marca mostra quem comprou." : "Sem a marca, fica difícil saber quem vazou uma foto."} No chat do bot o conteúdo vai protegido contra encaminhar e salvar.</p>
 
@@ -1603,13 +2209,56 @@ function editarPromo(){
     if(await salvarAjuste({vip_1mes_pct: pct}, pct ? `1º mês com ${pct}% OFF ativado ✓` : "Desconto desligado")){ vibrar("success"); fecharFolha(true); await recarregarConfig(); carregar() }
   };
 }
+function editarMeta(){
+  const M = CONFIG.meta;
+  abrirFolha(`<h2>${M ? "Meta de mimos" : "Nova meta"}</h2><p class="sub">Os fãs veem a barra enchendo a cada mimo. Quando bater, você e quem ajudou recebem um aviso.</p>
+    <span class="rotulo">Para que é a meta?</span><input type="text" id="mt-titulo" maxlength="60" placeholder="Ex: Câmera nova 📸" value="${M ? esc(M.titulo) : ""}">
+    <span class="rotulo">Descrição (opcional)</span><input type="text" id="mt-desc" maxlength="200" placeholder="Ex: Pra fotos ainda melhores pra vocês" value="${M ? esc(M.descricao) : ""}">
+    <span class="rotulo">Valor da meta</span><input type="text" id="mt-alvo" inputmode="decimal" placeholder="Ex: 2.000,00" value="${M ? esc(M.alvo_fmt.replace("R$ ", "")) : ""}">
+    ${M ? `<p class="dica">Arrecadado até agora: <b>${esc(M.arrecadado_fmt)}</b> (${M.pct}%). Editar não zera o progresso.</p>` : ""}
+    <div class="gap"></div><button class="btn" id="mt-salvar">${M ? "Salvar" : "Criar meta"}</button>
+    ${M ? `<div class="gap"></div><button class="btn fantasma perigo" id="mt-encerrar">Encerrar meta</button>` : ""}`);
+  $("#mt-salvar").onclick = async () => {
+    const r = await api("/api/criadora/meta", {titulo: $("#mt-titulo").value, descricao: $("#mt-desc").value, alvo: $("#mt-alvo").value});
+    if(!r.ok) return toast(r.erro || "Não consegui salvar");
+    vibrar("success"); toast(M ? "Meta salva ✓" : "Meta criada 🎯"); fecharFolha(true); await recarregarConfig(); carregar();
+  };
+  if(M) $("#mt-encerrar").onclick = () => confirmar("Encerrar a meta? A barra some do feed. O que já foi arrecadado continua no seu faturamento.", async () => {
+    const r = await api("/api/criadora/meta/encerrar", {}); if(!r.ok) return toast("Não consegui encerrar");
+    toast("Meta encerrada"); fecharFolha(true); await recarregarConfig(); carregar() });
+}
+function editarPedidosCfg(){
+  const P = CONFIG.pedidos;
+  abrirFolha(`<h2>Pedidos personalizados</h2><p class="sub">O fã escreve o que quer, oferece um valor (a partir do mínimo) e paga na hora. Você entrega pelo Painel ou recusa.</p>
+    <span class="rotulo">Preço mínimo</span><input type="text" id="pc-min" inputmode="decimal" placeholder="50,00" value="${esc(P.min_fmt.replace("R$ ", ""))}">
+    <span class="rotulo">Prazo de entrega (opcional)</span><input type="text" id="pc-prazo" maxlength="40" placeholder="Ex: até 3 dias" value="${esc(P.prazo)}">
+    <span class="rotulo">O que você faz e o que não faz (opcional)</span><textarea id="pc-info" maxlength="400" style="min-height:90px" placeholder="Ex: Fotos e vídeos de até 1 minuto. Não faço conteúdo com outras pessoas.">${esc(P.info)}</textarea>
+    <div class="gap"></div><button class="btn" id="pc-salvar">Salvar</button>`);
+  $("#pc-salvar").onclick = async () => {
+    if(await salvarAjuste({pedidos_min: $("#pc-min").value, pedidos_prazo: $("#pc-prazo").value, pedidos_info: $("#pc-info").value}, "Pedidos salvos ✓")){
+      vibrar("success"); fecharFolha(true); await recarregarConfig(); carregar() }
+  };
+}
+function editarCarrinhoCfg(){
+  let pct = CONFIG.carrinho.pct, min = CONFIG.carrinho.min;
+  abrirFolha(`<h2>Desconto no carrinho</h2><p class="sub">O fã junta vários packs e paga um PIX só. Com o desconto ligado, quem leva mais paga menos (bom para aumentar o ticket).</p>
+    <span class="rotulo">Desconto</span><div class="opcoes" id="cc-pct">${[0,5,10,15,20,30].map(v => `<button data-v="${v}" class="${v===pct?"on":""}">${v ? v + "%" : "Sem"}</button>`).join("")}</div>
+    <span class="rotulo">A partir de quantos packs</span><div class="opcoes" id="cc-min">${[2,3,4,5].map(v => `<button data-v="${v}" class="${v===min?"on":""}">${v}</button>`).join("")}</div>
+    <p class="dica" id="cc-dica"></p>
+    <div class="gap"></div><button class="btn" id="cc-salvar">Salvar</button>`);
+  const dica = () => $("#cc-dica").textContent = pct ? `Ex: ${min} packs de R$ 20,00 saem por ${reais(Math.max(100, min * 2000 - Math.floor(min * 2000 * pct / 100)))} em vez de ${reais(min * 2000)}.` : "O carrinho continua funcionando, só sem desconto.";
+  dica();
+  $("#cc-pct").onclick = e => { const b = e.target.closest("[data-v]"); if(!b) return; pct = +b.dataset.v; document.querySelectorAll("#cc-pct button").forEach(x => x.classList.toggle("on", x === b)); dica(); vibrar("leve") };
+  $("#cc-min").onclick = e => { const b = e.target.closest("[data-v]"); if(!b) return; min = +b.dataset.v; document.querySelectorAll("#cc-min button").forEach(x => x.classList.toggle("on", x === b)); dica(); vibrar("leve") };
+  $("#cc-salvar").onclick = async () => { if(await salvarAjuste({carrinho_pct: pct, carrinho_min: min}, pct ? `Carrinho com ${pct}% OFF a partir de ${min} packs ✓` : "Desconto do carrinho desligado")){ vibrar("success"); fecharFolha(true); await recarregarConfig(); carregar() } };
+}
 function editarLimite(){
   let v = CONFIG.limite_reenvio;
   abrirFolha(`<h2>Reenvios no chat</h2><p class="sub">Quantas vezes o fã pode pedir para receber de novo no chat um conteúdo que já comprou. Isso dificulta repassar o conteúdo. A entrega da compra não conta, e ele continua vendo tudo na loja (com marca d'água).</p>
     <div class="opcoes" id="lim-op">${[[0,"Sem limite"],[1,"1"],[3,"3"],[5,"5"],[10,"10"]].map(([n,t]) => `<button data-lim="${n}" class="${n===v?"on":""}">${t}</button>`).join("")}</div>
     <p class="dica" id="lim-dica"></p>
     <div class="gap"></div><button class="btn" id="lim-salvar">Salvar</button>`);
-  const dica = () => $("#lim-dica").textContent = v ? `Depois de ${v} reenvio(s), o bot avisa que o limite acabou e mostra o botão da loja.` : "O fã pode pedir quantas vezes quiser.";
+  const dica = () => $("#lim-dica").textContent = v ? `Depois de ${pl(v, "reenvio", "reenvios")}, o bot avisa que o limite acabou e mostra o botão da loja.` : "O fã pode pedir quantas vezes quiser.";
   dica();
   $("#lim-op").onclick = e => { const b = e.target.closest("[data-lim]"); if(!b) return; v = +b.dataset.lim; document.querySelectorAll("#lim-op button").forEach(x => x.classList.toggle("on", x === b)); dica(); vibrar("leve") };
   $("#lim-salvar").onclick = async () => { if(await salvarAjuste({limite_reenvio: v}, "Limite salvo ✓")){ vibrar("success"); fecharFolha(true); recarregarConfig() } };
@@ -1638,7 +2287,7 @@ async function abrirFa(id){
   const r = await api(`/api/criadora/fa/${id}`); if(!r.ok) return toast("Não encontrei esse fã");
   abrirFolha(`<div class="ficha"><div class="av-fa">${esc((r.nome || "?")[0].toUpperCase())}</div>
       <div style="min-width:0"><b>${esc(r.nome || "Sem nome")}</b><small>${r.username ? "@" + esc(r.username) + " · " : ""}ID ${r.id}</small>${r.bloqueado ? `<br><span class="selo-bloq">Bloqueado</span>` : ""}</div></div>
-    <div class="kpis" style="padding:0"><div class="kpi"><small>Total gasto</small><b>${esc(r.total)}</b><span>${r.compras} compra(s)</span></div>
+    <div class="kpis" style="padding:0"><div class="kpi"><small>Total gasto</small><b>${esc(r.total)}</b><span>${pl(r.compras, "compra", "compras")}</span></div>
       <div class="kpi"><small>VIP</small><b style="font-size:16px">${r.vip ? "Ativo" : "Não"}</b><span>${r.vip ? "até " + esc(r.vip) : "sem assinatura"}</span></div></div>
     ${r.desde ? `<p class="dica">Fã desde ${esc(r.desde)}</p>` : ""}
     <div class="gap"></div>
@@ -1976,10 +2625,35 @@ document.addEventListener("click", e => {
     TOQUE = {el: duplo, t: agora, timer: duplo.dataset.item ? setTimeout(() => { TOQUE = {}; detalhes(duplo.dataset.item) }, 260) : null};
     return;
   }
-  const el = e.target.closest("[data-votar],[data-avisar],[data-ag],[data-renovar],[data-fa],[data-desbloq],#ed-promo,#ed-limite,#ed-bloq,#notif-chave,#resumo-chave,#marca-chave,[data-plano-ed],[data-cupom-ed],#cupom-novo,#ed-mimos,#canal-chave,[data-fila],[data-previa],#rev-chave,[data-volta],[data-mais],[data-col],[data-curtir],[data-mimo],[data-mimo-outro],[data-periodo],[data-modo],[data-menu],[data-criar],[data-msg],#ed-perfil,#ed-perfil2,#ed-msgs,#como-fa,[data-reenviar],[data-ver],[data-aba],[data-vista],[data-filtro],[data-plano],[data-item],#pagar,#assinar,#gorjeta-ok");
+  const el = e.target.closest("[data-avatar],[data-cart],[data-cart-det],[data-tirar-cart],[data-filtros],[data-limpar-busca],#busca-limpar,#pedido-novo,[data-meu-pedido],[data-pedido],[data-rank],#pedidos-chave,#ed-pedidos,#ed-carrinho,#ed-meta,[data-votar],[data-avisar],[data-ag],[data-renovar],[data-fa],[data-desbloq],#ed-promo,#ed-limite,#ed-bloq,#notif-chave,#resumo-chave,#marca-chave,[data-plano-ed],[data-cupom-ed],#cupom-novo,#ed-mimos,#canal-chave,[data-fila],[data-previa],#rev-chave,[data-volta],[data-mais],[data-col],[data-curtir],[data-mimo],[data-mimo-outro],[data-periodo],[data-modo],[data-menu],[data-criar],[data-msg],#ed-perfil,#ed-perfil2,#ed-msgs,#como-fa,[data-reenviar],[data-ver],[data-aba],[data-vista],[data-filtro],[data-plano],[data-item],#pagar,#assinar,#gorjeta-ok");
   if(!el) return;
   if(el.dataset.modo){ COMO_FA = el.dataset.modo === "cliente"; ABA = "inicio"; vibrar("leve");
     if(!PLANO_SEL) PLANO_SEL = (D.planos.find(p => p.economia) || D.planos[0])?.id; return render() }
+  if(el.dataset.avatar !== undefined){ return tocarAvatar() }
+  if(el.dataset.cart){ e.stopPropagation(); return alternarCarrinho(el.dataset.cart) }
+  if(el.dataset.cartDet){ const id = el.dataset.cartDet; alternarCarrinho(id); el.textContent = CARRINHO.includes(id) ? "✓ No carrinho" : "🛒 Adicionar ao carrinho"; return }
+  if(el.dataset.tirarCart){
+    const id = el.dataset.tirarCart; CARRINHO = CARRINHO.filter(x => x !== id); salvarCarrinho(); vibrar("leve");
+    document.querySelectorAll(`[data-cart="${id}"]`).forEach(b => b.outerHTML = botaoCarrinho(id));
+    barraCarrinho(); return CARRINHO.length ? abrirCarrinho() : fecharFolha(true);
+  }
+  if(el.dataset.filtros !== undefined){ return abrirFiltros() }
+  if(el.dataset.limparBusca !== undefined || el.id === "busca-limpar"){
+    BUSCA = ""; if(el.dataset.limparBusca !== undefined) FILTROS_FEED = {...FEED_PADRAO};
+    const i = $("#busca"); if(i) i.value = ""; vibrar("leve"); atualizarFeed(); return;
+  }
+  if(el.id === "pedido-novo"){ return novoPedido() }
+  if(el.dataset.meuPedido){ return verMeuPedido(el.dataset.meuPedido) }
+  if(el.dataset.pedido){ return abrirPedido(el.dataset.pedido) }
+  if(el.dataset.rank){ RANK = el.dataset.rank; vibrar("leve"); const c = $("#conteudo"); c.innerHTML = painel(); suavizarImagens(c); return }
+  if(el.id === "pedidos-chave"){
+    const novo = !CONFIG.pedidos.ativo; CONFIG.pedidos.ativo = novo; el.classList.toggle("on", novo); vibrar("leve");
+    salvarAjuste({pedidos_ativo: novo}, novo ? "Pedidos personalizados abertos ✍️" : "Pedidos personalizados fechados").then(ok => ok && carregar());
+    return;
+  }
+  if(el.id === "ed-pedidos"){ return editarPedidosCfg() }
+  if(el.id === "ed-carrinho"){ return editarCarrinhoCfg() }
+  if(el.id === "ed-meta"){ return editarMeta() }
   if(el.dataset.votar){ return votar(el.dataset.votar) }
   if(el.dataset.avisar){ return avisar(el.dataset.avisar, el) }
   if(el.dataset.ag){ const [t, id, acao] = el.dataset.ag.split(":"); return acao ? acaoAgendado(`${t}:${id}`, acao) : acaoAgendado(`${t}:${id}`, "horario") }
@@ -2030,7 +2704,7 @@ document.addEventListener("click", e => {
   }
   if(el.dataset.periodo){ PERIODO = el.dataset.periodo; vibrar("leve"); const c = $("#conteudo"); c.innerHTML = painel(); contar(c); suavizarImagens(c); return }
   if(el.dataset.menu){ e.stopPropagation(); return menuItem(el.dataset.menu) }
-  if(el.dataset.criar){ return novaPublicacao(el.dataset.criar === "pack") }
+  if(el.dataset.criar){ return el.dataset.criar === "story" ? novoStory() : novaPublicacao(el.dataset.criar === "pack") }
   if(el.dataset.msg){ return editarMensagem(el.dataset.msg) }
   if(el.id === "ed-perfil" || el.id === "ed-perfil2"){ return editarPerfil() }
   if(el.id === "ed-msgs"){ return PAINEL ? editarMensagens() : carregarPainel().then(editarMensagens) }

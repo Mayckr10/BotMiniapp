@@ -76,6 +76,8 @@ async def enviar_cupons(bot: Bot, db: Database, cfg: Config) -> int:
         await db.definir_etapa_remarketing(v.id, 2)
         if await _ja_resolvida(db, v) or v.cupom:        # já veio com cupom: não empilha desconto
             continue
+        if not v.pack_id.startswith(("pack_", "combo_")):  # carrinho: o link de cupom só abre pack ou combo
+            continue
         item = await db.get_item(v.pack_id)
         codigo = f"VOLTA{secrets.token_hex(2).upper()}"
         await db.criar_cupom(codigo, "pct", cfg.cupom_remarketing_pct, item_id=v.pack_id, user_id=v.user_id,

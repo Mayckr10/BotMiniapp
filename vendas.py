@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
 from config import Config
-from database import Combo, Cupom, Database, Gorjeta, Pack, Plano, agora
+from database import Carrinho, Combo, Cupom, Database, Gorjeta, Pack, PedidoPersonalizado, Plano, agora
 from payments import Cobranca, PixGateway
 
 log = logging.getLogger(__name__)
@@ -48,18 +48,25 @@ async def criar_pedido(db: Database, gateway: PixGateway, cfg: Config, user_id: 
         return Pedido("inexistente")
     item = await db.get_item(item_id)
     packs = await db.packs_do_item(item_id)
-    conteudo = isinstance(item, (Pack, Combo))
+    conteudo = isinstance(item, (Pack, Combo, Carrinho))
     if not item or (conteudo and not packs):
         return Pedido("inexistente")
+    # carrinho e pedido personalizado são de um fã só; o carrinho não vale se algum pack saiu da vitrine
+    if isinstance(item, (Carrinho, PedidoPersonalizado)) and item.user_id != user_id:
+        return Pedido("inexistente")
+    if isinstance(item, Carrinho) and (len(packs) != len(item.pack_ids) or any(p.tipo != "pack" for p in packs)):
+        return Pedido("inexistente")
+    if isinstance(item, PedidoPersonalizado) and item.status != "AGUARDANDO":
+        return Pedido("inexistente")              # já pago, entregue ou recusado: não gera outro PIX
 
     # Quem já tem todo o conteúdo não paga de novo
     if conteudo and await db.tem_todos(user_id, [p.id for p in packs]):
         return Pedido("ja_comprou", item=item, packs=packs)
-    if isinstance(item, Pack) and item.tipo in ("arquivado", "fila", "agendado", "pedido"):       # apagado da vitrine: não vende mais
+    if isinstance(item, Pack) and item.tipo in ("arquivado", "fila", "agendado", "pedido", "preparando"):       # apagado da vitrine: não vende mais
         return Pedido("inexistente")
 
     pedido = Pedido("ok", item=item, packs=packs, preco=item.preco)
-    if codigo_cupom and not isinstance(item, Gorjeta):
+    if codigo_cupom and not isinstance(item, (Gorjeta, PedidoPersonalizado)):
         cupom, motivo = await db.validar_cupom(codigo_cupom, item_id, user_id)
         if cupom:
             pedido.cupom, pedido.preco = cupom, item.preco - cupom.desconto(item.preco)

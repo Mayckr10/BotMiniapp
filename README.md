@@ -146,7 +146,7 @@ Comandos do fã: `/start`, `/assinar`, `/assinatura`, `/gorjeta`, `/meus_packs`.
 ## Loja dentro do Telegram (Mini App)
 
 A loja abre dentro do Telegram (botão **🛍️ Loja** ao lado do campo de mensagem e "Abrir a loja" no perfil),
-com abas Packs, VIP, Minhas e Mimo. O cliente paga o PIX na própria página, e assim que o pagamento é
+com abas Início, VIP, Minhas e Mimos. O cliente paga o PIX na própria página, e assim que o pagamento é
 confirmado o **bot manda o conteúdo no chat**, igual à compra pelo bot.
 
 - Precisa de `PUBLIC_BASE_URL` com **HTTPS** (o Telegram não abre Mini App em http). O endereço é `https://seu-dominio/loja`, e o bot configura o botão de menu sozinho ao iniciar. `LOJA_ATIVA=0` desliga.
@@ -168,6 +168,13 @@ No modo criadora o controle todo fica no Mini App, e os comandos do bot ficam s�
 - **Fila de revisão** (opcional, em Ajustes): com "Revisar antes de publicar" ligado, posts e packs novos ficam numa fila. Nada aparece para os fãs nem vai para o canal até a criadora tocar em Publicar (dá para ver como o fã vai ver, editar ou descartar).
 - **Editor de fotos**: antes de publicar, o ✎ em cada foto abre cortar (livre, 1:1, 4:5, 9:16, 16:9), girar, espelhar, brilho, contraste, cor e filtros. A foto de perfil abre o editor com recorte redondo.
 - **Mensagens do bot**: boas-vindas do /start (com foto), mensagem depois da compra e boas-vindas do VIP. Marcadores: `{nome}`, `{criadora}`, `{item}`.
+- **Stories**: foto ou vídeo que fica 24h. Toque no avatar › Novo story (ou Painel › Criar). Os fãs veem o anel colorido no avatar (cinza depois de assistir), com barras de progresso, tocar para avançar e segurar para pausar. A criadora vê quem visualizou cada story e pode apagar.
+- **Posts e stories só para assinantes VIP**: quem não assina vê só um aviso com a quantidade de publicações e o botão de assinar. Os packs continuam à venda para todos. As fotos e vídeos dos posts saem com link assinado por pessoa e o servidor confere o VIP a cada acesso, então um link copiado não abre para quem não assina (nem depois que o VIP vence).
+- **Top fãs** (Painel): quem mais gastou nos últimos 30 dias ou desde o início, com a ficha de cada fã. O fã que está no top 10 vê a própria posição em Minhas (sem ver os outros).
+- **Pedido personalizado** (Ajustes › Pedidos personalizados): a criadora liga, define o preço mínimo, o prazo e as regras. O fã descreve o pedido, oferece um valor e paga o PIX. A criadora recebe o aviso no chat e entrega pelo Painel › Pedidos (fotos e vídeos vão só para aquele fã, no chat e em Minhas compras) ou recusa com um recado. O bot não faz estorno automático: ao recusar, devolva o valor pela sua conta de pagamento.
+- **Carrinho**: o fã junta vários packs e paga um PIX só. Em Ajustes › Carrinho dá para dar um desconto (ex: 10% levando 3 ou mais).
+- **Meta de mimos** (Ajustes › Meta de mimos): título e valor; a barra aparece no feed e na aba Mimos. Todo mimo pago depois que a meta é criada soma. Quando bate, a criadora e quem ajudou recebem um aviso.
+- **Busca e filtros**: o fã busca por título, legenda ou texto dos posts e filtra por vídeo/fotos, comprados/não comprados, e ordena por recentes, curtidos ou preço.
 
 ## Testar no Telegram só pelo celular
 

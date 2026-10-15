@@ -48,6 +48,8 @@ class _CacheLRU:
     def put(self, chave, valor: bytes):
         if len(valor) > self.max_bytes // 2:
             return
+        if chave in self.dados:                       # substituindo: desconta o tamanho antigo
+            self.total -= len(self.dados.pop(chave))
         self.dados[chave] = valor
         self.total += len(valor)
         while self.total > self.max_bytes:

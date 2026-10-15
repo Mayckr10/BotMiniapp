@@ -9,6 +9,10 @@ Tabelas:
   cupons   -> descontos aplicados via deep link (/start pack_8f3a_CUPOM10)
   usuarios -> todo mundo que já deu /start (base para broadcast e métricas)
   cliques  -> cada abertura de link de venda (para a taxa de conversão)
+  stories / stories_vistos -> fotos e vídeos de 24h e quem viu
+  pedidos  -> pedidos personalizados (pagos antes; a entrega vira um pack tipo 'pedido' só do fã)
+  carrinhos -> vários packs num PIX só (item carrinho_N)
+  metas    -> meta de mimos (soma os mimos pagos depois da criação)
 
 As listas de mídias são guardadas como JSON:
   [{"tipo": "photo", "file_id": "AgAC..."}, {"tipo": "video", "file_id": "BAAC..."}]
@@ -161,9 +165,65 @@ CREATE TABLE IF NOT EXISTS avisos_lancamento (
     PRIMARY KEY (pack_id, user_id)
 );
 
+-- Stories: foto ou vídeo que fica 24h no perfil
+CREATE TABLE IF NOT EXISTS stories (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    tipo        TEXT    NOT NULL,                  -- photo | video
+    file_id     TEXT    NOT NULL,                  -- a foto ou o vídeo
+    capa        TEXT,                              -- vídeo: imagem do primeiro quadro
+    legenda     TEXT,
+    ativo       INTEGER NOT NULL DEFAULT 1,
+    criado_em   TEXT    NOT NULL,
+    expira_em   TEXT    NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS stories_vistos (
+    story_id    INTEGER NOT NULL,
+    user_id     INTEGER NOT NULL,
+    criado_em   TEXT    NOT NULL,
+    PRIMARY KEY (story_id, user_id)
+);
+
+-- Pedido personalizado: o fã descreve e paga; a criadora entrega (vira um pack só dele) ou recusa
+CREATE TABLE IF NOT EXISTS pedidos (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id      INTEGER NOT NULL,
+    texto        TEXT    NOT NULL,
+    valor        INTEGER NOT NULL,                 -- centavos
+    status       TEXT    NOT NULL DEFAULT 'AGUARDANDO',  -- AGUARDANDO (PIX) | NOVO (pago) | ENTREGUE | RECUSADO
+    pack_id      TEXT,                             -- pack com o conteúdo entregue
+    resposta     TEXT,                             -- recado da criadora ao entregar ou recusar
+    criado_em    TEXT    NOT NULL,
+    pago_em      TEXT,
+    concluido_em TEXT
+);
+
+-- Carrinho: vários packs num PIX só (guarda o que foi cobrado no momento da compra)
+CREATE TABLE IF NOT EXISTS carrinhos (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL,
+    pack_ids    TEXT    NOT NULL,                  -- JSON
+    preco       INTEGER NOT NULL,                  -- com o desconto do carrinho
+    preco_cheio INTEGER NOT NULL,
+    criado_em   TEXT    NOT NULL
+);
+
+-- Meta de mimos: todos os mimos pagos depois da criação somam
+CREATE TABLE IF NOT EXISTS metas (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    titulo      TEXT    NOT NULL,
+    descricao   TEXT,
+    alvo        INTEGER NOT NULL,                  -- centavos
+    ativa       INTEGER NOT NULL DEFAULT 1,
+    criado_em   TEXT    NOT NULL,
+    batida_em   TEXT
+);
+
 CREATE INDEX IF NOT EXISTS idx_vendas_user_pack ON vendas(user_id, pack_id, status);
 CREATE INDEX IF NOT EXISTS idx_vendas_status ON vendas(status, criado_em);
 CREATE INDEX IF NOT EXISTS idx_cliques_data ON cliques(criado_em);
+CREATE INDEX IF NOT EXISTS idx_stories_expira ON stories(ativo, expira_em);
+CREATE INDEX IF NOT EXISTS idx_pedidos_status ON pedidos(status, pago_em);
 """
 
 # Colunas adicionadas depois do MVP: aplicadas com ALTER TABLE em bancos antigos
@@ -279,6 +339,53 @@ class Gorjeta:
 
 
 @dataclass
+class Carrinho:
+    id: int
+    user_id: int
+    pack_ids: list[str]
+    preco: int
+    preco_cheio: int
+
+    @property
+    def item_id(self) -> str:
+        return f"carrinho_{self.id}"
+
+    @property
+    def titulo(self) -> str:
+        return f"Carrinho · {len(self.pack_ids)} packs"
+
+    @property
+    def preco_fmt(self) -> str:
+        return fmt_reais(self.preco)
+
+
+@dataclass
+class PedidoPersonalizado:
+    id: int
+    user_id: int
+    texto: str
+    preco: int
+    status: str
+    pack_id: str | None = None
+    resposta: str | None = None
+    criado_em: str = ""
+    pago_em: str | None = None
+    concluido_em: str | None = None
+
+    @property
+    def item_id(self) -> str:
+        return f"pedido_{self.id}"
+
+    @property
+    def titulo(self) -> str:
+        return f"Pedido personalizado #{self.id}"
+
+    @property
+    def preco_fmt(self) -> str:
+        return fmt_reais(self.preco)
+
+
+@dataclass
 class Assinatura:
     user_id: int
     plano_id: int | None
@@ -380,12 +487,13 @@ class Database:
     async def gerar_pack_id(self) -> str:
         return await self._gerar_id("pack")
 
-    async def criar_pack(self, titulo: str, preco: int, originais: list[dict], blur: list[dict]) -> str:
+    async def criar_pack(self, titulo: str, preco: int, originais: list[dict], blur: list[dict],
+                         tipo: str = "pack", legenda: str = "") -> str:
         pack_id = await self.gerar_pack_id()
         await self.conn.execute(
-            "INSERT INTO packs (id, titulo, preco, file_ids_originais, file_ids_blur, criado_em) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (pack_id, titulo, preco, json.dumps(originais), json.dumps(blur), _agora()),
+            "INSERT INTO packs (id, titulo, preco, file_ids_originais, file_ids_blur, criado_em, tipo, legenda) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (pack_id, titulo, preco, json.dumps(originais), json.dumps(blur), _agora(), tipo, legenda or None),
         )
         await self.conn.commit()
         return pack_id
@@ -435,7 +543,11 @@ class Database:
         rows = await self._todos("SELECT id FROM combos WHERE ativo = 1 ORDER BY criado_em DESC, rowid DESC")
         return [c for c in [await self.get_combo(r["id"]) for r in rows] if c]
 
-    async def get_item(self, item_id: str) -> "Pack | Combo | Plano | Gorjeta | None":
+    async def get_item(self, item_id: str) -> "Pack | Combo | Plano | Gorjeta | Carrinho | PedidoPersonalizado | None":
+        if item_id.startswith("carrinho_"):
+            return await self.get_carrinho(int(item_id[9:])) if item_id[9:].isdigit() else None
+        if item_id.startswith("pedido_"):
+            return await self.get_pedido(int(item_id[7:])) if item_id[7:].isdigit() else None
         if item_id.startswith("combo_"):
             return await self.get_combo(item_id)
         if item_id.startswith("plano_"):
@@ -455,11 +567,11 @@ class Database:
         return await self.get_pack(item_id)
 
     async def packs_do_item(self, item_id: str) -> list[Pack]:
-        """Pack avulso -> [pack]; combo -> todos os packs ativos dele."""
+        """Pack avulso -> [pack]; combo ou carrinho -> todos os packs ativos dele."""
         item = await self.get_item(item_id)
         if isinstance(item, Pack):
             return [item]
-        if isinstance(item, Combo):
+        if isinstance(item, (Combo, Carrinho)):
             return [p for p in [await self.get_pack(i) for i in item.pack_ids] if p]
         return []
 
@@ -742,6 +854,156 @@ class Database:
         await self.conn.commit()
         await self.conn.execute("VACUUM")
         return tabelas
+
+    # ── Stories (24h) ──────────────────────────────────────────────────────
+    async def criar_story(self, tipo: str, file_id: str, capa: str | None, legenda: str, horas: int = 24) -> int:
+        cur = await self.conn.execute(
+            "INSERT INTO stories (tipo, file_id, capa, legenda, criado_em, expira_em) VALUES (?, ?, ?, ?, ?, ?)",
+            (tipo, file_id, capa, legenda or None, _agora(), iso(agora() + timedelta(hours=horas))))
+        await self.conn.commit()
+        return cur.lastrowid
+
+    async def stories_ativos(self, user_id: int) -> list[dict]:
+        """Stories no ar (mais antigo primeiro, como no Instagram), com 'visto' do usuário e total de visualizações."""
+        rows = await self._todos(
+            "SELECT s.id, s.tipo, s.legenda, s.criado_em, s.expira_em, "
+            "EXISTS(SELECT 1 FROM stories_vistos v WHERE v.story_id = s.id AND v.user_id = ?) AS visto, "
+            "(SELECT COUNT(*) FROM stories_vistos v WHERE v.story_id = s.id) AS vistos "
+            "FROM stories s WHERE s.ativo = 1 AND s.expira_em > ? ORDER BY s.criado_em, s.id", (user_id, _agora()))
+        return [{**dict(r), "visto": bool(r["visto"])} for r in rows]
+
+    async def get_story(self, story_id: int) -> dict | None:
+        row = await self._um("SELECT * FROM stories WHERE id = ? AND ativo = 1 AND expira_em > ?", (story_id, _agora()))
+        return dict(row) if row else None
+
+    async def marcar_story_visto(self, story_id: int, user_id: int) -> None:
+        await self.conn.execute("INSERT OR IGNORE INTO stories_vistos VALUES (?, ?, ?)", (story_id, user_id, _agora()))
+        await self.conn.commit()
+
+    async def quem_viu_story(self, story_id: int, ignorar: set[int]) -> list[dict]:
+        rows = await self._todos(
+            "SELECT v.user_id, v.criado_em, u.nome, u.username FROM stories_vistos v "
+            "LEFT JOIN usuarios u ON u.user_id = v.user_id WHERE v.story_id = ? ORDER BY v.criado_em DESC", (story_id,))
+        return [dict(r) for r in rows if r["user_id"] not in ignorar]
+
+    async def apagar_story(self, story_id: int) -> bool:
+        cur = await self.conn.execute("UPDATE stories SET ativo = 0 WHERE id = ? AND ativo = 1", (story_id,))
+        await self.conn.commit()
+        return cur.rowcount == 1
+
+    # ── Ranking de fãs ─────────────────────────────────────────────────────
+    async def top_fas(self, desde: datetime | None, ignorar: set[int], limite: int = 10) -> list[dict]:
+        """Quem mais gastou (vendas pagas), sem a criadora e sem fãs bloqueados."""
+        filtro, params = ("AND v.pago_em >= ?", [iso(desde)]) if desde else ("", [])
+        fora = f"AND v.user_id NOT IN ({','.join('?' * len(ignorar))})" if ignorar else ""   # NOT IN () vazio não existe
+        rows = await self._todos(
+            "SELECT v.user_id, COUNT(*) AS compras, SUM(v.valor) AS total, MAX(v.pago_em) AS ultima, u.nome, u.username "
+            "FROM vendas v LEFT JOIN usuarios u ON u.user_id = v.user_id "
+            f"WHERE v.status = ? {filtro} {fora} AND COALESCE(u.banido, 0) = 0 "
+            "GROUP BY v.user_id ORDER BY total DESC, compras DESC, ultima LIMIT ?",
+            (STATUS_PAGO, *params, *ignorar, limite))
+        return [dict(r) for r in rows]
+
+    # ── Pedidos personalizados ─────────────────────────────────────────────
+    @staticmethod
+    def _pedido(row) -> "PedidoPersonalizado":
+        return PedidoPersonalizado(id=row["id"], user_id=row["user_id"], texto=row["texto"], preco=row["valor"],
+                                   status=row["status"], pack_id=row["pack_id"], resposta=row["resposta"],
+                                   criado_em=row["criado_em"], pago_em=row["pago_em"], concluido_em=row["concluido_em"])
+
+    async def criar_pedido_personalizado(self, user_id: int, texto: str, valor: int) -> int:
+        cur = await self.conn.execute("INSERT INTO pedidos (user_id, texto, valor, criado_em) VALUES (?, ?, ?, ?)",
+                                      (user_id, texto, valor, _agora()))
+        await self.conn.commit()
+        return cur.lastrowid
+
+    async def get_pedido(self, pedido_id: int) -> "PedidoPersonalizado | None":
+        row = await self._um("SELECT * FROM pedidos WHERE id = ?", (pedido_id,))
+        return self._pedido(row) if row else None
+
+    async def pedidos_aguardando_recentes(self, user_id: int, horas: int = 24) -> int:
+        row = await self._um("SELECT COUNT(*) AS n FROM pedidos WHERE user_id = ? AND status = 'AGUARDANDO' "
+                             "AND criado_em >= ?", (user_id, iso(agora() - timedelta(hours=horas))))
+        return row["n"]
+
+    async def marcar_pedido_pago(self, pedido_id: int) -> bool:
+        cur = await self.conn.execute("UPDATE pedidos SET status = 'NOVO', pago_em = ? WHERE id = ? AND status = 'AGUARDANDO'",
+                                      (_agora(), pedido_id))
+        await self.conn.commit()
+        return cur.rowcount == 1
+
+    async def concluir_pedido(self, pedido_id: int, status: str, resposta: str | None, pack_id: str | None = None) -> bool:
+        """NOVO -> ENTREGUE ou RECUSADO (uma vez só)."""
+        cur = await self.conn.execute(
+            "UPDATE pedidos SET status = ?, resposta = ?, pack_id = ?, concluido_em = ? WHERE id = ? AND status = 'NOVO'",
+            (status, resposta or None, pack_id, _agora(), pedido_id))
+        await self.conn.commit()
+        return cur.rowcount == 1
+
+    async def listar_pedidos(self, user_id: int | None = None, limite: int = 40) -> list["PedidoPersonalizado"]:
+        """Pagos (para a criadora: os novos primeiro) ou só os de um fã."""
+        if user_id is not None:
+            rows = await self._todos("SELECT * FROM pedidos WHERE user_id = ? AND status != 'AGUARDANDO' "
+                                     "ORDER BY pago_em DESC LIMIT ?", (user_id, limite))
+        else:
+            rows = await self._todos("SELECT * FROM pedidos WHERE status != 'AGUARDANDO' "
+                                     "ORDER BY status = 'NOVO' DESC, COALESCE(concluido_em, pago_em) DESC LIMIT ?", (limite,))
+        return [self._pedido(r) for r in rows]
+
+    async def contar_pedidos_novos(self) -> int:
+        return (await self._um("SELECT COUNT(*) AS n FROM pedidos WHERE status = 'NOVO'"))["n"]
+
+    # ── Carrinho ───────────────────────────────────────────────────────────
+    async def criar_carrinho(self, user_id: int, pack_ids: list[str], preco: int, preco_cheio: int) -> int:
+        cur = await self.conn.execute(
+            "INSERT INTO carrinhos (user_id, pack_ids, preco, preco_cheio, criado_em) VALUES (?, ?, ?, ?, ?)",
+            (user_id, json.dumps(pack_ids), preco, preco_cheio, _agora()))
+        await self.conn.commit()
+        return cur.lastrowid
+
+    async def get_carrinho(self, carrinho_id: int) -> "Carrinho | None":
+        row = await self._um("SELECT * FROM carrinhos WHERE id = ?", (carrinho_id,))
+        if not row:
+            return None
+        return Carrinho(id=row["id"], user_id=row["user_id"], pack_ids=json.loads(row["pack_ids"]),
+                        preco=row["preco"], preco_cheio=row["preco_cheio"])
+
+    # ── Meta de mimos ──────────────────────────────────────────────────────
+    async def meta_ativa(self) -> dict | None:
+        row = await self._um("SELECT * FROM metas WHERE ativa = 1 ORDER BY id DESC LIMIT 1")
+        if not row:
+            return None
+        soma = await self._um(
+            "SELECT COALESCE(SUM(valor), 0) AS total, COUNT(DISTINCT user_id) AS fas FROM vendas "
+            "WHERE status = ? AND pack_id LIKE 'gorjeta\\_%' ESCAPE '\\' AND pago_em >= ?", (STATUS_PAGO, row["criado_em"]))
+        return {**dict(row), "arrecadado": soma["total"], "fas": soma["fas"]}
+
+    async def salvar_meta(self, titulo: str, descricao: str, alvo: int) -> int:
+        """Cria uma meta nova (encerra a anterior) ou, se já existe uma ativa, só edita o texto e o valor."""
+        atual = await self._um("SELECT id FROM metas WHERE ativa = 1 ORDER BY id DESC LIMIT 1")
+        if atual:
+            await self.conn.execute("UPDATE metas SET titulo = ?, descricao = ?, alvo = ? WHERE id = ?",
+                                    (titulo, descricao or None, alvo, atual["id"]))
+            await self.conn.commit()
+            return atual["id"]
+        cur = await self.conn.execute("INSERT INTO metas (titulo, descricao, alvo, criado_em) VALUES (?, ?, ?, ?)",
+                                      (titulo, descricao or None, alvo, _agora()))
+        await self.conn.commit()
+        return cur.lastrowid
+
+    async def encerrar_meta(self) -> None:
+        await self.conn.execute("UPDATE metas SET ativa = 0 WHERE ativa = 1")
+        await self.conn.commit()
+
+    async def marcar_meta_batida(self, meta_id: int) -> bool:
+        cur = await self.conn.execute("UPDATE metas SET batida_em = ? WHERE id = ? AND batida_em IS NULL", (_agora(), meta_id))
+        await self.conn.commit()
+        return cur.rowcount == 1
+
+    async def apoiadores_meta(self, desde: str) -> list[int]:
+        rows = await self._todos("SELECT DISTINCT user_id FROM vendas WHERE status = ? AND pack_id LIKE 'gorjeta\\_%' "
+                                 "ESCAPE '\\' AND pago_em >= ?", (STATUS_PAGO, desde))
+        return [r["user_id"] for r in rows]
 
     async def get_post(self, post_id: int) -> dict | None:
         row = await self._um("SELECT id, texto, foto, video, criado_em FROM posts WHERE id = ? AND ativo = 1", (post_id,))

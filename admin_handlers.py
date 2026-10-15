@@ -61,6 +61,8 @@ def parse_preco(texto: str) -> int | None:
         return None
     if "," in t:                      # formato BR: 1.299,90
         t = t.replace(".", "").replace(",", ".")
+    elif re.fullmatch(r"\d{1,3}(\.\d{3})+", t):   # "1.000" ou "1.500.000": ponto de milhar, não decimal
+        t = t.replace(".", "")
     try:
         centavos = round(float(t) * 100)
     except ValueError:

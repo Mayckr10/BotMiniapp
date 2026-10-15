@@ -23,7 +23,12 @@ Rotas (todas exigem initData de um admin):
   POST /api/criadora/pack              multipart: titulo, preco, legenda, canal, arquivos (vários)
   POST /api/criadora/pack/{id}         json: titulo, preco, legenda
   POST /api/criadora/pack/{id}/apagar
-  GET  /api/loja/post_foto/{id}        (público) foto de uma publicação de texto
+  POST /api/criadora/story                    multipart: arquivo, legenda (some em 24h)
+  POST /api/criadora/story/{id}/apagar        · GET /api/criadora/story/{id}/vistos (quem viu)
+  POST /api/criadora/pedido/{id}/entregar     multipart: arquivos, mensagem (vira um pack só do fã)
+  POST /api/criadora/pedido/{id}/recusar      json: mensagem
+  POST /api/criadora/meta                     json: titulo, descricao, alvo · POST /api/criadora/meta/encerrar
+  GET  /api/loja/post_foto/{id}?u&e&s  foto de uma publicação (link assinado; só VIP e a criadora)
 """
 import asyncio
 import time
@@ -164,7 +169,9 @@ def _em_segundo_plano(request: web.Request, user: dict, arquivos: list, rotulo: 
                 resp = await trabalho(progresso)
             r = json.loads(resp.body)
             if r.get("ok"):
-                onde = (f"agendado para {r['agendado']} 🗓️" if r.get("agendado") else
+                onde = (("entregue ao fã ✅" if r.get("no_chat") else "liberado na loja do fã ✅ (não consegui mandar no chat dele)")
+                        if r.get("entregue") else
+                        f"agendado para {r['agendado']} 🗓️" if r.get("agendado") else
                         "na fila de revisão 📝" if r.get("fila") else
                         "no ar e postado no canal ✅" if r.get("no_canal") else "no ar ✅")
                 texto = f"🎬 {rotulo}: {onde}"
@@ -236,18 +243,6 @@ async def _subir(bot: Bot, chat_id: int, tipo: str, dados: bytes, nome: str) -> 
     return file_id
 
 
-def _tipo(content_type: str, nome_campo: str, dados: bytes) -> str | None:
-    if content_type.startswith("video/"):
-        return "video"
-    if content_type.startswith("image/"):
-        return "photo"
-    try:                                     # sem content-type confiável: tenta abrir como imagem
-        Image.open(BytesIO(dados)).verify()
-        return "photo"
-    except Exception:
-        return None
-
-
 # ════════════════════════════════════════════════════════════════════════════
 async def painel(request: web.Request) -> web.Response:
     _admin(request)
@@ -274,6 +269,18 @@ async def painel(request: web.Request) -> web.Response:
         top.append({"id": t["pack_id"], "titulo": item.titulo if item else t["pack_id"], "vendas": t["n"],
                     "total_fmt": fmt_reais(t["total"]), "curtidas": curtidas.get(t["pack_id"], {}).get("n", 0)})
     tipos = await db.receita_por_tipo(periodos["30d"])
+
+    async def ranking(desde) -> list[dict]:
+        return [{"id": f["user_id"], "nome": f["nome"] or "", "username": f["username"] or "", "compras": f["compras"],
+                 "total_fmt": fmt_reais(f["total"]), "vip": await db.assinante_ativo(f["user_id"])}
+                for f in await db.top_fas(desde, cfg.admin_ids)]
+
+    pedidos = []
+    for pd in await db.listar_pedidos():
+        u = await db.get_usuario(pd.user_id) or {}
+        pedidos.append({"id": pd.id, "user_id": pd.user_id, "nome": u.get("nome") or "", "username": u.get("username") or "",
+                        "texto": pd.texto, "valor_fmt": pd.preco_fmt, "status": pd.status, "pack_id": pd.pack_id,
+                        "resposta": pd.resposta or "", "quando": data_local(pd.pago_em or pd.criado_em, cfg)})
     stats = {k: {"faturamento": fmt_reais(v["faturamento"]), "vendas": v["vendas"],
                  "ticket": fmt_reais(v["ticket_medio"]), "cliques": v["cliques"], "compras": v["compras_unicas"],
                  "conversao": round(v["conversao"] * 100) if v["conversao"] is not None else None,
@@ -298,6 +305,8 @@ async def painel(request: web.Request) -> web.Response:
             "curtidas_total": sum(c["n"] for c in curtidas.values()),
             "mimos_total": fmt_reais(sum(m["total"] for m in mimos.values())),
         },
+        "top_fas": {"30d": await ranking(periodos["30d"]), "sempre": await ranking(None)},
+        "pedidos": pedidos,
         "perfil": {"nome": await db.get_ajuste("nome", cfg.criadora_nome),
                    "bio": await db.get_ajuste("bio", "") or ""},
         "canal": bool(cfg.channel_id),
@@ -494,8 +503,36 @@ async def _novo_pack(request, user, db: Database, cfg: Config, bot: Bot, campos:
     if erro:
         return _erro(erro)
 
+    r = await _processar_midias(bot, user["id"], cfg, arquivos, progresso)
+    if isinstance(r, web.Response):
+        return r
+    originais, blur = r
+    legenda = campos.get("legenda", "")[:2000]
+    revisao = not quando and await _revisao(db)
+    # agendado ou em revisão nasce "preparando" (fora da vitrine) e muda de estado num UPDATE só
+    pack_id = await db.criar_pack(titulo, preco, originais, blur,
+                                  tipo="preparando" if quando or revisao else "pack", legenda=legenda)
+    if quando:
+        await db.agendar_pack(pack_id, quando, campos.get("contagem") == "1", campos.get("canal") == "1")
+        return _ok(id=pack_id, agendado=data_local(quando, cfg))
+    if revisao:                               # fica na fila: nada aparece nem vai para o canal até aprovar
+        await db.mandar_pack_para_fila(pack_id, campos.get("canal") == "1")
+        return _ok(id=pack_id, fila=True)
+    no_canal = False
+    if campos.get("canal") == "1" and cfg.channel_id:
+        try:
+            await postar_no_canal(bot, cfg, await db.get_pack(pack_id))
+            no_canal = True
+        except Exception:
+            log.exception("Painel: não consegui postar no canal")
+    return _ok(id=pack_id, no_canal=no_canal)
+
+
+async def _processar_midias(bot: Bot, chat_id: int, cfg: Config, arquivos: list,
+                            progresso=None) -> "tuple[list[dict], list[dict]] | web.Response":
+    """Sobe cada arquivo para o Telegram (original + amostra embaçada), um por vez na memória."""
     originais, blur = [], []
-    for i, (_, ctype, arquivo) in enumerate(arquivos):     # um arquivo por vez na memória
+    for i, (_, ctype, arquivo) in enumerate(arquivos):
         tipo = _tipo_arquivo(ctype, arquivo)
         if tipo is None:
             return _erro(f"O arquivo {i + 1} não é foto nem vídeo.")
@@ -514,9 +551,9 @@ async def _novo_pack(request, user, db: Database, cfg: Config, bot: Bot, campos:
                 frame = await asyncio.to_thread(_frame_ffmpeg, dados)
                 teaser = await asyncio.to_thread(aplicar_blur, frame or _capa_video_generica(),
                                                  cfg.blur_radius if frame else 0, "VIDEO BLOQUEADO")
-            originais.append({"tipo": tipo, "file_id": await _subir(bot, user["id"], tipo, dados,
+            originais.append({"tipo": tipo, "file_id": await _subir(bot, chat_id, tipo, dados,
                                                                      f"m{i}.{'jpg' if tipo == 'photo' else 'mp4'}")})
-            blur.append({"tipo": "photo", "file_id": await _subir(bot, user["id"], "photo",
+            blur.append({"tipo": "photo", "file_id": await _subir(bot, chat_id, "photo",
                                                                   teaser.getvalue(), f"b{i}.jpg")})
             del dados, teaser
             if isinstance(arquivo, Path):
@@ -526,23 +563,7 @@ async def _novo_pack(request, user, db: Database, cfg: Config, bot: Bot, campos:
         except Exception:
             log.exception("Painel: falha ao processar o arquivo %s", i + 1)
             return _erro(f"Não consegui processar o arquivo {i + 1}. Tente de novo.", 502)
-
-    pack_id = await db.criar_pack(titulo, preco, originais, blur)
-    await db.editar_pack(pack_id, titulo, preco, campos.get("legenda", "")[:2000])
-    if quando:
-        await db.agendar_pack(pack_id, quando, campos.get("contagem") == "1", campos.get("canal") == "1")
-        return _ok(id=pack_id, agendado=data_local(quando, cfg))
-    if await _revisao(db):                    # fica na fila: nada aparece nem vai para o canal até aprovar
-        await db.mandar_pack_para_fila(pack_id, campos.get("canal") == "1")
-        return _ok(id=pack_id, fila=True)
-    no_canal = False
-    if campos.get("canal") == "1" and cfg.channel_id:
-        try:
-            await postar_no_canal(bot, cfg, await db.get_pack(pack_id))
-            no_canal = True
-        except Exception:
-            log.exception("Painel: não consegui postar no canal")
-    return _ok(id=pack_id, no_canal=no_canal)
+    return originais, blur
 
 
 async def editar_pack(request: web.Request) -> web.Response:
@@ -594,19 +615,29 @@ async def mensagem_foto(request: web.Request) -> web.Response:
                         headers={"Cache-Control": "no-cache"})
 
 
+async def _post_liberado(request: web.Request) -> dict:
+    """Post publicado (ou na fila/agendado, para a criadora) + link assinado de quem pode ver (VIP)."""
+    from loja import checar_midia
+    post = await request.app["db"].get_post(int(request.match_info["id"]))
+    if not post:
+        raise web.HTTPNotFound()
+    await checar_midia(request, f"post_{post['id']}")
+    return post
+
+
 async def post_foto(request: web.Request) -> web.Response:
     from loja import _imagem
-    post = await request.app["db"].get_post(int(request.match_info["id"]))
-    if not post or not post["foto"]:
+    post = await _post_liberado(request)
+    if not post["foto"]:
         raise web.HTTPNotFound()
     return web.Response(body=await _imagem(request.app["bot"], post["foto"]), content_type="image/jpeg",
-                        headers={"Cache-Control": "public, max-age=86400"})
+                        headers={"Cache-Control": "private, max-age=3600"})
 
 
 async def post_video(request: web.Request) -> web.Response:
     from galeria import _baixar, _resposta_com_range
-    post = await request.app["db"].get_post(int(request.match_info["id"]))
-    if not post or not post.get("video"):
+    post = await _post_liberado(request)
+    if not post.get("video"):
         raise web.HTTPNotFound()
     try:
         dados = await _baixar(request.app["bot"], post["video"])
@@ -614,8 +645,177 @@ async def post_video(request: web.Request) -> web.Response:
         log.exception("Não consegui baixar o vídeo do post %s", post["id"])
         raise web.HTTPNotFound()
     resp = _resposta_com_range(request, dados, "video/mp4")
-    resp.headers["Cache-Control"] = "public, max-age=86400"
+    resp.headers["Cache-Control"] = "private, max-age=3600"
     return resp
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  Stories (somem em 24h)
+# ════════════════════════════════════════════════════════════════════════════
+async def novo_story(request: web.Request) -> web.Response:
+    user = _admin(request)
+    db: Database = request.app["db"]
+    campos, arquivos = await _ler_multipart(request, em_disco=True)
+    if not arquivos:
+        return _erro("Escolha uma foto ou um vídeo.")
+    legenda = campos.get("legenda", "").strip()[:200]
+    _, ctype, arquivo = arquivos[0]
+    tipo = _tipo_arquivo(ctype, arquivo)
+    if tipo is None:
+        _limpar(arquivos)
+        return _erro("Esse arquivo não é foto nem vídeo.")
+
+    async def trabalho(progresso=None) -> web.Response:
+        bot: Bot = request.app["bot"]
+        if tipo == "photo":
+            try:
+                dados = arquivo.read_bytes() if isinstance(arquivo, Path) else arquivo
+                jpg = await asyncio.to_thread(_ajustar_foto, dados)
+            except Exception:
+                return _erro("Não consegui ler essa imagem.")
+            story_id = await db.criar_story("photo", await _subir(bot, user["id"], "photo", jpg, "story.jpg"), None, legenda)
+        else:
+            r = await _video_do_post(bot, user["id"], arquivo)
+            if isinstance(r, str):
+                return _erro(r)
+            capa, video = r
+            story_id = await db.criar_story("video", video, capa, legenda)
+        return _ok(id=story_id)
+
+    if tipo == "video":                       # vídeo pode precisar comprimir: não deixa a criadora esperando
+        return _em_segundo_plano(request, user, arquivos, "Story", trabalho)
+    try:
+        return await trabalho()
+    finally:
+        _limpar(arquivos)
+
+
+async def apagar_story(request: web.Request) -> web.Response:
+    _admin(request)
+    if not await request.app["db"].apagar_story(int(request.match_info["id"])):
+        return _erro("Esse story já saiu do ar.", 404)
+    return _ok()
+
+
+async def vistos_story(request: web.Request) -> web.Response:
+    _admin(request)
+    cfg: Config = request.app["cfg"]
+    lista = await request.app["db"].quem_viu_story(int(request.match_info["id"]), cfg.admin_ids)
+    return _ok(vistos=[{"id": v["user_id"], "nome": v["nome"] or "", "username": v["username"] or "",
+                        "quando": data_local(v["criado_em"], cfg)} for v in lista])
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  Pedidos personalizados
+# ════════════════════════════════════════════════════════════════════════════
+async def _pedido_novo(request: web.Request) -> "tuple[object, web.Response | None]":
+    db: Database = request.app["db"]
+    pedido = await db.get_pedido(int(request.match_info["id"]))
+    if not pedido or pedido.status == "AGUARDANDO":
+        return None, _erro("Pedido não encontrado.", 404)
+    if pedido.status != "NOVO":
+        return None, _erro("Esse pedido já foi " + ("entregue." if pedido.status == "ENTREGUE" else "recusado."), 409)
+    return pedido, None
+
+
+async def entregar_pedido(request: web.Request) -> web.Response:
+    user = _admin(request)
+    db: Database = request.app["db"]
+    cfg: Config = request.app["cfg"]
+    pedido, erro = await _pedido_novo(request)
+    if erro:
+        return erro
+    campos, arquivos = await _ler_multipart(request, em_disco=True)
+    if not arquivos:
+        return _erro("Escolha pelo menos uma foto ou vídeo para entregar.")
+    if len(arquivos) > MAX_ARQUIVOS:
+        _limpar(arquivos)
+        return _erro(f"Máximo de {MAX_ARQUIVOS} arquivos por entrega.")
+    recado = campos.get("mensagem", "").strip()[:500]
+
+    async def trabalho(progresso=None) -> web.Response:
+        bot: Bot = request.app["bot"]
+        r = await _processar_midias(bot, user["id"], cfg, arquivos, progresso)
+        if isinstance(r, web.Response):
+            return r
+        originais, blur = r
+        pack_id = await db.criar_pack(f"✍️ Pedido #{pedido.id}", pedido.preco, originais, blur, tipo="pedido", legenda=recado)
+        if not await db.concluir_pedido(pedido.id, "ENTREGUE", recado, pack_id):    # entregue em outra aba ao mesmo tempo
+            await db.apagar_pack(pack_id)
+            return _erro("Esse pedido já tinha sido concluído.", 409)
+        await db.liberar_acesso(pedido.user_id, [pack_id], None)
+        entregue = True
+        try:
+            from webhook import entregar_packs
+            await bot.send_message(pedido.user_id, f"🎁 <b>Seu pedido personalizado #{pedido.id} chegou!</b>"
+                                   + (f"\n\n💬 {html.escape(recado)}" if recado else ""))
+            await entregar_packs(bot, pedido.user_id, [await db.get_pack(pack_id)], f"Pedido #{pedido.id}")
+        except Exception:
+            log.exception("Pedido %s: não consegui entregar no chat do fã", pedido.id)
+            entregue = False                  # continua liberado em Minhas compras na loja
+        return _ok(id=pack_id, entregue=True, no_chat=entregue)
+
+    if len(arquivos) > 4 or any(_tipo_arquivo(c, d) == "video" for _, c, d in arquivos):
+        return _em_segundo_plano(request, user, arquivos, f"Entrega do pedido #{pedido.id}", trabalho)
+    try:
+        return await trabalho()
+    finally:
+        _limpar(arquivos)
+
+
+async def recusar_pedido(request: web.Request) -> web.Response:
+    _admin(request)
+    db: Database = request.app["db"]
+    cfg: Config = request.app["cfg"]
+    pedido, erro = await _pedido_novo(request)
+    if erro:
+        return erro
+    recado = str((await request.json()).get("mensagem", "")).strip()[:500]
+    if not await db.concluir_pedido(pedido.id, "RECUSADO", recado):
+        return _erro("Esse pedido já tinha sido concluído.", 409)
+    try:
+        await request.app["bot"].send_message(
+            pedido.user_id,
+            f"😔 {html.escape(cfg.criadora_nome or 'A criadora')} não vai poder fazer seu pedido #{pedido.id}."
+            + (f"\n\n💬 {html.escape(recado)}" if recado else "")
+            + f"\n\nO valor de <b>{pedido.preco_fmt}</b> será devolvido.")
+    except Exception:
+        log.warning("Pedido %s recusado: não consegui avisar o fã", pedido.id)
+    return _ok()
+
+
+# ════════════════════════════════════════════════════════════════════════════
+#  Meta de mimos
+# ════════════════════════════════════════════════════════════════════════════
+async def salvar_meta(request: web.Request) -> web.Response:
+    _admin(request)
+    corpo = await request.json()
+    titulo = str(corpo.get("titulo", "")).strip()[:60]
+    descricao = str(corpo.get("descricao", "")).strip()[:200]
+    alvo = parse_preco(str(corpo.get("alvo", "")))
+    if len(titulo) < 2:
+        return _erro("Dê um nome para a meta, ex: Câmera nova 📸")
+    if not alvo or alvo < 1000:
+        return _erro("O valor da meta precisa ser de pelo menos R$ 10,00.")
+    if alvo > 100_000_000:
+        return _erro("Valor alto demais para uma meta.")
+    await request.app["db"].salvar_meta(titulo, descricao, alvo)
+    return _ok()
+
+
+async def encerrar_meta(request: web.Request) -> web.Response:
+    _admin(request)
+    await request.app["db"].encerrar_meta()
+    return _ok()
+
+
+def meta_json(meta: dict | None) -> dict | None:
+    if not meta:
+        return None
+    return {"titulo": meta["titulo"], "descricao": meta["descricao"] or "", "alvo": meta["alvo"],
+            "alvo_fmt": fmt_reais(meta["alvo"]), "arrecadado_fmt": fmt_reais(meta["arrecadado"]),
+            "pct": min(100, meta["arrecadado"] * 100 // max(1, meta["alvo"])), "fas": meta["fas"],
+            "batida": bool(meta["batida_em"])}
 
 
 async def _revisao(db: Database) -> bool:
@@ -649,6 +849,33 @@ async def ajustes(request: web.Request) -> web.Response:
         if not 0 <= pct <= 90:
             return _erro("O desconto do 1º mês deve ser de 1 a 90% (0 desliga).")
         await db.set_ajuste("vip_1mes_pct", str(pct))
+    if "pedidos_ativo" in corpo:
+        await db.set_ajuste("pedidos_ativo", "1" if corpo["pedidos_ativo"] else "0")
+    if "pedidos_min" in corpo:
+        minimo = parse_preco(str(corpo["pedidos_min"]))
+        if not minimo or minimo > 1_000_000:
+            return _erro("Preço mínimo inválido. Use algo como 50,00.")
+        await db.set_ajuste("pedidos_min", str(minimo))
+    if "pedidos_prazo" in corpo:
+        await db.set_ajuste("pedidos_prazo", str(corpo["pedidos_prazo"]).strip()[:40])
+    if "pedidos_info" in corpo:
+        await db.set_ajuste("pedidos_info", str(corpo["pedidos_info"]).strip()[:400])
+    if "carrinho_pct" in corpo:
+        try:
+            pct = int(str(corpo["carrinho_pct"]).replace("%", "").strip() or 0)
+        except ValueError:
+            return _erro("Desconto inválido.")
+        if not 0 <= pct <= 50:
+            return _erro("O desconto do carrinho vai de 0 (desligado) a 50%.")
+        await db.set_ajuste("carrinho_pct", str(pct))
+    if "carrinho_min" in corpo:
+        try:
+            minimo = int(corpo["carrinho_min"])
+        except (TypeError, ValueError):
+            return _erro("Quantidade inválida.")
+        if not 2 <= minimo <= 10:
+            return _erro("O desconto vale a partir de 2 a 10 packs.")
+        await db.set_ajuste("carrinho_min", str(minimo))
     if "gorjetas" in corpo:
         valores = sorted({int(v) for v in str(corpo["gorjetas"]).replace(";", ",").split(",")
                           if v.strip().isdigit() and 1 <= int(v) <= 10000})
@@ -656,6 +883,17 @@ async def ajustes(request: web.Request) -> web.Response:
             return _erro("Informe pelo menos um valor, ex: 10, 25, 50, 100")
         await db.set_ajuste("gorjetas", ",".join(map(str, valores[:8])))
     return _ok()
+
+
+async def config_pedidos(db: Database) -> dict:
+    minimo = int(await db.get_ajuste("pedidos_min", "5000") or 5000)
+    return {"ativo": await db.get_ajuste("pedidos_ativo", "0") == "1", "min": minimo, "min_fmt": fmt_reais(minimo),
+            "prazo": await db.get_ajuste("pedidos_prazo", "") or "", "info": await db.get_ajuste("pedidos_info", "") or ""}
+
+
+async def config_carrinho(db: Database) -> dict:
+    return {"pct": int(await db.get_ajuste("carrinho_pct", "0") or 0),
+            "min": int(await db.get_ajuste("carrinho_min", "3") or 3)}
 
 
 async def config(request: web.Request) -> web.Response:
@@ -680,6 +918,9 @@ async def config(request: web.Request) -> web.Response:
         "limite_reenvio": await protecao.limite_reenvio(db),
         "marca_dagua": await db.get_ajuste("marca_dagua", "1") == "1",
         "vip_1mes_pct": int(await db.get_ajuste("vip_1mes_pct", "0") or 0),
+        "pedidos": await config_pedidos(db),
+        "carrinho": await config_carrinho(db),
+        "meta": meta_json(await db.meta_ativa()),
         "bloqueados": [{"id": u["user_id"], "nome": u["nome"] or "", "username": u["username"] or "",
                         "desde": data_local(u["banido_em"], request.app["cfg"]) if u["banido_em"] else ""}
                        for u in await db.listar_banidos()],
@@ -845,6 +1086,13 @@ async def agendado(request: web.Request) -> web.Response:
 
 
 def registrar_rotas(app: web.Application) -> None:
+    app.router.add_post("/api/criadora/story", novo_story)
+    app.router.add_post("/api/criadora/story/{id:\\d+}/apagar", apagar_story)
+    app.router.add_get("/api/criadora/story/{id:\\d+}/vistos", vistos_story)
+    app.router.add_post("/api/criadora/pedido/{id:\\d+}/entregar", entregar_pedido)
+    app.router.add_post("/api/criadora/pedido/{id:\\d+}/recusar", recusar_pedido)
+    app.router.add_post("/api/criadora/meta", salvar_meta)
+    app.router.add_post("/api/criadora/meta/encerrar", encerrar_meta)
     app.router.add_post("/api/criadora/agendado/{tipo:post|pack}/{id}/{acao:publicar|cancelar|horario}", agendado)
     app.router.add_post("/api/criadora/bloquear", bloquear)
     app.router.add_get("/api/criadora/fa/{id:\\d+}", fa)
