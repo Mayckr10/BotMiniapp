@@ -26,6 +26,7 @@ Rotas (todas exigem initData de um admin):
   GET  /api/loja/post_foto/{id}        (público) foto de uma publicação de texto
 """
 import asyncio
+import time
 import html
 import json
 import logging
@@ -37,6 +38,7 @@ from zoneinfo import ZoneInfo
 from io import BytesIO
 
 from aiogram import Bot
+from aiogram.exceptions import TelegramNetworkError, TelegramRetryAfter
 from aiogram.types import BufferedInputFile
 from aiohttp import web
 from PIL import Image, ImageOps
@@ -74,8 +76,8 @@ def _erro(msg: str, status: int = 400) -> web.Response:
 
 async def _ler_multipart(request: web.Request, em_disco: bool = False) -> tuple[dict, list[tuple[str, str, bytes]]]:
     """Devolve (campos de texto, [(nome_do_campo, content_type, bytes)]).
-    Com em_disco=True, arquivos grandes (vídeos) vão para um arquivo temporário e voltam como Path,
-    para não segurar centenas de MB na memória."""
+    Com em_disco=True, cada arquivo vai para um arquivo temporário e volta como Path: o servidor tem 1 GB de RAM
+    e um pack de 20 vídeos passa disso fácil. Os arquivos são lidos um por vez na hora de processar."""
     campos, arquivos = {}, []
     if not request.content_type.startswith("multipart/"):          # formulário simples, sem arquivos
         return {k: str(v).strip() for k, v in (await request.post()).items()}, []
@@ -91,10 +93,7 @@ async def _ler_multipart(request: web.Request, em_disco: bool = False) -> tuple[
                 if not tam:
                     tmp.unlink(missing_ok=True)
                     continue
-                dados = tmp if tam > LIMITE_VIDEO else tmp.read_bytes()
-                if not isinstance(dados, Path):
-                    tmp.unlink(missing_ok=True)
-                arquivos.append((parte.name, parte.headers.get("Content-Type", ""), dados))
+                arquivos.append((parte.name, parte.headers.get("Content-Type", ""), tmp))
                 continue
             dados = await parte.read(decode=False)
             if dados:
@@ -105,6 +104,30 @@ async def _ler_multipart(request: web.Request, em_disco: bool = False) -> tuple[
 
 
 _TAREFAS: set[asyncio.Task] = set()
+_FILA: asyncio.Semaphore | None = None          # uma publicação pesada por vez (memória e CPU limitadas)
+
+
+def _fila() -> asyncio.Semaphore:
+    global _FILA
+    if _FILA is None:
+        _FILA = asyncio.Semaphore(1)
+    return _FILA
+
+
+def _tamanho(d) -> int:
+    return d.stat().st_size if isinstance(d, Path) else len(d)
+
+
+def _tipo_arquivo(ctype: str, d) -> str | None:
+    if ctype.startswith("video/"):
+        return "video"
+    if ctype.startswith("image/"):
+        return "photo"
+    try:                                     # sem content-type confiável: tenta abrir como imagem
+        Image.open(d if isinstance(d, Path) else BytesIO(d)).verify()
+        return "photo"
+    except Exception:
+        return None
 
 
 def _limpar(arquivos: list) -> None:
@@ -114,12 +137,31 @@ def _limpar(arquivos: list) -> None:
 
 
 def _em_segundo_plano(request: web.Request, user: dict, arquivos: list, rotulo: str, trabalho) -> web.Response:
-    """Vídeo grande: responde na hora e comprime/publica em segundo plano. Avisa a criadora no chat do bot."""
+    """Envio pesado (vídeos ou muitos arquivos): responde na hora e processa em segundo plano, um envio por vez.
+    A criadora acompanha o andamento numa mensagem do bot que vai sendo atualizada."""
     bot: Bot = request.app["bot"]
 
     async def rodar():
+        aviso = None
         try:
-            resp = await trabalho()
+            aviso = await bot.send_message(user["id"], f"⏳ Preparando: {rotulo}…", disable_notification=True)
+        except Exception:
+            pass
+        ultimo = [0.0]
+
+        async def progresso(feitos: int, total: int):
+            if not aviso or (time.monotonic() - ultimo[0] < 3 and feitos < total):
+                return
+            ultimo[0] = time.monotonic()
+            barra = "▰" * round(10 * feitos / total) + "▱" * (10 - round(10 * feitos / total))
+            try:
+                await aviso.edit_text(f"⏳ Preparando: {rotulo}\n{barra} {feitos}/{total} arquivo(s)")
+            except Exception:
+                pass
+
+        try:
+            async with _fila():
+                resp = await trabalho(progresso)
             r = json.loads(resp.body)
             if r.get("ok"):
                 onde = (f"agendado para {r['agendado']} 🗓️" if r.get("agendado") else
@@ -134,6 +176,11 @@ def _em_segundo_plano(request: web.Request, user: dict, arquivos: list, rotulo: 
         finally:
             _limpar(arquivos)
         try:
+            if aviso:
+                await aviso.delete()
+        except Exception:
+            pass
+        try:
             await bot.send_message(user["id"], texto)
         except Exception:
             log.warning("Não consegui avisar a criadora sobre a publicação")
@@ -146,7 +193,9 @@ def _em_segundo_plano(request: web.Request, user: dict, arquivos: list, rotulo: 
 
 def _ajustar_foto(dados: bytes) -> bytes:
     """Converte HEIC/PNG/etc. em JPEG e reduz se passar do limite do Telegram."""
-    img = ImageOps.exif_transpose(Image.open(BytesIO(dados)))     # foto do celular: aplica a rotação do EXIF
+    img = Image.open(BytesIO(dados))
+    img.draft("RGB", (4096, 4096))            # JPEG gigante: decodifica já reduzido (bem menos memória)
+    img = ImageOps.exif_transpose(img)        # foto do celular: aplica a rotação do EXIF
     img = img.convert("RGB")
     lado = 4096
     while True:
@@ -159,14 +208,27 @@ def _ajustar_foto(dados: bytes) -> bytes:
 
 
 async def _subir(bot: Bot, chat_id: int, tipo: str, dados: bytes, nome: str) -> str:
-    """Envia para o chat da criadora, pega o file_id e apaga a mensagem (fica só o arquivo no Telegram)."""
-    arquivo = BufferedInputFile(dados, filename=nome)
-    if tipo == "photo":
-        msg = await bot.send_photo(chat_id, arquivo, disable_notification=True)
-        file_id = msg.photo[-1].file_id
+    """Envia para o chat da criadora, pega o file_id e apaga a mensagem (fica só o arquivo no Telegram).
+    Packs grandes mandam dezenas de arquivos seguidos: se o Telegram pedir para esperar (flood), espera e tenta de novo."""
+    for tentativa in range(5):
+        arquivo = BufferedInputFile(dados, filename=nome)
+        try:
+            if tipo == "photo":
+                msg = await bot.send_photo(chat_id, arquivo, disable_notification=True)
+                file_id = msg.photo[-1].file_id
+            else:
+                msg = await bot.send_video(chat_id, arquivo, disable_notification=True, supports_streaming=True)
+                file_id = msg.video.file_id
+            break
+        except TelegramRetryAfter as e:
+            log.info("Telegram pediu %ss de pausa no envio do painel", e.retry_after)
+            await asyncio.sleep(e.retry_after + 1)
+        except TelegramNetworkError:
+            if tentativa == 4:
+                raise
+            await asyncio.sleep(3 * (tentativa + 1))
     else:
-        msg = await bot.send_video(chat_id, arquivo, disable_notification=True, supports_streaming=True)
-        file_id = msg.video.file_id
+        raise RuntimeError("Telegram recusou o envio várias vezes")
     try:
         await bot.delete_message(chat_id, msg.message_id)
     except Exception:
@@ -299,15 +361,14 @@ async def novo_post(request: web.Request) -> web.Response:
     user = _admin(request)
     db: Database = request.app["db"]
     campos, arquivos = await _ler_multipart(request, em_disco=True)
-    pesado = arquivos and (isinstance(arquivos[0][2], Path) or
-                           (_tipo(arquivos[0][1], "", arquivos[0][2]) == "video" and len(arquivos[0][2]) > LIMITE_VIDEO_POST))
+    pesado = bool(arquivos) and _tipo_arquivo(arquivos[0][1], arquivos[0][2]) == "video"
     if pesado:                                 # vídeo que precisa comprimir: não deixa a criadora esperando
         erro = _enquete(campos)[1] or _quando(campos)[1]
         if erro:
             _limpar(arquivos)
             return _erro(erro)
         return _em_segundo_plano(request, user, arquivos, "Publicação com vídeo",
-                                 lambda: _novo_post(request, user, db, campos, arquivos))
+                                 lambda progresso: _novo_post(request, user, db, campos, arquivos))
     try:
         return await _novo_post(request, user, db, campos, arquivos)
     finally:
@@ -317,6 +378,8 @@ async def novo_post(request: web.Request) -> web.Response:
 async def _video_do_post(bot: Bot, chat_id: int, dados) -> tuple[str, str] | str:
     """Prepara o vídeo de uma publicação grátis. Devolve (file_id da capa, file_id do vídeo) ou a mensagem de erro.
     Fica com até 19 MB: a loja só consegue buscar no Telegram arquivos de até 20 MB para tocar no feed."""
+    if isinstance(dados, Path) and dados.stat().st_size <= LIMITE_VIDEO_POST:
+        dados = dados.read_bytes()
     if isinstance(dados, Path) or len(dados) > LIMITE_VIDEO_POST:
         origem, tmp = dados, None
         if not isinstance(dados, Path):
@@ -348,7 +411,7 @@ async def _novo_post(request: web.Request, user: dict, db: Database, campos: dic
     foto = video = None
     if arquivos:
         _, ctype, dados = arquivos[0]
-        eh_video = isinstance(dados, Path) or _tipo(ctype, "", dados) == "video"
+        eh_video = _tipo_arquivo(ctype, dados) == "video"
         if eh_video:
             try:
                 r = await _video_do_post(request.app["bot"], user["id"], dados)
@@ -360,7 +423,7 @@ async def _novo_post(request: web.Request, user: dict, db: Database, campos: dic
             foto, video = r
         else:
             try:
-                jpg = await asyncio.to_thread(_ajustar_foto, dados)
+                jpg = await asyncio.to_thread(_ajustar_foto, dados.read_bytes() if isinstance(dados, Path) else dados)
             except Exception:
                 return _erro("Não consegui ler essa imagem.")
             foto = await _subir(request.app["bot"], user["id"], "photo", jpg, "post.jpg")
@@ -396,7 +459,9 @@ async def novo_pack(request: web.Request) -> web.Response:
     cfg: Config = request.app["cfg"]
     bot: Bot = request.app["bot"]
     campos, arquivos = await _ler_multipart(request, em_disco=True)
-    if any(isinstance(d, Path) for _, _, d in arquivos):     # tem vídeo para comprimir: publica em segundo plano
+    pesado = (len(arquivos) > 4 or sum(_tamanho(d) for _, _, d in arquivos) > 40 * 1024 * 1024
+              or any(_tipo_arquivo(c, d) == "video" for _, c, d in arquivos))
+    if pesado:                                # muitos arquivos ou vídeo: publica em segundo plano
         titulo, preco = campos.get("titulo", "")[:80], parse_preco(campos.get("preco", ""))
         erro = ("Dê um título ao pack." if not titulo else
                 "Preço inválido. Use algo como 29,90 (mínimo R$ 1,00)." if not preco else
@@ -406,14 +471,15 @@ async def novo_pack(request: web.Request) -> web.Response:
             _limpar(arquivos)
             return _erro(erro)
         return _em_segundo_plano(request, user, arquivos, f"Pack “{html.escape(titulo)}”",
-                                 lambda: _novo_pack(request, user, db, cfg, bot, campos, arquivos))
+                                 lambda progresso: _novo_pack(request, user, db, cfg, bot, campos, arquivos, progresso))
     try:
         return await _novo_pack(request, user, db, cfg, bot, campos, arquivos)
     finally:
         _limpar(arquivos)
 
 
-async def _novo_pack(request, user, db: Database, cfg: Config, bot: Bot, campos: dict, arquivos: list) -> web.Response:
+async def _novo_pack(request, user, db: Database, cfg: Config, bot: Bot, campos: dict, arquivos: list,
+                     progresso=None) -> web.Response:
     titulo = campos.get("titulo", "")[:80]
     preco = parse_preco(campos.get("preco", ""))
     if not titulo:
@@ -429,18 +495,17 @@ async def _novo_pack(request, user, db: Database, cfg: Config, bot: Bot, campos:
         return _erro(erro)
 
     originais, blur = [], []
-    for i, (_, ctype, dados) in enumerate(arquivos):
-        grande = isinstance(dados, Path)
-        tipo = "video" if grande and ctype.startswith("video") else _tipo(ctype, "", dados if not grande else b"")
+    for i, (_, ctype, arquivo) in enumerate(arquivos):     # um arquivo por vez na memória
+        tipo = _tipo_arquivo(ctype, arquivo)
         if tipo is None:
             return _erro(f"O arquivo {i + 1} não é foto nem vídeo.")
-        if tipo == "video" and grande:            # passa de 50 MB: comprime para caber no limite do Telegram
-            dados = await asyncio.to_thread(comprimir_video, dados, LIMITE_VIDEO)
+        if tipo == "video" and _tamanho(arquivo) > LIMITE_VIDEO:   # passa de 50 MB: comprime para o limite do Telegram
+            dados = await asyncio.to_thread(comprimir_video, arquivo, LIMITE_VIDEO)
             if dados is None:
                 return _erro(f"Não consegui deixar o vídeo {i + 1} abaixo de 50 MB (o limite do Telegram). "
                              "Ele pode ser longo demais: corte em partes ou envie pelo bot.")
-        elif grande:
-            return _erro(f"O arquivo {i + 1} é grande demais.")
+        else:
+            dados = arquivo.read_bytes() if isinstance(arquivo, Path) else arquivo
         try:
             if tipo == "photo":
                 dados = await asyncio.to_thread(_ajustar_foto, dados)
@@ -453,6 +518,11 @@ async def _novo_pack(request, user, db: Database, cfg: Config, bot: Bot, campos:
                                                                      f"m{i}.{'jpg' if tipo == 'photo' else 'mp4'}")})
             blur.append({"tipo": "photo", "file_id": await _subir(bot, user["id"], "photo",
                                                                   teaser.getvalue(), f"b{i}.jpg")})
+            del dados, teaser
+            if isinstance(arquivo, Path):
+                arquivo.unlink(missing_ok=True)          # libera o disco assim que o arquivo foi para o Telegram
+            if progresso:
+                await progresso(i + 1, len(arquivos))
         except Exception:
             log.exception("Painel: falha ao processar o arquivo %s", i + 1)
             return _erro(f"Não consegui processar o arquivo {i + 1}. Tente de novo.", 502)

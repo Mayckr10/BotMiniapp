@@ -1829,7 +1829,7 @@ function novaPublicacao(pago){
       p => { $("#pub-barra").style.width = `${Math.round(p * 100)}%`; $("#pub-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : (comprimir ? "Quase lá…" : "Gerando as prévias com desfoque…") });
     if(!r.ok){ b.disabled = false; b.textContent = "Publicar pack"; $("#pub-prog").classList.add("ocultar"); return toast(r.erro || "Não consegui publicar") }
     vibrar("success"); fecharFolha(true); PAINEL = null; ANIMAR = true;
-    if(r.processando){ toast("Enviado! Estou comprimindo os vídeos e te aviso no chat quando o pack estiver no ar 🎬") }
+    if(r.processando){ toast("Enviado! Estou preparando os arquivos e te aviso no chat quando o pack estiver no ar 🎬") }
     else if(r.agendado){ toast(`Lançamento agendado para ${r.agendado} 🗓️`); ABA = "painel" }
     else if(r.fila){ toast("Pack na fila de revisão 📝"); ABA = "painel" }
     else { toast(r.no_canal ? "Pack publicado e postado no canal ✓" : "Pack publicado ✓"); confete(); ABA = "inicio"; FILTRO = "todos" }

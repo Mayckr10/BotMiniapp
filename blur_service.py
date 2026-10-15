@@ -44,7 +44,9 @@ def _selo(img: Image.Image, texto: str) -> Image.Image:
 
 def aplicar_blur(dados: bytes, radius: int = 20, selo: str | None = TEXTO_SELO) -> BytesIO:
     """Função síncrona e pura: bytes da imagem -> JPEG embaçado em memória."""
-    img = ImageOps.exif_transpose(Image.open(BytesIO(dados)))     # foto do celular: aplica a rotação do EXIF
+    img = Image.open(BytesIO(dados))
+    img.draft("RGB", (MAX_LADO * 2, MAX_LADO * 2))                # JPEG grande: decodifica reduzido
+    img = ImageOps.exif_transpose(img)                            # foto do celular: aplica a rotação do EXIF
     img = img.convert("RGB")
     img.thumbnail((MAX_LADO, MAX_LADO))
     if radius:
@@ -125,7 +127,7 @@ def comprimir_video(origem: Path, limite: int) -> bytes | None:
             lado = 1280 if video >= 1_200_000 else 854
             escala = (f"scale='if(gt(iw,ih),min({lado},iw),-2)':'if(gt(iw,ih),-2,min({lado},ih))'")
             proc = subprocess.run(
-                ["ffmpeg", "-y", "-loglevel", "error", "-i", str(origem), "-vf", escala,
+                ["ffmpeg", "-y", "-loglevel", "error", "-i", str(origem), "-vf", escala, "-threads", "2",
                  "-c:v", "libx264", "-preset", "superfast", "-b:v", str(video), "-maxrate", str(int(video * 1.3)),
                  "-bufsize", str(video * 2), "-pix_fmt", "yuv420p",
                  "-c:a", "aac", "-b:a", str(audio), "-ac", "2", "-movflags", "+faststart", str(saida)],

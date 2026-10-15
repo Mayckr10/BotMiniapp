@@ -31,6 +31,7 @@ import agenda
 import notificacoes
 import protecao
 import reset_banco
+import monitor
 from webhook import criar_app_web
 
 
@@ -103,6 +104,7 @@ async def run(cfg: Config) -> None:
     await runner.setup()
     await web.TCPSite(runner, cfg.webhook_host, cfg.webhook_port).start()
     logging.info("Bot @%s online | webhook PIX em %s", me.username, cfg.webhook_url.split("?")[0])   # sem o token no log
+    await monitor.iniciar(bot, db, cfg)
 
     jobs = [asyncio.create_task(loop_remarketing(bot, db, cfg)),
             asyncio.create_task(notificacoes.loop_resumo(bot, db, cfg)),
@@ -115,11 +117,12 @@ async def run(cfg: Config) -> None:
     finally:
         for job in jobs:
             job.cancel()
+        await monitor.desligando(db)
         await runner.cleanup()
         await db.close()
         await bot.session.close()
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    monitor.configurar_logs()
     asyncio.run(run(load_config()))

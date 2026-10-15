@@ -55,8 +55,8 @@ class _CacheLRU:
             self.total -= len(velho)
 
 
-_originais = _CacheLRU(120 * 1024 * 1024)      # arquivos baixados do Telegram
-_marcadas = _CacheLRU(60 * 1024 * 1024)        # fotos já com a marca d'água de cada comprador
+_originais = _CacheLRU(64 * 1024 * 1024)      # arquivos baixados do Telegram
+_marcadas = _CacheLRU(32 * 1024 * 1024)        # fotos já com a marca d'água de cada comprador
 
 
 def _assinar(cfg: Config, user_id: int, item_id: str, n: int, exp: int) -> str:

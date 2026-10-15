@@ -40,6 +40,14 @@ from webhook import processar_pagamento
 
 log = logging.getLogger(__name__)
 PAGINA = Path(__file__).parent / "miniapp" / "index.html"
+FAVICON = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
+           '<stop offset="0" stop-color="#ff4f8b"/><stop offset="1" stop-color="#ff9a3c"/></linearGradient></defs>'
+           '<rect width="64" height="64" rx="16" fill="url(#g)"/><path d="M32 49s-15-9.3-15-20.2C17 23 21 19 26 19c2.9 0 '
+           '4.9 1.5 6 3.4 1.1-1.9 3.1-3.4 6-3.4 5 0 9 4 9 9.8C47 39.7 32 49 32 49z" fill="#fff"/></svg>')
+
+
+async def favicon(_: web.Request) -> web.Response:
+    return web.Response(text=FAVICON, content_type="image/svg+xml", headers={"Cache-Control": "public, max-age=604800"})
 VALIDADE_INIT_DATA = 24 * 3600
 _cache_imagens: dict[str, bytes] = {}
 
@@ -353,6 +361,7 @@ async def barrar_bloqueados(request: web.Request, handler):
 def registrar_rotas(app: web.Application) -> None:
     app.middlewares.append(barrar_bloqueados)
     app.router.add_get("/loja", pagina)
+    app.router.add_get("/favicon.ico", favicon)
     app.router.add_get("/api/loja/dados", dados)
     app.router.add_get("/api/loja/previa/{item_id}", previa)
     app.router.add_get("/api/loja/foto", foto)
