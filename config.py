@@ -17,7 +17,9 @@ def _ids(valor: str) -> set[int]:
 class Config:
     # Telegram
     bot_token: str = os.getenv("BOT_TOKEN", "")
-    admin_ids: set[int] = field(default_factory=lambda: _ids(os.getenv("ADMIN_IDS", "")))
+    # ADMIN_IDS_EXTRA soma admins sem precisar reescrever ADMIN_IDS
+    admin_ids: set[int] = field(default_factory=lambda: _ids(os.getenv("ADMIN_IDS", "")) |
+                                                        _ids(os.getenv("ADMIN_IDS_EXTRA", "")))
     channel_id: int = int(os.getenv("CHANNEL_ID", "0"))
     # Base alternativa da Bot API (usada pelo simulador local). Vazio = api.telegram.org
     telegram_api_base: str = os.getenv("TELEGRAM_API_BASE", "")
