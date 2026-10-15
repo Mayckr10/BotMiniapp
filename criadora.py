@@ -27,7 +27,8 @@ Rotas (todas exigem initData de um admin):
 """
 import asyncio
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 from io import BytesIO
 
 from aiogram import Bot
@@ -126,13 +127,32 @@ async def painel(request: web.Request) -> web.Response:
     _admin(request)
     db: Database = request.app["db"]
     cfg: Config = request.app["cfg"]
-    hoje = agora().replace(hour=3, minute=0, second=0, microsecond=0)     # ~00h de Brasília
-    if hoje > agora():
-        hoje -= timedelta(days=1)
-    s_hoje, s_7d, s_30d = (await db.stats_periodo(hoje), await db.stats_periodo(agora() - timedelta(days=7)),
-                           await db.stats_periodo(agora() - timedelta(days=30)))
+    fuso = ZoneInfo(cfg.fuso_horario)
+    hoje = datetime.now(fuso).replace(hour=0, minute=0, second=0, microsecond=0)
+    periodos = {"hoje": hoje, "7d": agora() - timedelta(days=7), "30d": agora() - timedelta(days=30)}
+    st = {k: await db.stats_periodo(v) for k, v in periodos.items()}
+    s_hoje, s_7d, s_30d = st["hoje"], st["7d"], st["30d"]
     vip = await db.resumo_assinaturas()
     packs = await db.listar_packs()
+    curtidas = await db.curtidas_do_feed(0)
+    mimos = await db.mimos_do_feed()
+
+    # gráfico dos últimos 14 dias (no fuso da criadora)
+    offset = int(hoje.utcoffset().total_seconds() // 3600)
+    por_dia = await db.vendas_por_dia(hoje - timedelta(days=13), offset)
+    grafico = [{"dia": (hoje - timedelta(days=13 - i)).strftime("%d/%m"),
+                "v": por_dia.get((hoje - timedelta(days=13 - i)).strftime("%Y-%m-%d"), 0)} for i in range(14)]
+    top = []
+    for t in await db.top_itens(periodos["30d"]):
+        item = await db.get_item(t["pack_id"])
+        top.append({"id": t["pack_id"], "titulo": item.titulo if item else t["pack_id"], "vendas": t["n"],
+                    "total_fmt": fmt_reais(t["total"]), "curtidas": curtidas.get(t["pack_id"], {}).get("n", 0)})
+    tipos = await db.receita_por_tipo(periodos["30d"])
+    stats = {k: {"faturamento": fmt_reais(v["faturamento"]), "vendas": v["vendas"],
+                 "ticket": fmt_reais(v["ticket_medio"]), "cliques": v["cliques"], "compras": v["compras_unicas"],
+                 "conversao": round(v["conversao"] * 100) if v["conversao"] is not None else None,
+                 "novos": v["novos_usuarios"], "cupom": v["com_cupom"], "pix": v["pix_gerados"],
+                 "curtidas": await db.curtidas_desde(periodos[k])} for k, v in st.items()}
     return web.json_response({
         "resumo": {
             "hoje": {"vendas": s_hoje["vendas"], "valor": fmt_reais(s_hoje["faturamento"])},
@@ -140,6 +160,17 @@ async def painel(request: web.Request) -> web.Response:
             "mes": {"vendas": s_30d["vendas"], "valor": fmt_reais(s_30d["faturamento"])},
             "assinantes": vip["ativos"], "vencendo": vip["vencendo_7d"],
             "packs": len(packs),
+        },
+        "stats": {
+            "periodos": stats,
+            "grafico": grafico,
+            "top": top,
+            "receita_tipos": {k: fmt_reais(tipos.get(k, 0)) for k in ("packs", "vip", "mimos")},
+            "receita_tipos_v": {k: tipos.get(k, 0) for k in ("packs", "vip", "mimos")},
+            "vip_receita": fmt_reais(vip["receita_30d"]),
+            "pendentes": await db.pendentes_abertos(),
+            "curtidas_total": sum(c["n"] for c in curtidas.values()),
+            "mimos_total": fmt_reais(sum(m["total"] for m in mimos.values())),
         },
         "perfil": {"nome": await db.get_ajuste("nome", cfg.criadora_nome),
                    "bio": await db.get_ajuste("bio", "") or ""},

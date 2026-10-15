@@ -129,6 +129,13 @@ CREATE TABLE IF NOT EXISTS posts (
     criado_em   TEXT    NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS curtidas (
+    user_id     INTEGER NOT NULL,
+    alvo        TEXT    NOT NULL,                  -- pack_xxxx, combo_xxxx ou post_N
+    criado_em   TEXT    NOT NULL,
+    PRIMARY KEY (user_id, alvo)
+);
+
 CREATE INDEX IF NOT EXISTS idx_vendas_user_pack ON vendas(user_id, pack_id, status);
 CREATE INDEX IF NOT EXISTS idx_vendas_status ON vendas(status, criado_em);
 CREATE INDEX IF NOT EXISTS idx_cliques_data ON cliques(criado_em);
@@ -228,6 +235,7 @@ class Plano:
 class Gorjeta:
     preco: int
     titulo: str = "Gorjeta 💝"
+    alvo: str = ""          # pack/combo/post que recebeu o mimo (id gorjeta_<valor>_<alvo>)
 
     @property
     def preco_fmt(self) -> str:
@@ -397,8 +405,17 @@ class Database:
         if item_id.startswith("plano_"):
             return await self.get_plano(int(item_id[6:]))
         if item_id.startswith("gorjeta_"):
-            valor = int(item_id[8:])
-            return Gorjeta(valor) if valor >= 100 else None
+            valor, _, alvo = item_id[8:].partition("_")
+            if not valor.isdigit() or int(valor) < 100:
+                return None
+            if not alvo:
+                return Gorjeta(int(valor))
+            ref = await self.get_post(int(alvo[5:])) if alvo.startswith("post_") and alvo[5:].isdigit() \
+                else await self.get_item(alvo) if alvo.startswith(("pack_", "combo_")) else None
+            if not ref:
+                return None
+            nome = ref["texto"][:30] if isinstance(ref, dict) else ref.titulo
+            return Gorjeta(int(valor), f"Mimo 💝 · {nome}", alvo)
         return await self.get_pack(item_id)
 
     async def packs_do_item(self, item_id: str) -> list[Pack]:
@@ -565,6 +582,61 @@ class Database:
         """Tira da vitrine e para de vender. Quem já comprou continua com acesso (/meus_packs e galeria)."""
         await self.conn.execute("UPDATE packs SET tipo = 'arquivado' WHERE id = ?", (pack_id,))
         await self.conn.commit()
+
+    # ── Curtidas e mimos do feed ───────────────────────────────────────────
+    async def curtir(self, user_id: int, alvo: str) -> tuple[bool, int]:
+        """Liga/desliga a curtida. Devolve (curtido agora, total do alvo)."""
+        cur = await self.conn.execute("DELETE FROM curtidas WHERE user_id = ? AND alvo = ?", (user_id, alvo))
+        curtido = cur.rowcount == 0
+        if curtido:
+            await self.conn.execute("INSERT INTO curtidas VALUES (?, ?, ?)", (user_id, alvo, _agora()))
+        await self.conn.commit()
+        total = await self._um("SELECT COUNT(*) AS n FROM curtidas WHERE alvo = ?", (alvo,))
+        return curtido, total["n"]
+
+    async def curtidas_do_feed(self, user_id: int) -> dict[str, dict]:
+        rows = await self._todos("SELECT alvo, COUNT(*) AS n, MAX(user_id = ?) AS eu FROM curtidas GROUP BY alvo",
+                                 (user_id,))
+        return {r["alvo"]: {"n": r["n"], "eu": bool(r["eu"])} for r in rows}
+
+    async def mimos_do_feed(self) -> dict[str, dict]:
+        """Mimos pagos por post/pack: {alvo: {qtd, total}}."""
+        rows = await self._todos(
+            "SELECT pack_id, COUNT(*) AS n, SUM(valor) AS total FROM vendas "
+            "WHERE status = ? AND pack_id LIKE 'gorjeta\\_%\\_%' ESCAPE '\\' GROUP BY pack_id", (STATUS_PAGO,))
+        saida: dict[str, dict] = {}
+        for r in rows:
+            alvo = r["pack_id"][8:].partition("_")[2]
+            d = saida.setdefault(alvo, {"qtd": 0, "total": 0})
+            d["qtd"] += r["n"]
+            d["total"] += r["total"]
+        return saida
+
+    # ── Estatísticas do painel ─────────────────────────────────────────────
+    async def vendas_por_dia(self, desde: datetime, fuso_horas: int = -3) -> dict[str, int]:
+        """Faturamento por dia (data local AAAA-MM-DD -> centavos)."""
+        rows = await self._todos(
+            "SELECT date(pago_em, ? || ' hours') AS dia, SUM(valor) AS total FROM vendas "
+            "WHERE status = ? AND pago_em >= ? GROUP BY dia", (str(fuso_horas), STATUS_PAGO, iso(desde)))
+        return {r["dia"]: r["total"] for r in rows}
+
+    async def receita_por_tipo(self, desde: datetime) -> dict[str, int]:
+        rows = await self._todos(
+            "SELECT CASE WHEN pack_id LIKE 'plano_%' THEN 'vip' WHEN pack_id LIKE 'gorjeta_%' THEN 'mimos' "
+            "ELSE 'packs' END AS tipo, SUM(valor) AS total FROM vendas WHERE status = ? AND pago_em >= ? GROUP BY tipo",
+            (STATUS_PAGO, iso(desde)))
+        return {r["tipo"]: r["total"] for r in rows}
+
+    async def top_itens(self, desde: datetime, limite: int = 5) -> list[dict]:
+        rows = await self._todos(
+            "SELECT pack_id, COUNT(*) AS n, SUM(valor) AS total FROM vendas WHERE status = ? AND pago_em >= ? "
+            "AND (pack_id LIKE 'pack_%' OR pack_id LIKE 'combo_%') GROUP BY pack_id ORDER BY total DESC LIMIT ?",
+            (STATUS_PAGO, iso(desde), limite))
+        return [dict(r) for r in rows]
+
+    async def curtidas_desde(self, desde: datetime) -> int:
+        row = await self._um("SELECT COUNT(*) AS n FROM curtidas WHERE criado_em >= ?", (iso(desde),))
+        return row["n"]
 
     # ── Vendas ─────────────────────────────────────────────────────────────
     async def criar_venda(self, user_id: int, item_id: str, valor: int,

@@ -90,12 +90,14 @@ async def processar_pagamento(bot: Bot, db: Database, gateway: PixGateway, pix_i
 
     # Gorjeta
     if venda.pack_id.startswith("gorjeta_"):
+        mimo = await db.get_item(venda.pack_id)
+        onde = f" em <b>{html.escape(mimo.titulo.split(' · ', 1)[1])}</b>" if mimo and mimo.alvo else ""
         await bot.send_message(venda.user_id, f"💝 Recebi sua gorjeta de <b>{fmt_reais(venda.valor)}</b>. "
                                               "Muito obrigada pelo carinho! 🥰")
         for admin_id in cfg.admin_ids:
             try:
                 await bot.send_message(admin_id, f"💝 Gorjeta de {fmt_reais(venda.valor)} de "
-                                                 f"<code>{venda.user_id}</code>.")
+                                                 f"<code>{venda.user_id}</code>{onde}.")
             except Exception:
                 pass
         return "entregue"

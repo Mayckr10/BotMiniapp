@@ -254,6 +254,38 @@ input::placeholder{color:var(--muted)}
 textarea{width:100%;min-height:110px;resize:vertical;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;color:var(--text);font:15px/1.5 inherit;font-family:inherit;outline:none}
 textarea:focus{border-color:var(--a1)}
 .escolher{display:flex;align-items:center;justify-content:center;gap:8px;border:2px dashed var(--line);border-radius:var(--r);padding:20px;color:var(--muted);font-weight:700;cursor:pointer;width:100%;background:transparent}
+.interacoes{display:flex;align-items:center;gap:6px;padding:0 10px 12px;margin-top:-4px}
+.interacao{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border-radius:999px;font-size:14px;font-weight:700;color:var(--text);background:transparent}
+.interacao:active{background:var(--line)}
+.interacao.on{color:var(--a1)}
+.interacao .coracao{font-size:18px;line-height:1;display:inline-block}
+.interacao.pop .coracao{animation:pop .35s ease}
+.interacao.info{color:var(--muted);font-size:13px;font-weight:600;margin-left:auto}
+@keyframes pop{40%{transform:scale(1.45)}100%{transform:scale(1)}}
+.seg{display:flex;gap:4px;margin:0 16px 10px;padding:4px;background:var(--card);border:1px solid var(--line);border-radius:14px}
+.seg button{flex:1;height:34px;border-radius:10px;font-weight:700;font-size:13.5px;color:var(--muted)}
+.seg button.on{background:var(--text);color:var(--bg)}
+.kpis.tres{grid-template-columns:repeat(3,1fr)}
+.kpis.tres .kpi b{font-size:17px}
+.grafico{margin:0 16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 14px 10px}
+.grafico .barras{display:flex;align-items:flex-end;gap:5px;height:120px}
+.grafico .col{flex:1;border-radius:6px 6px 3px 3px;background:color-mix(in srgb,var(--a1) 22%,transparent);min-height:3px;position:relative}
+.grafico .col.hoje{background:var(--grad)}
+.grafico .eixo{display:flex;justify-content:space-between;color:var(--muted);font-size:11px;margin-top:8px}
+.grafico .topo{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.grafico .topo b{font-size:20px;letter-spacing:-.02em}
+.divisao{display:flex;height:10px;border-radius:999px;overflow:hidden;margin:12px 0 10px;background:var(--line)}
+.legendas{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted)}
+.legendas i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.ranking{margin:0 16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.ranking .linha{display:flex;align-items:center;gap:12px;padding:11px 14px;border-top:1px solid var(--line)}
+.ranking .linha:first-child{border-top:0}
+.ranking .pos{width:22px;font-weight:800;color:var(--muted);text-align:center}
+.ranking img{width:42px;height:42px;border-radius:10px;object-fit:cover}
+.ranking .txt{flex:1;min-width:0}
+.ranking .txt b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ranking .txt small{color:var(--muted);font-size:12px}
+.ranking .v{font-weight:800;font-size:14px}
 .miniaturas{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
 .miniaturas div{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--card)}
 .miniaturas img,.miniaturas video{width:100%;height:100%;object-fit:cover}
@@ -321,6 +353,7 @@ const criadora = () => D && D.sou_criadora && !COMO_FA;
 const avatarSrc = () => `/api/loja/foto?v=${encodeURIComponent(D.criadora.foto_v || "")}`;
 const reais = c => "R$ " + (c/100).toFixed(2).replace(".", ",");
 const EMOJI_MIMO = ["☕","🌹","💎","👑","🚀","🔥"];
+let PERIODO = "7d";
 let COMO_FA = false, PAINEL = null, ULTIMO = null, D = null, ABA = "inicio", FILTRO = "todos", VISTA = "feed", PLANO_SEL = null, POLL = null, TIMER = null;
 
 async function api(caminho, corpo){
@@ -435,11 +468,22 @@ function cabPost(menu){
     <div><b>${esc(D.criadora.nome)}</b><small>${menu.data}</small></div>
     ${criadora() && menu.acao ? `<button class="menu-post" data-menu="${menu.acao}">⋯</button>` : ""}</div>`;
 }
+function interacoes(alvo){
+  const c = (D.curtidas || {})[alvo] || {n:0, eu:false};
+  const m = (D.mimos || {})[alvo];
+  return `<div class="interacoes">
+    <button class="interacao ${c.eu ? "on" : ""}" data-curtir="${alvo}"><span class="coracao">${c.eu ? "❤️" : "🤍"}</span><span class="n">${c.n || ""}</span></button>
+    ${criadora()
+      ? `<span class="interacao info">💝 ${m ? `${m.qtd} mimo(s) · ${esc(m.total_fmt)}` : "nenhum mimo ainda"}</span>`
+      : `<button class="interacao" data-mimo="${alvo}"><span class="coracao">💝</span><span>Mimo</span></button>`}
+  </div>`;
+}
 function postTexto(p){
   return `<article class="post post-texto">
     ${cabPost({data: esc(relativo(p.criado_em)), acao: `post:${p.id}`})}
     ${p.texto ? `<div class="corpo">${esc(p.texto)}</div>` : ""}
     ${p.foto ? `<img class="foto-post" src="/api/loja/post_foto/${p.id}" loading="lazy" alt="">` : ""}
+    <div style="height:8px"></div>${interacoes(`post_${p.id}`)}
   </article>`;
 }
 function inicio(){
@@ -481,6 +525,7 @@ function inicio(){
         <div><b>${esc(x.titulo)}</b><small>${x.combo ? `Separados ${esc(x.separados_fmt)}` : esc(x.resumo)}</small></div>
         ${criadora() ? `<span class="preco-tag ok" data-menu="pack:${x.id}">Editar</span>` : x.comprado ? `<span class="preco-tag ok" data-ver="${x.id}">Abrir</span>` : `<span class="preco-tag" data-item="${x.id}">${esc(x.preco_fmt)}</span>`}
       </div>
+      ${interacoes(x.id)}
     </article>`).join("")}</div>`;
 }
 
@@ -662,6 +707,7 @@ function painel(){
       <div class="kpi"><small>Últimos 30 dias</small><b>${esc(R.mes.valor)}</b><span>${R.mes.vendas} venda(s)</span></div>
       <div class="kpi"><small>Assinantes VIP</small><b>${R.assinantes}</b><span>${R.vencendo} vencem em 7 dias</span></div>
     </div>
+    ${estatisticas()}
     <div class="secao-titulo"><h2>Criar</h2></div>
     <div class="acoes">
       <button class="acao" data-criar="post"><span class="ico">📝</span><div><b>Nova publicação</b><small>Texto e foto, visível para todos</small></div><span class="seta">›</span></button>
@@ -675,6 +721,61 @@ function painel(){
     <div class="gap"></div><div class="gap"></div>
     <div class="troca"><div><b>Ver a loja como fã</b><br><small class="muted">Esconde as ferramentas de criadora</small></div><span class="chave" id="como-fa"></span></div>
     <p class="dica" style="text-align:center;margin:16px">O bot continua com todos os comandos (/admin) como plano B.</p>`;
+}
+
+function estatisticas(){
+  const S = PAINEL.stats; if(!S) return "";
+  const P = S.periodos[PERIODO];
+  const max = Math.max(1, ...S.grafico.map(g => g.v));
+  const total14 = S.grafico.reduce((a, g) => a + g.v, 0);
+  const tv = S.receita_tipos_v, soma = tv.packs + tv.vip + tv.mimos;
+  const cores = {packs:"var(--a1)", vip:"#7b5cff", mimos:"var(--a2)"};
+  return `
+    <div class="secao-titulo"><h2>Estatísticas</h2></div>
+    <div class="seg">${[["hoje","Hoje"],["7d","7 dias"],["30d","30 dias"]].map(([k,t]) => `<button class="${PERIODO===k?"on":""}" data-periodo="${k}">${t}</button>`).join("")}</div>
+    <div class="kpis tres">
+      <div class="kpi"><small>Faturamento</small><b>${esc(P.faturamento)}</b><span>${P.vendas} venda(s)</span></div>
+      <div class="kpi"><small>Ticket médio</small><b>${esc(P.ticket)}</b><span>${P.cupom} com cupom</span></div>
+      <div class="kpi"><small>Conversão</small><b>${P.conversao == null ? "–" : P.conversao + "%"}</b><span>${P.compras}/${P.cliques} visitas</span></div>
+      <div class="kpi"><small>Novos fãs</small><b>${P.novos}</b><span>abriram o bot</span></div>
+      <div class="kpi"><small>Curtidas</small><b>${P.curtidas}</b><span>${S.curtidas_total} no total</span></div>
+      <div class="kpi"><small>PIX gerados</small><b>${P.pix}</b><span>${S.pendentes} em aberto</span></div>
+    </div>
+    <div class="gap"></div>
+    <div class="grafico">
+      <div class="topo"><div><small class="muted">Faturamento · 14 dias</small><br><b>${reais(total14)}</b></div><small class="muted">por dia</small></div>
+      <div class="barras">${S.grafico.map((g, i) => `<div class="col ${i === S.grafico.length - 1 ? "hoje" : ""}" style="height:${Math.max(2, Math.round(g.v / max * 100))}%" title="${g.dia}: ${reais(g.v)}"></div>`).join("")}</div>
+      <div class="eixo"><span>${S.grafico[0].dia}</span><span>${S.grafico[7].dia}</span><span>Hoje</span></div>
+    </div>
+    <div class="gap"></div>
+    <div class="grafico">
+      <div class="topo"><div><small class="muted">De onde vem o dinheiro · 30 dias</small></div></div>
+      <div class="divisao">${soma ? ["packs","vip","mimos"].map(k => `<span style="width:${tv[k] / soma * 100}%;background:${cores[k]}"></span>`).join("") : ""}</div>
+      <div class="legendas">${[["packs","Packs"],["vip","VIP"],["mimos","Mimos"]].map(([k,t]) => `<span><i style="background:${cores[k]}"></i>${t} <b style="color:var(--text)">${esc(S.receita_tipos[k])}</b></span>`).join("")}</div>
+    </div>
+    ${S.top.length ? `<div class="secao-titulo"><h2>Mais vendidos</h2><small class="muted">30 dias</small></div>
+    <div class="ranking">${S.top.map((t, i) => `<div class="linha" data-ver="${t.id}"><span class="pos">${i + 1}</span><img src="/api/loja/previa/${t.id}" alt="">
+      <div class="txt"><b>${esc(t.titulo)}</b><small>${t.vendas} venda(s) · ❤️ ${t.curtidas}</small></div><span class="v">${esc(t.total_fmt)}</span></div>`).join("")}</div>` : ""}`;
+}
+
+function mimoPara(alvo){
+  const item = D.packs.find(x => x.id === alvo) || D.combos.find(x => x.id === alvo);
+  const nome = item ? item.titulo : "esta publicação";
+  abrirFolha(`<div class="ok-grande"><div class="emoji">💝</div><h2>Mandar um mimo</h2>
+    <p class="sub">Um agrado para ${esc(D.criadora.nome)} por <b>${esc(nome)}</b>. Ela vê que foi você.</p></div>
+    <div class="mimos" style="padding:0">${D.gorjetas.map((v,i) => `<button class="mimo" data-item="gorjeta_${v}_${alvo}"><span class="emoji">${EMOJI_MIMO[i % EMOJI_MIMO.length]}</span><b>${reais(v)}</b><small>toque para enviar</small></button>`).join("")}</div>
+    <div class="campo" style="padding:12px 0 0"><input type="text" id="mimo-outro" inputmode="decimal" placeholder="Outro valor (ex: 15,00)"><button class="btn mini" data-mimo-outro="${alvo}" style="padding:0 18px">Enviar</button></div>`);
+}
+
+async function curtir(el){
+  const alvo = el.dataset.curtir;
+  const c = D.curtidas[alvo] = D.curtidas[alvo] || {n:0, eu:false};
+  c.eu = !c.eu; c.n += c.eu ? 1 : -1;
+  const pintar = () => { el.classList.toggle("on", c.eu); el.querySelector(".coracao").textContent = c.eu ? "❤️" : "🤍"; el.querySelector(".n").textContent = c.n || "" };
+  pintar(); vibrar("leve");
+  if(c.eu){ el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop") }
+  const r = await api("/api/loja/curtir", {alvo});
+  if(r.ok){ c.eu = r.curtido; c.n = r.total; pintar() }
 }
 
 function escolherCriacao(){
@@ -888,10 +989,18 @@ function fecharGaleria(){
 
 /* ── Eventos ───────────────────────────────────────────────────────────── */
 document.addEventListener("click", e => {
-  const el = e.target.closest("[data-modo],[data-menu],[data-criar],[data-msg],#ed-perfil,#ed-perfil2,#ed-msgs,#como-fa,[data-reenviar],[data-ver],[data-aba],[data-vista],[data-filtro],[data-plano],[data-item],#pagar,#assinar,#gorjeta-ok");
+  const el = e.target.closest("[data-curtir],[data-mimo],[data-mimo-outro],[data-periodo],[data-modo],[data-menu],[data-criar],[data-msg],#ed-perfil,#ed-perfil2,#ed-msgs,#como-fa,[data-reenviar],[data-ver],[data-aba],[data-vista],[data-filtro],[data-plano],[data-item],#pagar,#assinar,#gorjeta-ok");
   if(!el) return;
   if(el.dataset.modo){ COMO_FA = el.dataset.modo === "cliente"; ABA = "inicio"; vibrar("leve");
     if(!PLANO_SEL) PLANO_SEL = (D.planos.find(p => p.economia) || D.planos[0])?.id; return render() }
+  if(el.dataset.curtir){ return curtir(el) }
+  if(el.dataset.mimo){ return mimoPara(el.dataset.mimo) }
+  if(el.dataset.mimoOutro){
+    const v = Math.round(parseFloat(($("#mimo-outro").value || "").replace(/\./g,"").replace(",", ".")) * 100);
+    if(!v || v < 100){ toast("Valor mínimo: R$ 1,00"); return }
+    return pagar(`gorjeta_${v}_${el.dataset.mimoOutro}`);
+  }
+  if(el.dataset.periodo){ PERIODO = el.dataset.periodo; vibrar("leve"); $("#conteudo").innerHTML = painel(); return }
   if(el.dataset.menu){ e.stopPropagation(); return menuItem(el.dataset.menu) }
   if(el.dataset.criar){ return el.dataset.criar === "post" ? novoPost() : novoPack() }
   if(el.dataset.msg){ return editarMensagem(el.dataset.msg) }

@@ -159,7 +159,8 @@ confirmado o **bot manda o conteúdo no chat**, igual à compra pelo bot.
 Quem está em `ADMIN_IDS` escolhe ao abrir a loja se entra como **Criadora** ou **Cliente** (dá para trocar depois).
 No modo criadora o controle todo fica no Mini App, e os comandos do bot ficam só para emergência:
 
-- **Painel**: vendas de hoje, da semana e do mês, assinantes e packs.
+- **Painel**: vendas de hoje, da semana e do mês, assinantes, e estatísticas por período (faturamento, ticket médio, conversão, novos fãs, curtidas, PIX), gráfico de 14 dias, de onde vem a receita (packs, VIP, mimos) e os mais vendidos.
+- **Curtidas e mimos**: os fãs curtem e mandam mimos em cada post ou pack; a criadora vê quantos mimos e quanto cada um rendeu.
 - **Criar**: post de texto (com foto opcional) e pack pago com legenda, enviado do celular (até 30 arquivos, vídeos até 49 MB; maiores pelo `/novo_pack`). Pode postar a prévia no canal de amostras.
 - **⋯** em cada post ou pack: editar (título, preço, legenda) ou apagar. Pack apagado sai da loja, mas quem comprou continua com acesso.
 - **Perfil**: foto, nome e bio.

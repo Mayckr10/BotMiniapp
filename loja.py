@@ -135,7 +135,22 @@ async def dados(request: web.Request) -> web.Response:
         "combos": combos,
         "gorjetas": [int(v) * 100 for v in cfg.gorjeta_valores.split(",") if v.strip().isdigit()],
         "minhas": [{"id": p.id, "titulo": p.titulo} for p in await db.packs_do_cliente(user["id"])],
+        "curtidas": await db.curtidas_do_feed(user["id"]),                        # {alvo: {n, eu}}
+        "mimos": {a: {"qtd": m["qtd"], "total_fmt": fmt_reais(m["total"])}         # só a criadora vê os valores
+                  for a, m in (await db.mimos_do_feed()).items()} if user["id"] in cfg.admin_ids else {},
     })
+
+
+async def curtir(request: web.Request) -> web.Response:
+    db: Database = request.app["db"]
+    user = _usuario(request)
+    alvo = str((await request.json()).get("alvo", ""))
+    existe = await db.get_post(int(alvo[5:])) if alvo.startswith("post_") and alvo[5:].isdigit() \
+        else await db.get_item(alvo) if alvo.startswith(("pack_", "combo_")) else None
+    if not existe:
+        return web.json_response({"ok": False}, status=404)
+    curtido, total = await db.curtir(user["id"], alvo)
+    return web.json_response({"ok": True, "curtido": curtido, "total": total})
 
 
 async def previa(request: web.Request) -> web.Response:
@@ -242,6 +257,7 @@ def registrar_rotas(app: web.Application) -> None:
     app.router.add_get("/api/loja/previa/{item_id}", previa)
     app.router.add_get("/api/loja/foto", foto)
     app.router.add_post("/api/loja/idade", idade)
+    app.router.add_post("/api/loja/curtir", curtir)
     app.router.add_post("/api/loja/comprar", comprar)
     app.router.add_get("/api/loja/pedido/{pix_id}", pedido)
     app.router.add_post("/api/loja/reenviar", reenviar)
