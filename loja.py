@@ -30,6 +30,7 @@ from aiohttp import web
 import galeria
 from assinaturas import data_local
 from config import Config
+import mensagens
 from database import Database, Pack, fmt_reais
 from payments import MockPixGateway
 from vendas import criar_pedido
@@ -133,7 +134,7 @@ async def dados(request: web.Request) -> web.Response:
                     "economia": economia(p)} for p in planos],
         "packs": packs,
         "combos": combos,
-        "gorjetas": [int(v) * 100 for v in cfg.gorjeta_valores.split(",") if v.strip().isdigit()],
+        "gorjetas": [v * 100 for v in await mensagens.valores_gorjeta()],
         "minhas": [{"id": p.id, "titulo": p.titulo} for p in await db.packs_do_cliente(user["id"])],
         "fila": await _fila(db) if user["id"] in cfg.admin_ids else None,     # aguardando revisão da criadora
         "revisao": await db.get_ajuste("revisao", "0") == "1" if user["id"] in cfg.admin_ids else False,

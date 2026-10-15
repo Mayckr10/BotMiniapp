@@ -164,6 +164,7 @@ No modo criadora o controle todo fica no Mini App, e os comandos do bot ficam s�
 - **Criar**: post de texto (com foto opcional) e pack pago com legenda, enviado do celular (até 30 arquivos, vídeos até 49 MB; maiores pelo `/novo_pack`). Pode postar a prévia no canal de amostras.
 - **⋯** em cada post ou pack: editar (título, preço, legenda) ou apagar. Pack apagado sai da loja, mas quem comprou continua com acesso.
 - **Perfil**: foto, nome e bio.
+- **Aba Ajustes** (só para a criadora, que não vê as abas de compra): perfil, mensagens do bot, planos do VIP (nome, duração e preço; criar e remover), valores dos mimos, cupons de desconto (% ou R$, limite de usos e validade), revisão antes de publicar, prévia no canal por padrão e "ver a loja como fã".
 - **Fila de revisão** (opcional, em Ajustes): com "Revisar antes de publicar" ligado, posts e packs novos ficam numa fila. Nada aparece para os fãs nem vai para o canal até a criadora tocar em Publicar (dá para ver como o fã vai ver, editar ou descartar).
 - **Editor de fotos**: antes de publicar, o ✎ em cada foto abre cortar (livre, 1:1, 4:5, 9:16, 16:9), girar, espelhar, brilho, contraste, cor e filtros. A foto de perfil abre o editor com recorte redondo.
 - **Mensagens do bot**: boas-vindas do /start (com foto), mensagem depois da compra e boas-vindas do VIP. Marcadores: `{nome}`, `{criadora}`, `{item}`.

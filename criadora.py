@@ -27,6 +27,7 @@ Rotas (todas exigem initData de um admin):
 """
 import asyncio
 import logging
+import unicodedata
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from io import BytesIO
@@ -40,6 +41,7 @@ import mensagens
 from admin_handlers import parse_preco, postar_no_canal
 from blur_service import _capa_video_generica, _frame_ffmpeg, aplicar_blur
 from config import Config
+from assinaturas import data_local
 from database import Database, agora, fmt_reais
 
 log = logging.getLogger(__name__)
@@ -358,8 +360,101 @@ async def _revisao(db: Database) -> bool:
 async def ajustes(request: web.Request) -> web.Response:
     _admin(request)
     corpo = await request.json()
+    db: Database = request.app["db"]
     if "revisao" in corpo:
-        await request.app["db"].set_ajuste("revisao", "1" if corpo["revisao"] else "0")
+        await db.set_ajuste("revisao", "1" if corpo["revisao"] else "0")
+    if "canal_padrao" in corpo:
+        await db.set_ajuste("canal_padrao", "1" if corpo["canal_padrao"] else "0")
+    if "gorjetas" in corpo:
+        valores = sorted({int(v) for v in str(corpo["gorjetas"]).replace(";", ",").split(",")
+                          if v.strip().isdigit() and 1 <= int(v) <= 10000})
+        if not valores:
+            return _erro("Informe pelo menos um valor, ex: 10, 25, 50, 100")
+        await db.set_ajuste("gorjetas", ",".join(map(str, valores[:8])))
+    return _ok()
+
+
+async def config(request: web.Request) -> web.Response:
+    """Tudo que a aba Ajustes mostra: planos, cupons, mimos e preferências."""
+    _admin(request)
+    db: Database = request.app["db"]
+    cupons = []
+    for c in await db.listar_cupons():
+        cupons.append({"codigo": c.codigo, "descricao": c.descricao, "usos": c.usos, "usos_max": c.usos_max,
+                       "expira": data_local(c.expira_em, request.app["cfg"]) if c.expira_em else None})
+    return web.json_response({
+        "planos": [{"id": p.id, "nome": p.nome, "dias": p.dias, "preco": p.preco, "preco_fmt": p.preco_fmt}
+                   for p in await db.listar_planos()],
+        "cupons": cupons,
+        "gorjetas": await mensagens.valores_gorjeta(),
+        "revisao": await db.get_ajuste("revisao", "0") == "1",
+        "canal_padrao": await db.get_ajuste("canal_padrao", "1") == "1",
+        "canal": bool(request.app["cfg"].channel_id),
+    })
+
+
+async def salvar_plano(request: web.Request) -> web.Response:
+    _admin(request)
+    db: Database = request.app["db"]
+    corpo = await request.json()
+    nome = str(corpo.get("nome", "")).strip()[:40]
+    try:
+        dias = int(corpo.get("dias", 0))
+    except (TypeError, ValueError):
+        dias = 0
+    preco = parse_preco(str(corpo.get("preco", "")))
+    if not nome:
+        return _erro("Dê um nome ao plano (ex: Mensal).")
+    if not 1 <= dias <= 3650:
+        return _erro("Duração inválida: use de 1 a 3650 dias.")
+    if not preco:
+        return _erro("Preço inválido. Use algo como 29,90.")
+    if corpo.get("id"):
+        if not await db.atualizar_plano(int(corpo["id"]), nome, dias, preco):
+            return _erro("Plano não encontrado.", 404)
+        return _ok(id=int(corpo["id"]))
+    return _ok(id=await db.salvar_plano(nome, dias, preco))
+
+
+async def apagar_plano(request: web.Request) -> web.Response:
+    _admin(request)
+    db: Database = request.app["db"]
+    if len(await db.listar_planos()) <= 1:
+        return _erro("Mantenha pelo menos um plano ativo.")
+    await db.desativar_plano(int(request.match_info["id"]))
+    return _ok()
+
+
+async def salvar_cupom(request: web.Request) -> web.Response:
+    _admin(request)
+    db: Database = request.app["db"]
+    corpo = await request.json()
+    sem_acento = unicodedata.normalize("NFKD", str(corpo.get("codigo", ""))).encode("ascii", "ignore").decode()
+    codigo = "".join(ch for ch in sem_acento.upper() if ch.isalnum())[:20]
+    tipo = "fixo" if corpo.get("tipo") == "fixo" else "pct"
+    if len(codigo) < 3:
+        return _erro("O código precisa de pelo menos 3 letras ou números.")
+    if tipo == "pct":
+        try:
+            valor = int(str(corpo.get("valor", "")).replace("%", "").strip())
+        except ValueError:
+            valor = 0
+        if not 1 <= valor <= 90:
+            return _erro("Desconto em % deve ser de 1 a 90.")
+    else:
+        valor = parse_preco(str(corpo.get("valor", "")))
+        if not valor:
+            return _erro("Valor do desconto inválido. Use algo como 5,00.")
+    usos = str(corpo.get("usos_max", "")).strip()
+    dias = str(corpo.get("dias", "")).strip()
+    await db.criar_cupom(codigo, tipo, valor, usos_max=int(usos) if usos.isdigit() and int(usos) > 0 else None,
+                         expira_em=agora() + timedelta(days=int(dias)) if dias.isdigit() and int(dias) > 0 else None)
+    return _ok(codigo=codigo)
+
+
+async def apagar_cupom(request: web.Request) -> web.Response:
+    _admin(request)
+    await request.app["db"].desativar_cupom(request.match_info["codigo"])
     return _ok()
 
 
@@ -395,6 +490,11 @@ async def aprovar(request: web.Request) -> web.Response:
 
 def registrar_rotas(app: web.Application) -> None:
     app.router.add_post("/api/criadora/ajustes", ajustes)
+    app.router.add_get("/api/criadora/config", config)
+    app.router.add_post("/api/criadora/plano", salvar_plano)
+    app.router.add_post("/api/criadora/plano/{id:\\d+}/apagar", apagar_plano)
+    app.router.add_post("/api/criadora/cupom", salvar_cupom)
+    app.router.add_post("/api/criadora/cupom/{codigo}/apagar", apagar_cupom)
     app.router.add_post("/api/criadora/fila/{tipo:post|pack}/{id}/{acao:aprovar|descartar}", aprovar)
     app.router.add_get("/api/criadora/painel", painel)
     app.router.add_post("/api/criadora/perfil", perfil)

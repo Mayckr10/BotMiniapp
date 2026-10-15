@@ -452,6 +452,12 @@ class Database:
         await self.conn.commit()
         return plano_id
 
+    async def atualizar_plano(self, plano_id: int, nome: str, dias: int, preco: int) -> bool:
+        cur = await self.conn.execute("UPDATE planos SET nome = ?, dias = ?, preco = ? WHERE id = ? AND ativo = 1",
+                                      (nome, dias, preco, plano_id))
+        await self.conn.commit()
+        return cur.rowcount == 1
+
     async def desativar_plano(self, plano_id: int) -> bool:
         cur = await self.conn.execute("UPDATE planos SET ativo = 0 WHERE id = ?", (plano_id,))
         await self.conn.commit()

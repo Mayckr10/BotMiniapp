@@ -482,6 +482,27 @@ img.fade.ok{opacity:1}
 .barra nav .bolinha{position:absolute;top:4px;right:calc(50% - 22px);min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--a1);color:#fff;font-size:10.5px;font-weight:800;display:grid;place-items:center;box-shadow:0 0 0 2px var(--bg2);animation:pop .4s cubic-bezier(.2,1.4,.4,1)}
 .previa-fa{pointer-events:none;margin:6px -2px 10px}
 .previa-fa .post{box-shadow:none}
+
+/* ── Aba Ajustes ─────────────────────────────────────────────────────── */
+.grupo{margin:0 16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.grupo .linha-c{display:flex;align-items:center;gap:12px;padding:13px 14px;border-top:1px solid var(--line);width:100%;text-align:left;transition:background .2s}
+.grupo .linha-c:first-child{border-top:0}
+.grupo .linha-c:active{background:color-mix(in srgb,var(--text) 6%,transparent)}
+.grupo .linha-c .ico{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;font-size:17px;flex:none;background:color-mix(in srgb,var(--a1) 13%,transparent)}
+.grupo .linha-c .txt{flex:1;min-width:0}
+.grupo .linha-c b{display:block;font-size:14.5px}
+.grupo .linha-c small{display:block;color:var(--muted);font-size:12.5px}
+.grupo .linha-c .v{font-weight:800;font-size:14.5px;white-space:nowrap}
+.grupo .linha-c .seta{color:var(--muted);font-size:18px}
+.grupo .linha-c.add{color:var(--a1);font-weight:700;justify-content:center}
+.grupo .vazio-c{padding:14px;color:var(--muted);font-size:13.5px;text-align:center}
+.legenda-grupo{padding:8px 20px 0;color:var(--muted);font-size:12.5px}
+.chips-valor{display:flex;flex-wrap:wrap;gap:6px}
+.chips-valor span{background:color-mix(in srgb,var(--a1) 12%,transparent);color:var(--text);border-radius:999px;padding:4px 10px;font-size:12.5px;font-weight:700}
+.dupla{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opcoes{display:flex;gap:6px;padding:4px;background:var(--card);border:1px solid var(--line);border-radius:14px}
+.opcoes button{flex:1;height:38px;border-radius:10px;font-weight:700;color:var(--muted);transition:.25s}
+.opcoes button.on{background:var(--text);color:var(--bg)}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}}
 </style>
 </head>
@@ -507,6 +528,7 @@ const criadora = () => D && D.sou_criadora && !COMO_FA && !PREVIA;
 const avatarSrc = () => `/api/loja/foto?v=${encodeURIComponent(D.criadora.foto_v || "")}`;
 const reais = c => "R$ " + (c/100).toFixed(2).replace(".", ",");
 const EMOJI_MIMO = ["☕","🌹","💎","👑","🚀","🔥"];
+let CONFIG = null;
 let PERIODO = "7d", ANIMAR = true, DIR = "", SALTA = false, PILULA = null, TOQUE = {};
 let COMO_FA = false, PAINEL = null, ULTIMO = null, D = null, ABA = "inicio", FILTRO = "todos", VISTA = "feed", PLANO_SEL = null, POLL = null, TIMER = null;
 
@@ -645,7 +667,9 @@ function render(){
       </div>` : ""}
     </header>
     <section id="conteudo">${aba()}</section>`;
-  const abas = criadora() ? [["inicio","🏠","Início"],["painel","📊","Painel"],["vip","⭐","VIP"],["gorjeta","💝","Mimos"]]
+  if(criadora() && !["inicio","painel","config"].includes(ABA)) ABA = "inicio";
+  if(!criadora() && ["painel","config"].includes(ABA)) ABA = "inicio";
+  const abas = criadora() ? [["inicio","🏠","Início"],["painel","📊","Painel"],["config","⚙️","Ajustes"]]
                           : [["inicio","🏠","Início"],["vip","⭐","VIP"],["minhas","🗂️","Minhas"],["gorjeta","💝","Mimos"]];
   const idx = Math.max(0, abas.findIndex(a => a[0] === ABA));
   $("#barra").innerHTML = `<nav>
@@ -666,6 +690,7 @@ function render(){
   $("#fab")?.remove();
   if(criadora() && ABA === "inicio"){ const f = document.createElement("button"); f.className = "fab"; f.id = "fab"; f.textContent = "+"; f.onclick = () => novaPublicacao(false); document.body.appendChild(f) }
   if(criadora() && ABA === "painel" && !PAINEL) carregarPainel();
+  if(criadora() && ABA === "config" && !CONFIG) carregarConfig();
   $("#volta-criadora")?.remove();
   if(D.sou_criadora && COMO_FA){
     const v = document.createElement("button"); v.id = "volta-criadora"; v.className = "selo-criadora"; v.dataset.volta = "1";
@@ -699,6 +724,7 @@ function vipAtivo(){
 function aba(){
   if(ABA === "inicio") return inicio();
   if(ABA === "painel") return painel();
+  if(ABA === "config") return config();
   if(ABA === "vip") return vip();
   if(ABA === "minhas") return minhas();
   return mimos();
@@ -978,16 +1004,8 @@ function painel(){
     <div class="acoes">
       <button class="acao" data-criar="post"><span class="ico">✨</span><div><b>Nova publicação</b><small>Post grátis ou pack pago, escolhe na chave</small></div><span class="seta">›</span></button>
     </div>
-    <div class="secao-titulo"><h2>Ajustes</h2></div>
-    <div class="acoes lista-msg">
-      <button class="acao" id="ed-perfil2"><span class="ico">👤</span><div><b>Perfil</b><small>Foto, nome e bio</small></div><span class="seta">›</span></button>
-      <button class="acao" id="ed-msgs"><span class="ico">💬</span><div><b>Mensagens do bot</b><small>Boas-vindas, pós-compra e VIP</small></div><span class="seta">›</span></button>
-    </div>
-    <div class="gap"></div>
-    <div class="troca"><div><b>📝 Revisar antes de publicar</b><br><small class="muted">Tudo entra numa fila e só aparece para os fãs quando você aprovar</small></div><span class="chave ${D.revisao ? "on" : ""}" id="rev-chave"></span></div>
-    <div class="gap"></div><div class="gap"></div>
-    <div class="troca"><div><b>Ver a loja como fã</b><br><small class="muted">Esconde as ferramentas de criadora</small></div><span class="chave" id="como-fa"></span></div>
-    <p class="dica" style="text-align:center;margin:16px">O bot continua com todos os comandos (/admin) como plano B.</p>`;
+    <div class="acoes" style="margin-top:10px"><button class="acao" data-aba="config"><span class="ico">⚙️</span><div><b>Ajustes</b><small>Perfil, VIP, mimos, cupons, mensagens e publicação</small></div><span class="seta">›</span></button></div>
+    <div class="gap"></div>`;
 }
 
 function estatisticas(){
@@ -1286,6 +1304,112 @@ async function acaoFila(ref, acao){
   feito();
 }
 
+
+/* ── Aba Ajustes (só criadora) ───────────────────────────────────────── */
+async function carregarConfig(){
+  const r = await api("/api/criadora/config");
+  if(r.ok){ CONFIG = r; D.revisao = r.revisao; if(ABA === "config"){ const c = $("#conteudo"); c.innerHTML = config(); animarEntrada(c) } }
+}
+function config(){
+  if(!CONFIG) return `<div class="gap"></div><div class="pad"><div class="sk" style="height:120px"></div><div class="gap"></div><div class="sk" style="height:180px"></div></div>`;
+  const C = CONFIG;
+  const linha = (attrs, ico, titulo, sub, dir = `<span class="seta">›</span>`) =>
+    `<button class="linha-c" ${attrs}><span class="ico">${ico}</span><span class="txt"><b>${titulo}</b>${sub ? `<small>${sub}</small>` : ""}</span>${dir}</button>`;
+  return `
+    <div class="secao-titulo"><h2>Perfil</h2></div>
+    <div class="grupo">
+      ${linha('id="ed-perfil2"', "👤", "Foto, nome e bio", esc(D.criadora.nome))}
+      ${linha('id="ed-msgs"', "💬", "Mensagens do bot", "Boas-vindas, pós-compra e VIP")}
+    </div>
+
+    <div class="secao-titulo"><h2>Assinatura VIP</h2><small class="muted">${C.planos.length} plano(s)</small></div>
+    <div class="grupo">
+      ${C.planos.map(p => linha(`data-plano-ed="${p.id}"`, "⭐", esc(p.nome), `${p.dias} dias · ${reais(Math.round(p.preco / p.dias * 30))}/mês`, `<span class="v">${esc(p.preco_fmt)}</span><span class="seta">›</span>`)).join("")}
+      <button class="linha-c add" data-plano-ed="novo">＋ Novo plano</button>
+    </div>
+    <p class="legenda-grupo">Mudar o preço vale para as próximas compras. Quem já assinou continua até o fim do período.</p>
+
+    <div class="secao-titulo"><h2>Mimos</h2></div>
+    <div class="grupo">
+      ${linha('id="ed-mimos"', "💝", "Valores sugeridos", `<span class="chips-valor" style="margin-top:6px">${C.gorjetas.map(v => `<span>R$ ${v}</span>`).join("")}</span>`)}
+    </div>
+
+    <div class="secao-titulo"><h2>Cupons de desconto</h2><small class="muted">${C.cupons.length} ativo(s)</small></div>
+    <div class="grupo">
+      ${C.cupons.length ? C.cupons.map(c => linha(`data-cupom-ed="${esc(c.codigo)}"`, "🏷️", esc(c.codigo), `${esc(c.descricao)} · ${c.usos}${c.usos_max ? `/${c.usos_max}` : ""} uso(s)${c.expira ? ` · até ${esc(c.expira)}` : ""}`, `<span class="seta perigo">✕</span>`)).join("") : `<div class="vazio-c">Nenhum cupom ativo.</div>`}
+      <button class="linha-c add" id="cupom-novo">＋ Novo cupom</button>
+    </div>
+
+    <div class="secao-titulo"><h2>Publicação</h2></div>
+    <div class="grupo">
+      <div class="linha-c"><span class="ico">📝</span><span class="txt"><b>Revisar antes de publicar</b><small>Tudo entra numa fila e só aparece quando você aprovar</small></span><span class="chave ${C.revisao ? "on" : ""}" id="rev-chave"></span></div>
+      ${C.canal ? `<div class="linha-c"><span class="ico">📣</span><span class="txt"><b>Postar prévia no canal</b><small>Já vem ligado ao criar um pack</small></span><span class="chave ${C.canal_padrao ? "on" : ""}" id="canal-chave"></span></div>` : ""}
+    </div>
+
+    <div class="secao-titulo"><h2>Visualização</h2></div>
+    <div class="grupo">
+      <div class="linha-c"><span class="ico">👀</span><span class="txt"><b>Ver a loja como fã</b><small>Esconde as ferramentas de criadora</small></span><span class="chave" id="como-fa"></span></div>
+    </div>
+    <p class="dica" style="text-align:center;margin:18px 16px">O bot continua com todos os comandos (/admin) como plano B.</p>`;
+}
+const recarregarConfig = async () => { CONFIG = null; await carregarConfig() };
+function editarPlano(id){
+  const p = CONFIG.planos.find(x => String(x.id) === String(id));
+  abrirFolha(`<h2>${p ? "Editar plano" : "Novo plano"}</h2><p class="sub">Os fãs veem o nome, a duração e o preço na aba VIP.</p>
+    <span class="rotulo">Nome</span><input type="text" id="pl-nome" maxlength="40" placeholder="Ex: Mensal" value="${p ? esc(p.nome) : ""}">
+    <div class="dupla">
+      <div><span class="rotulo">Duração (dias)</span><input type="text" id="pl-dias" inputmode="numeric" placeholder="30" value="${p ? p.dias : ""}"></div>
+      <div><span class="rotulo">Preço</span><input type="text" id="pl-preco" inputmode="decimal" placeholder="29,90" value="${p ? esc(p.preco_fmt.replace("R$ ", "")) : ""}"></div>
+    </div>
+    <p class="dica" id="pl-mes"></p>
+    <div class="gap"></div><button class="btn" id="pl-salvar">Salvar</button>
+    ${p ? `<div class="gap"></div><button class="btn fantasma perigo" id="pl-apagar">Remover plano</button>` : ""}`);
+  const mes = () => { const d = +$("#pl-dias").value, v = Math.round(parseFloat(($("#pl-preco").value || "").replace(/\./g, "").replace(",", ".")) * 100);
+    $("#pl-mes").textContent = d > 0 && v > 0 ? `Equivale a ${reais(Math.round(v / d * 30))} por mês.` : "" };
+  $("#pl-dias").oninput = $("#pl-preco").oninput = mes; mes();
+  $("#pl-salvar").onclick = async () => {
+    const r = await api("/api/criadora/plano", {id: p?.id, nome: $("#pl-nome").value, dias: $("#pl-dias").value, preco: $("#pl-preco").value});
+    if(!r.ok) return toast(r.erro || "Não consegui salvar");
+    vibrar("success"); toast("Plano salvo ✓"); fecharFolha(true); await recarregarConfig(); carregar();
+  };
+  p && ($("#pl-apagar").onclick = () => confirmar(`Remover o plano ${p.nome}? Quem já assinou continua com acesso.`, async () => {
+    const r = await api(`/api/criadora/plano/${p.id}/apagar`, {}); if(!r.ok) return toast(r.erro || "Não consegui remover");
+    toast("Plano removido"); fecharFolha(true); await recarregarConfig(); carregar() }));
+}
+function editarMimos(){
+  abrirFolha(`<h2>Valores dos mimos</h2><p class="sub">Os botões que os fãs veem para mandar um mimo (em reais). Eles também podem digitar outro valor.</p>
+    <input type="text" id="mi-valores" inputmode="numeric" value="${CONFIG.gorjetas.join(", ")}" placeholder="10, 25, 50, 100">
+    <div class="gap"></div><div class="chips-valor" id="mi-prev"></div>
+    <div class="gap"></div><button class="btn" id="mi-salvar">Salvar</button>`);
+  const prev = () => { $("#mi-prev").innerHTML = ($("#mi-valores").value.match(/\d+/g) || []).slice(0, 8).map(v => `<span>R$ ${+v}</span>`).join("") };
+  $("#mi-valores").oninput = prev; prev();
+  $("#mi-salvar").onclick = async () => {
+    const r = await api("/api/criadora/ajustes", {gorjetas: ($("#mi-valores").value.match(/\d+/g) || []).join(",")});
+    if(!r.ok) return toast(r.erro || "Não consegui salvar");
+    vibrar("success"); toast("Valores salvos ✓"); fecharFolha(true); await recarregarConfig(); carregar();
+  };
+}
+function novoCupom(){
+  let tipo = "pct";
+  abrirFolha(`<h2>Novo cupom</h2><p class="sub">O fã digita o código na hora de pagar.</p>
+    <span class="rotulo">Código</span><input type="text" id="cp-codigo" maxlength="20" placeholder="Ex: VERAO20" autocapitalize="characters">
+    <span class="rotulo">Tipo de desconto</span><div class="opcoes"><button data-tp="pct" class="on">% Porcentagem</button><button data-tp="fixo">R$ Valor fixo</button></div>
+    <span class="rotulo" id="cp-rot">Desconto (%)</span><input type="text" id="cp-valor" inputmode="decimal" placeholder="20">
+    <div class="dupla">
+      <div><span class="rotulo">Limite de usos</span><input type="text" id="cp-usos" inputmode="numeric" placeholder="Sem limite"></div>
+      <div><span class="rotulo">Validade (dias)</span><input type="text" id="cp-dias" inputmode="numeric" placeholder="Sem validade"></div>
+    </div>
+    <div class="gap"></div><button class="btn" id="cp-salvar">Criar cupom</button>`);
+  $(".folha .opcoes").onclick = e => { const b = e.target.closest("[data-tp]"); if(!b) return; tipo = b.dataset.tp;
+    document.querySelectorAll(".folha [data-tp]").forEach(x => x.classList.toggle("on", x === b));
+    $("#cp-rot").textContent = tipo === "pct" ? "Desconto (%)" : "Desconto (R$)"; $("#cp-valor").placeholder = tipo === "pct" ? "20" : "5,00"; vibrar("leve") };
+  $("#cp-salvar").onclick = async () => {
+    const r = await api("/api/criadora/cupom", {codigo: $("#cp-codigo").value, tipo, valor: $("#cp-valor").value, usos_max: $("#cp-usos").value, dias: $("#cp-dias").value});
+    if(!r.ok) return toast(r.erro || "Não consegui criar");
+    vibrar("success"); toast(`Cupom ${r.codigo} criado ✓`); fecharFolha(true); recarregarConfig();
+  };
+}
+
 function curtirDuplo(alvoEl){
   const alvo = alvoEl.dataset.duplo;
   if(!SEM_MOVIMENTO){ const h = document.createElement("span"); h.className = "coracao-grande"; h.textContent = "❤️"; alvoEl.appendChild(h); setTimeout(() => h.remove(), 1000) }
@@ -1338,7 +1462,7 @@ function novaPublicacao(pago){
     <div id="pub-pagos">
       <span class="rotulo">Título</span><input type="text" id="pub-titulo" maxlength="80" placeholder="Ex: Ensaio de verão">
       <span class="rotulo">Preço</span><input type="text" id="pub-preco" inputmode="decimal" placeholder="29,90">
-      ${canal ? `<div class="troca" style="margin:14px 0 0"><div><b>Postar prévia no canal</b><br><small class="muted">Canal de amostras, com botão de compra</small></div><span class="chave on" id="pub-canal"></span></div>` : ""}
+      ${canal ? `<div class="troca" style="margin:14px 0 0"><div><b>Postar prévia no canal</b><br><small class="muted">Canal de amostras, com botão de compra</small></div><span class="chave ${CONFIG && !CONFIG.canal_padrao ? "" : "on"}" id="pub-canal"></span></div>` : ""}
     </div>
     <div id="pub-prog" class="ocultar"><div class="progresso"><i id="pub-barra"></i></div><p class="dica" id="pub-etapa">Enviando…</p></div>
     <div class="gap"></div><button class="btn" id="pub-publicar"></button>`);
@@ -1524,14 +1648,22 @@ document.addEventListener("click", e => {
     TOQUE = {el: duplo, t: agora, timer: duplo.dataset.item ? setTimeout(() => { TOQUE = {}; detalhes(duplo.dataset.item) }, 260) : null};
     return;
   }
-  const el = e.target.closest("[data-fila],[data-previa],#rev-chave,[data-volta],[data-mais],[data-col],[data-curtir],[data-mimo],[data-mimo-outro],[data-periodo],[data-modo],[data-menu],[data-criar],[data-msg],#ed-perfil,#ed-perfil2,#ed-msgs,#como-fa,[data-reenviar],[data-ver],[data-aba],[data-vista],[data-filtro],[data-plano],[data-item],#pagar,#assinar,#gorjeta-ok");
+  const el = e.target.closest("[data-plano-ed],[data-cupom-ed],#cupom-novo,#ed-mimos,#canal-chave,[data-fila],[data-previa],#rev-chave,[data-volta],[data-mais],[data-col],[data-curtir],[data-mimo],[data-mimo-outro],[data-periodo],[data-modo],[data-menu],[data-criar],[data-msg],#ed-perfil,#ed-perfil2,#ed-msgs,#como-fa,[data-reenviar],[data-ver],[data-aba],[data-vista],[data-filtro],[data-plano],[data-item],#pagar,#assinar,#gorjeta-ok");
   if(!el) return;
   if(el.dataset.modo){ COMO_FA = el.dataset.modo === "cliente"; ABA = "inicio"; vibrar("leve");
     if(!PLANO_SEL) PLANO_SEL = (D.planos.find(p => p.economia) || D.planos[0])?.id; return render() }
+  if(el.dataset.planoEd){ return editarPlano(el.dataset.planoEd) }
+  if(el.id === "ed-mimos"){ return editarMimos() }
+  if(el.id === "cupom-novo"){ return novoCupom() }
+  if(el.dataset.cupomEd){ const cod = el.dataset.cupomEd; return confirmar(`Desativar o cupom ${cod}?`, async () => { await api(`/api/criadora/cupom/${encodeURIComponent(cod)}/apagar`, {}); toast("Cupom desativado"); recarregarConfig() }) }
+  if(el.id === "canal-chave"){
+    CONFIG.canal_padrao = !CONFIG.canal_padrao; el.classList.toggle("on", CONFIG.canal_padrao); vibrar("leve");
+    api("/api/criadora/ajustes", {canal_padrao: CONFIG.canal_padrao}); return;
+  }
   if(el.dataset.fila){ const [t, id, acao] = el.dataset.fila.split(":"); return acaoFila(`${t}:${id}`, acao) }
   if(el.dataset.previa){ return previaFa(el.dataset.previa) }
   if(el.id === "rev-chave"){
-    D.revisao = !D.revisao; el.classList.toggle("on", D.revisao); vibrar("leve");
+    D.revisao = !D.revisao; if(CONFIG) CONFIG.revisao = D.revisao; el.classList.toggle("on", D.revisao); vibrar("leve");
     api("/api/criadora/ajustes", {revisao: D.revisao}).then(r => r.ok
       ? toast(D.revisao ? "Revisão ligada: novas publicações vão para a fila" : "Revisão desligada: publica na hora")
       : toast("Não consegui salvar"));

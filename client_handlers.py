@@ -281,7 +281,7 @@ async def gorjeta_cmd(msg: Message, cfg: Config):
 
 
 async def mostrar_gorjetas(msg: Message, cfg: Config) -> None:
-    valores = [int(v) for v in cfg.gorjeta_valores.split(",") if v.strip().isdigit()]
+    valores = await mensagens.valores_gorjeta()
     botoes = [InlineKeyboardButton(text=f"R$ {v}", callback_data=f"comprar:gorjeta_{v * 100}") for v in valores]
     linhas = [botoes[i:i + 2] for i in range(0, len(botoes), 2)]
     linhas.append([InlineKeyboardButton(text="✏️ Outro valor", callback_data="gorjeta:outro")])

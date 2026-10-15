@@ -59,6 +59,12 @@ async def _nome_do_fa(user_id: int) -> str:
     return ((row["nome"] if row else "") or "").split(" ")[0] or "amor"
 
 
+async def valores_gorjeta() -> list[int]:
+    """Valores sugeridos de mimo, em reais (editáveis no painel; padrão vem do .env)."""
+    texto = (await _db.get_ajuste("gorjetas") if _db else None) or (_cfg.gorjeta_valores if _cfg else "10,25,50,100")
+    return [int(v) for v in texto.split(",") if v.strip().isdigit() and int(v) >= 1][:8]
+
+
 async def para_fa(chave: str, user_id: int, item: str = "") -> str:
     if _db is None:
         return montar(PADRAO[chave], nome="", criadora="", item=item)
