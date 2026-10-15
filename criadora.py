@@ -34,7 +34,7 @@ from io import BytesIO
 from aiogram import Bot
 from aiogram.types import BufferedInputFile
 from aiohttp import web
-from PIL import Image
+from PIL import Image, ImageOps
 
 import mensagens
 from admin_handlers import parse_preco, postar_no_canal
@@ -82,7 +82,7 @@ async def _ler_multipart(request: web.Request) -> tuple[dict, list[tuple[str, st
 
 def _ajustar_foto(dados: bytes) -> bytes:
     """Converte HEIC/PNG/etc. em JPEG e reduz se passar do limite do Telegram."""
-    img = Image.open(BytesIO(dados))
+    img = ImageOps.exif_transpose(Image.open(BytesIO(dados)))     # foto do celular: aplica a rotação do EXIF
     img = img.convert("RGB")
     lado = 4096
     while True:

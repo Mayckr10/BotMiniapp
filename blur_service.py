@@ -15,7 +15,7 @@ from io import BytesIO
 from pathlib import Path
 
 from aiogram import Bot
-from PIL import Image, ImageDraw, ImageFilter, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 
 MAX_LADO = 1280          # redimensiona antes de embaçar (mais rápido e blur mais uniforme)
 TEXTO_SELO = "CONTEUDO BLOQUEADO"   # sem acento: a fonte padrão do Pillow não tem todos os glifos
@@ -41,7 +41,7 @@ def _selo(img: Image.Image, texto: str) -> Image.Image:
 
 def aplicar_blur(dados: bytes, radius: int = 20, selo: str | None = TEXTO_SELO) -> BytesIO:
     """Função síncrona e pura: bytes da imagem -> JPEG embaçado em memória."""
-    img = Image.open(BytesIO(dados))
+    img = ImageOps.exif_transpose(Image.open(BytesIO(dados)))     # foto do celular: aplica a rotação do EXIF
     img = img.convert("RGB")
     img.thumbnail((MAX_LADO, MAX_LADO))
     if radius:
