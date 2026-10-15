@@ -126,7 +126,7 @@ def comprimir_video(origem: Path, limite: int) -> bytes | None:
             escala = (f"scale='if(gt(iw,ih),min({lado},iw),-2)':'if(gt(iw,ih),-2,min({lado},ih))'")
             proc = subprocess.run(
                 ["ffmpeg", "-y", "-loglevel", "error", "-i", str(origem), "-vf", escala,
-                 "-c:v", "libx264", "-preset", "veryfast", "-b:v", str(video), "-maxrate", str(int(video * 1.3)),
+                 "-c:v", "libx264", "-preset", "superfast", "-b:v", str(video), "-maxrate", str(int(video * 1.3)),
                  "-bufsize", str(video * 2), "-pix_fmt", "yuv420p",
                  "-c:a", "aac", "-b:a", str(audio), "-ac", "2", "-movflags", "+faststart", str(saida)],
                 capture_output=True, timeout=1500,

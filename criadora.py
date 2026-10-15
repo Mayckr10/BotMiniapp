@@ -26,6 +26,7 @@ Rotas (todas exigem initData de um admin):
   GET  /api/loja/post_foto/{id}        (público) foto de uma publicação de texto
 """
 import asyncio
+import html
 import json
 import logging
 import tempfile
@@ -101,6 +102,46 @@ async def _ler_multipart(request: web.Request, em_disco: bool = False) -> tuple[
         else:
             campos[parte.name] = (await parte.text()).strip()
     return campos, arquivos
+
+
+_TAREFAS: set[asyncio.Task] = set()
+
+
+def _limpar(arquivos: list) -> None:
+    for _, _, d in arquivos:
+        if isinstance(d, Path):
+            d.unlink(missing_ok=True)
+
+
+def _em_segundo_plano(request: web.Request, user: dict, arquivos: list, rotulo: str, trabalho) -> web.Response:
+    """Vídeo grande: responde na hora e comprime/publica em segundo plano. Avisa a criadora no chat do bot."""
+    bot: Bot = request.app["bot"]
+
+    async def rodar():
+        try:
+            resp = await trabalho()
+            r = json.loads(resp.body)
+            if r.get("ok"):
+                onde = (f"agendado para {r['agendado']} 🗓️" if r.get("agendado") else
+                        "na fila de revisão 📝" if r.get("fila") else
+                        "no ar e postado no canal ✅" if r.get("no_canal") else "no ar ✅")
+                texto = f"🎬 {rotulo}: {onde}"
+            else:
+                texto = f"❌ Não consegui publicar ({rotulo}): {r.get('erro', 'erro desconhecido')}"
+        except Exception:
+            log.exception("Painel: falha ao publicar em segundo plano")
+            texto = f"❌ Deu erro ao preparar ({rotulo}). Tente publicar de novo."
+        finally:
+            _limpar(arquivos)
+        try:
+            await bot.send_message(user["id"], texto)
+        except Exception:
+            log.warning("Não consegui avisar a criadora sobre a publicação")
+
+    tarefa = asyncio.create_task(rodar())
+    _TAREFAS.add(tarefa)
+    tarefa.add_done_callback(_TAREFAS.discard)
+    return _ok(processando=True)
 
 
 def _ajustar_foto(dados: bytes) -> bytes:
@@ -258,12 +299,19 @@ async def novo_post(request: web.Request) -> web.Response:
     user = _admin(request)
     db: Database = request.app["db"]
     campos, arquivos = await _ler_multipart(request, em_disco=True)
+    pesado = arquivos and (isinstance(arquivos[0][2], Path) or
+                           (_tipo(arquivos[0][1], "", arquivos[0][2]) == "video" and len(arquivos[0][2]) > LIMITE_VIDEO_POST))
+    if pesado:                                 # vídeo que precisa comprimir: não deixa a criadora esperando
+        erro = _enquete(campos)[1] or _quando(campos)[1]
+        if erro:
+            _limpar(arquivos)
+            return _erro(erro)
+        return _em_segundo_plano(request, user, arquivos, "Publicação com vídeo",
+                                 lambda: _novo_post(request, user, db, campos, arquivos))
     try:
         return await _novo_post(request, user, db, campos, arquivos)
     finally:
-        for _, _, d in arquivos:
-            if isinstance(d, Path):
-                d.unlink(missing_ok=True)
+        _limpar(arquivos)
 
 
 async def _video_do_post(bot: Bot, chat_id: int, dados) -> tuple[str, str] | str:
@@ -348,12 +396,21 @@ async def novo_pack(request: web.Request) -> web.Response:
     cfg: Config = request.app["cfg"]
     bot: Bot = request.app["bot"]
     campos, arquivos = await _ler_multipart(request, em_disco=True)
+    if any(isinstance(d, Path) for _, _, d in arquivos):     # tem vídeo para comprimir: publica em segundo plano
+        titulo, preco = campos.get("titulo", "")[:80], parse_preco(campos.get("preco", ""))
+        erro = ("Dê um título ao pack." if not titulo else
+                "Preço inválido. Use algo como 29,90 (mínimo R$ 1,00)." if not preco else
+                f"Máximo de {MAX_ARQUIVOS} arquivos por pack." if len(arquivos) > MAX_ARQUIVOS else
+                _quando(campos)[1])
+        if erro:
+            _limpar(arquivos)
+            return _erro(erro)
+        return _em_segundo_plano(request, user, arquivos, f"Pack “{html.escape(titulo)}”",
+                                 lambda: _novo_pack(request, user, db, cfg, bot, campos, arquivos))
     try:
         return await _novo_pack(request, user, db, cfg, bot, campos, arquivos)
     finally:
-        for _, _, d in arquivos:
-            if isinstance(d, Path):
-                d.unlink(missing_ok=True)
+        _limpar(arquivos)
 
 
 async def _novo_pack(request, user, db: Database, cfg: Config, bot: Bot, campos: dict, arquivos: list) -> web.Response:

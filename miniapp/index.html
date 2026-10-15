@@ -1806,10 +1806,11 @@ function novaPublicacao(pago){
       b.disabled = true; b.textContent = "Publicando…";
       if(vid) $("#pub-prog").classList.remove("ocultar");
       const r = await enviarForm("/api/criadora/post", {texto, enquete: ops.length ? JSON.stringify(ops) : "", agendar: quando()}, arqs.length ? [["foto", arqs[0]]] : [],
-        vid ? p => { $("#pub-barra").style.width = `${Math.round(p * 100)}%`; $("#pub-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : "Preparando o vídeo para o feed… pode levar um minuto" } : undefined);
+        vid ? p => { $("#pub-barra").style.width = `${Math.round(p * 100)}%`; $("#pub-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : "Quase lá…" } : undefined);
       if(!r.ok){ b.disabled = false; b.textContent = agendar ? "Agendar" : "Publicar"; $("#pub-prog").classList.add("ocultar"); return toast(r.erro || "Não consegui publicar") }
       vibrar("success"); fecharFolha(true); PAINEL = null; ANIMAR = true;
-      if(r.agendado){ toast(`Agendado para ${r.agendado} 🗓️`); ABA = "painel" }
+      if(r.processando){ toast("Vídeo enviado! Estou preparando e te aviso no chat quando estiver no ar 🎬") }
+      else if(r.agendado){ toast(`Agendado para ${r.agendado} 🗓️`); ABA = "painel" }
       else if(r.fila){ toast("Na fila de revisão 📝"); ABA = "painel" } else { toast("Publicado ✓"); confete(40); ABA = "inicio"; FILTRO = "todos" }
       carregar();
       return;
@@ -1825,10 +1826,11 @@ function novaPublicacao(pago){
       {titulo, preco, legenda: texto, canal: $("#pub-canal")?.classList.contains("on") ? "1" : "0",
        agendar: quando(), contagem: $("#pub-contagem").classList.contains("on") ? "1" : "0"},
       arqs.map(f => ["arquivos", f]),
-      p => { $("#pub-barra").style.width = `${Math.round(p * 100)}%`; $("#pub-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : (comprimir ? "Comprimindo os vídeos grandes… pode levar alguns minutos" : "Gerando as prévias com desfoque…") });
+      p => { $("#pub-barra").style.width = `${Math.round(p * 100)}%`; $("#pub-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : (comprimir ? "Quase lá…" : "Gerando as prévias com desfoque…") });
     if(!r.ok){ b.disabled = false; b.textContent = "Publicar pack"; $("#pub-prog").classList.add("ocultar"); return toast(r.erro || "Não consegui publicar") }
     vibrar("success"); fecharFolha(true); PAINEL = null; ANIMAR = true;
-    if(r.agendado){ toast(`Lançamento agendado para ${r.agendado} 🗓️`); ABA = "painel" }
+    if(r.processando){ toast("Enviado! Estou comprimindo os vídeos e te aviso no chat quando o pack estiver no ar 🎬") }
+    else if(r.agendado){ toast(`Lançamento agendado para ${r.agendado} 🗓️`); ABA = "painel" }
     else if(r.fila){ toast("Pack na fila de revisão 📝"); ABA = "painel" }
     else { toast(r.no_canal ? "Pack publicado e postado no canal ✓" : "Pack publicado ✓"); confete(); ABA = "inicio"; FILTRO = "todos" }
     carregar();
