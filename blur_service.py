@@ -13,9 +13,12 @@ import shutil
 import tempfile
 from io import BytesIO
 from pathlib import Path
+import logging
 
 from aiogram import Bot
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
+
+log = logging.getLogger(__name__)
 
 MAX_LADO = 1280          # redimensiona antes de embaçar (mais rápido e blur mais uniforme)
 TEXTO_SELO = "CONTEUDO BLOQUEADO"   # sem acento: a fonte padrão do Pillow não tem todos os glifos
@@ -89,6 +92,49 @@ def _frame_ffmpeg(dados_video: bytes) -> bytes | None:
                 capture_output=True, timeout=60,
             )
             if proc.returncode == 0 and saida.exists():
+                return saida.read_bytes()
+    return None
+
+
+def _duracao(caminho: Path) -> float:
+    import subprocess
+    proc = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration",
+                           "-of", "default=nw=1:nk=1", str(caminho)], capture_output=True, text=True, timeout=60)
+    try:
+        return float(proc.stdout.strip())
+    except ValueError:
+        return 0.0
+
+
+def comprimir_video(origem: Path, limite: int) -> bytes | None:
+    """Recomprime um vídeo (H.264 + AAC, até 1280px no lado maior) para caber em `limite` bytes.
+    Calcula o bitrate pela duração e tenta de novo mais baixo se ainda passar. None se não der."""
+    import subprocess
+
+    dur = _duracao(origem)
+    if dur <= 0:
+        return None
+    audio = 96_000
+    alvo = limite * 8 * 0.92 / dur - audio            # bits/s que sobram para o vídeo
+    with tempfile.TemporaryDirectory() as tmp:
+        saida = Path(tmp, "out.mp4")
+        for tentativa in range(3):
+            video = int(alvo * (0.85 ** tentativa))
+            if video < 150_000:                         # vídeo longo demais: ficaria ilegível
+                return None
+            lado = 1280 if video >= 1_200_000 else 854
+            escala = (f"scale='if(gt(iw,ih),min({lado},iw),-2)':'if(gt(iw,ih),-2,min({lado},ih))'")
+            proc = subprocess.run(
+                ["ffmpeg", "-y", "-loglevel", "error", "-i", str(origem), "-vf", escala,
+                 "-c:v", "libx264", "-preset", "veryfast", "-b:v", str(video), "-maxrate", str(int(video * 1.3)),
+                 "-bufsize", str(video * 2), "-pix_fmt", "yuv420p",
+                 "-c:a", "aac", "-b:a", str(audio), "-ac", "2", "-movflags", "+faststart", str(saida)],
+                capture_output=True, timeout=1500,
+            )
+            if proc.returncode != 0:
+                log.warning("ffmpeg falhou ao comprimir: %s", proc.stderr[-500:])
+                return None
+            if saida.stat().st_size <= limite:
                 return saida.read_bytes()
     return None
 

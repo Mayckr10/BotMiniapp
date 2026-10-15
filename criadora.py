@@ -28,6 +28,8 @@ Rotas (todas exigem initData de um admin):
 import asyncio
 import json
 import logging
+import tempfile
+from pathlib import Path
 import unicodedata
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -41,7 +43,7 @@ from PIL import Image, ImageOps
 import mensagens
 import protecao
 from admin_handlers import parse_preco, postar_no_canal
-from blur_service import _capa_video_generica, _frame_ffmpeg, aplicar_blur
+from blur_service import _capa_video_generica, _frame_ffmpeg, aplicar_blur, comprimir_video
 from config import Config
 from assinaturas import data_local
 from database import Database, agora, fmt_reais
@@ -68,14 +70,30 @@ def _erro(msg: str, status: int = 400) -> web.Response:
     return web.json_response({"ok": False, "erro": msg}, status=status)
 
 
-async def _ler_multipart(request: web.Request) -> tuple[dict, list[tuple[str, str, bytes]]]:
-    """Devolve (campos de texto, [(nome_do_campo, content_type, bytes)])."""
+async def _ler_multipart(request: web.Request, em_disco: bool = False) -> tuple[dict, list[tuple[str, str, bytes]]]:
+    """Devolve (campos de texto, [(nome_do_campo, content_type, bytes)]).
+    Com em_disco=True, arquivos grandes (vídeos) vão para um arquivo temporário e voltam como Path,
+    para não segurar centenas de MB na memória."""
     campos, arquivos = {}, []
     if not request.content_type.startswith("multipart/"):          # formulário simples, sem arquivos
         return {k: str(v).strip() for k, v in (await request.post()).items()}, []
     leitor = await request.multipart()
     async for parte in leitor:
         if parte.filename:
+            if em_disco:
+                tmp = Path(tempfile.mkstemp(prefix="up_", suffix=".bin")[1])
+                with tmp.open("wb") as f:
+                    while pedaco := await parte.read_chunk(1024 * 1024):
+                        f.write(pedaco)
+                tam = tmp.stat().st_size
+                if not tam:
+                    tmp.unlink(missing_ok=True)
+                    continue
+                dados = tmp if tam > LIMITE_VIDEO else tmp.read_bytes()
+                if not isinstance(dados, Path):
+                    tmp.unlink(missing_ok=True)
+                arquivos.append((parte.name, parte.headers.get("Content-Type", ""), dados))
+                continue
             dados = await parte.read(decode=False)
             if dados:
                 arquivos.append((parte.name, parte.headers.get("Content-Type", ""), bytes(dados)))
@@ -284,7 +302,16 @@ async def novo_pack(request: web.Request) -> web.Response:
     db: Database = request.app["db"]
     cfg: Config = request.app["cfg"]
     bot: Bot = request.app["bot"]
-    campos, arquivos = await _ler_multipart(request)
+    campos, arquivos = await _ler_multipart(request, em_disco=True)
+    try:
+        return await _novo_pack(request, user, db, cfg, bot, campos, arquivos)
+    finally:
+        for _, _, d in arquivos:
+            if isinstance(d, Path):
+                d.unlink(missing_ok=True)
+
+
+async def _novo_pack(request, user, db: Database, cfg: Config, bot: Bot, campos: dict, arquivos: list) -> web.Response:
     titulo = campos.get("titulo", "")[:80]
     preco = parse_preco(campos.get("preco", ""))
     if not titulo:
@@ -301,12 +328,17 @@ async def novo_pack(request: web.Request) -> web.Response:
 
     originais, blur = [], []
     for i, (_, ctype, dados) in enumerate(arquivos):
-        tipo = _tipo(ctype, "", dados)
+        grande = isinstance(dados, Path)
+        tipo = "video" if grande and ctype.startswith("video") else _tipo(ctype, "", dados if not grande else b"")
         if tipo is None:
             return _erro(f"O arquivo {i + 1} não é foto nem vídeo.")
-        if tipo == "video" and len(dados) > LIMITE_VIDEO:
-            return _erro(f"O vídeo {i + 1} passa de 50 MB, o limite do Telegram para bots. "
-                         "Envie esse pelo bot (/novo_pack) ou comprima antes.")
+        if tipo == "video" and grande:            # passa de 50 MB: comprime para caber no limite do Telegram
+            dados = await asyncio.to_thread(comprimir_video, dados, LIMITE_VIDEO)
+            if dados is None:
+                return _erro(f"Não consegui deixar o vídeo {i + 1} abaixo de 50 MB (o limite do Telegram). "
+                             "Ele pode ser longo demais: corte em partes ou envie pelo bot.")
+        elif grande:
+            return _erro(f"O arquivo {i + 1} é grande demais.")
         try:
             if tipo == "photo":
                 dados = await asyncio.to_thread(_ajustar_foto, dados)

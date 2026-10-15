@@ -1716,7 +1716,7 @@ function seletor(id, multiplo, aceitar){
 function miniaturas(lista, alvo){
   $(alvo).innerHTML = lista.map((f, i) => {
     const url = URL.createObjectURL(f), video = f.type.startsWith("video");
-    return `<div>${video ? `<video src="${url}" muted playsinline></video><span class="v">VÍDEO</span>` : `<img src="${url}" alt="" data-editar="${i}"><button class="lapis-m" data-editar="${i}" aria-label="Editar">✎</button>`}<button class="x" data-tirar="${i}">✕</button></div>`;
+    return `<div>${video ? `<video src="${url}#t=0.1" muted playsinline preload="metadata"></video><span class="v">VÍDEO</span>` : `<img src="${url}" alt="" data-editar="${i}"><button class="lapis-m" data-editar="${i}" aria-label="Editar">✎</button>`}<button class="x" data-tirar="${i}">✕</button></div>`;
   }).join("");
 }
 
@@ -1813,13 +1813,14 @@ function novaPublicacao(pago){
     const titulo = $("#pub-titulo").value.trim(), preco = $("#pub-preco").value.trim();
     if(!titulo) return toast("Dê um título ao pack");
     if(!preco) return toast("Defina o preço");
-    if(arqs.find(f => f.type.startsWith("video") && f.size > 49 * 1024 * 1024)) return toast("Um vídeo passa de 50 MB, o limite do Telegram. Envie esse pelo bot.");
+    if(arqs.find(f => f.type.startsWith("video") && f.size > 700 * 1024 * 1024)) return toast("Um vídeo passa de 700 MB. Corte em partes antes de enviar.");
+    const comprimir = arqs.some(f => f.type.startsWith("video") && f.size > 49 * 1024 * 1024);
     b.disabled = true; b.textContent = "Publicando…"; $("#pub-prog").classList.remove("ocultar");
     const r = await enviarForm("/api/criadora/pack",
       {titulo, preco, legenda: texto, canal: $("#pub-canal")?.classList.contains("on") ? "1" : "0",
        agendar: quando(), contagem: $("#pub-contagem").classList.contains("on") ? "1" : "0"},
       arqs.map(f => ["arquivos", f]),
-      p => { $("#pub-barra").style.width = `${Math.round(p * 100)}%`; $("#pub-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : "Gerando as prévias com desfoque…" });
+      p => { $("#pub-barra").style.width = `${Math.round(p * 100)}%`; $("#pub-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : (comprimir ? "Comprimindo os vídeos grandes… pode levar alguns minutos" : "Gerando as prévias com desfoque…") });
     if(!r.ok){ b.disabled = false; b.textContent = "Publicar pack"; $("#pub-prog").classList.add("ocultar"); return toast(r.erro || "Não consegui publicar") }
     vibrar("success"); fecharFolha(true); PAINEL = null; ANIMAR = true;
     if(r.agendado){ toast(`Lançamento agendado para ${r.agendado} 🗓️`); ABA = "painel" }

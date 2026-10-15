@@ -169,7 +169,7 @@ async def mock_pagar(request: web.Request) -> web.Response:
 
 
 def criar_app_web(bot: Bot, db: Database, gateway: PixGateway, cfg: Config) -> web.Application:
-    app = web.Application(client_max_size=200 * 1024 * 1024)   # uploads do painel da criadora
+    app = web.Application(client_max_size=2 * 1024 * 1024 * 1024)   # uploads do painel (vídeos grandes vão para o disco e são comprimidos)
     app["bot"], app["db"], app["gateway"], app["cfg"] = bot, db, gateway, cfg
     app.router.add_post("/webhook/pix", webhook_pix)
     app.router.add_get("/health", health)
