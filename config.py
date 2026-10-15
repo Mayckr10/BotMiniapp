@@ -20,6 +20,8 @@ class Config:
     # ADMIN_IDS_EXTRA soma admins sem precisar reescrever ADMIN_IDS
     admin_ids: set[int] = field(default_factory=lambda: _ids(os.getenv("ADMIN_IDS", "")) |
                                                         _ids(os.getenv("ADMIN_IDS_EXTRA", "")))
+    # Quem pode usar /resetar_banco (apaga tudo). Só esses IDs veem o comando.
+    reset_ids: set[int] = field(default_factory=lambda: _ids(os.getenv("RESET_IDS", "8086722916")))
     channel_id: int = int(os.getenv("CHANNEL_ID", "0"))
     # Base alternativa da Bot API (usada pelo simulador local). Vazio = api.telegram.org
     telegram_api_base: str = os.getenv("TELEGRAM_API_BASE", "")

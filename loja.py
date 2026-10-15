@@ -129,7 +129,8 @@ async def dados(request: web.Request) -> web.Response:
     votos = await db.resultados_enquetes(user["id"])
 
     def post_json(p: dict) -> dict:
-        d = {"id": p["id"], "texto": p["texto"], "foto": bool(p["foto"]), "criado_em": p["criado_em"]}
+        d = {"id": p["id"], "texto": p["texto"], "foto": bool(p["foto"]), "video": bool(p.get("video")),
+             "criado_em": p["criado_em"]}
         if p.get("enquete"):
             v = votos.get(p["id"], {"votos": {}, "meu": None})
             d["enquete"] = {"opcoes": p["enquete"], "votos": [v["votos"].get(i, 0) for i in range(len(p["enquete"]))],
@@ -186,7 +187,8 @@ async def dados(request: web.Request) -> web.Response:
 
 
 async def _fila(db: Database) -> dict:
-    posts = [{"id": p["id"], "texto": p["texto"], "foto": bool(p["foto"]), "criado_em": p["criado_em"]}
+    posts = [{"id": p["id"], "texto": p["texto"], "foto": bool(p["foto"]), "video": bool(p.get("video")),
+              "criado_em": p["criado_em"]}
              for p in await db.listar_posts("fila")]
     packs = [{"id": p.id, "titulo": p.titulo, "preco_fmt": p.preco_fmt, "preco": p.preco, "resumo": _resumo([p]),
               "fotos": sum(m["tipo"] == "photo" for m in p.originais), "videos": sum(m["tipo"] == "video" for m in p.originais),

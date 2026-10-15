@@ -179,6 +179,7 @@ MIGRACOES = {
         "status": "TEXT NOT NULL DEFAULT 'publicado'",  # publicado | fila (aguardando revisão) | agendado
         "enquete": "TEXT",                              # JSON com as opções (NULL = sem enquete)
         "agendado_para": "TEXT",                        # quando publicar sozinho (status agendado)
+        "video": "TEXT",                                # file_id do vídeo (a coluna foto guarda a capa)
     },
     "packs": {
         "postar_canal": "INTEGER NOT NULL DEFAULT 0",   # na fila: posta no canal quando for aprovado
@@ -598,14 +599,16 @@ class Database:
         await self.conn.commit()
 
     # ── Publicações (feed) e edição de packs pelo painel da criadora ───────
-    async def criar_post(self, texto: str, foto: str | None = None, enquete: list[str] | None = None) -> int:
-        cur = await self.conn.execute("INSERT INTO posts (texto, foto, enquete, criado_em) VALUES (?, ?, ?, ?)",
-                                      (texto, foto, json.dumps(enquete, ensure_ascii=False) if enquete else None, _agora()))
+    async def criar_post(self, texto: str, foto: str | None = None, enquete: list[str] | None = None,
+                         video: str | None = None) -> int:
+        cur = await self.conn.execute("INSERT INTO posts (texto, foto, enquete, criado_em, video) VALUES (?, ?, ?, ?, ?)",
+                                      (texto, foto, json.dumps(enquete, ensure_ascii=False) if enquete else None, _agora(),
+                                       video))
         await self.conn.commit()
         return cur.lastrowid
 
     async def listar_posts(self, status: str = "publicado") -> list[dict]:
-        rows = await self._todos("SELECT id, texto, foto, criado_em, enquete, agendado_para FROM posts "
+        rows = await self._todos("SELECT id, texto, foto, video, criado_em, enquete, agendado_para FROM posts "
                                  "WHERE ativo = 1 AND status = ? ORDER BY id DESC", (status,))
         return [{**dict(r), "enquete": json.loads(r["enquete"]) if r["enquete"] else None} for r in rows]
 
@@ -630,7 +633,7 @@ class Database:
     async def agendados(self, so_vencidos: bool = False) -> dict:
         """{"posts": [...], "packs": [Pack + agendado_para/contagem]} na ordem em que vão ao ar."""
         filtro, params = (" AND agendado_para <= ?", (_agora(),)) if so_vencidos else ("", ())
-        posts = await self._todos("SELECT id, texto, foto, enquete, agendado_para FROM posts WHERE ativo = 1 "
+        posts = await self._todos("SELECT id, texto, foto, video, enquete, agendado_para FROM posts WHERE ativo = 1 "
                                   "AND status = 'agendado'" + filtro + " ORDER BY agendado_para", params)
         packs = await self._todos("SELECT id, agendado_para, contagem, postar_canal FROM packs WHERE ativo = 1 "
                                   "AND tipo = 'agendado'" + filtro + " ORDER BY agendado_para", params)
@@ -725,8 +728,23 @@ class Database:
         await self.conn.execute("UPDATE packs SET ativo = 0 WHERE id = ? AND tipo = 'fila'", (pack_id,))
         await self.conn.commit()
 
+    async def apagar_tudo(self) -> list[str]:
+        """Zera o banco inteiro (todas as tabelas). Devolve as tabelas apagadas."""
+        async with self.conn.execute("SELECT name FROM sqlite_master WHERE type = 'table' "
+                                     "AND name NOT LIKE 'sqlite_%'") as cur:
+            tabelas = [r["name"] for r in await cur.fetchall()]
+        for t in tabelas:
+            await self.conn.execute(f'DELETE FROM "{t}"')
+        try:
+            await self.conn.execute("DELETE FROM sqlite_sequence")
+        except Exception:
+            pass
+        await self.conn.commit()
+        await self.conn.execute("VACUUM")
+        return tabelas
+
     async def get_post(self, post_id: int) -> dict | None:
-        row = await self._um("SELECT id, texto, foto, criado_em FROM posts WHERE id = ? AND ativo = 1", (post_id,))
+        row = await self._um("SELECT id, texto, foto, video, criado_em FROM posts WHERE id = ? AND ativo = 1", (post_id,))
         return dict(row) if row else None
 
     async def editar_post(self, post_id: int, texto: str) -> None:

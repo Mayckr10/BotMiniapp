@@ -821,7 +821,8 @@ function postTexto(p){
     ${cabPost({data: esc(relativo(p.criado_em)), acao: `post:${p.id}`})}
     ${p.texto ? `<div class="corpo">${esc(p.texto)}</div>` : ""}
     ${enquete(p)}
-    ${p.foto ? `<div class="foto-wrap" data-duplo="post_${p.id}"><img class="foto-post" src="/api/loja/post_foto/${p.id}" loading="lazy" alt=""></div>` : ""}
+    ${p.video ? `<div class="foto-wrap"><video class="foto-post" src="/api/loja/post_video/${p.id}" poster="/api/loja/post_foto/${p.id}" controls playsinline preload="none"></video></div>`
+      : p.foto ? `<div class="foto-wrap" data-duplo="post_${p.id}"><img class="foto-post" src="/api/loja/post_foto/${p.id}" loading="lazy" alt=""></div>` : ""}
     <div style="height:8px"></div>${interacoes(`post_${p.id}`)}
   </article>`;
 }
@@ -1770,9 +1771,9 @@ function novaPublicacao(pago){
     $("#pub-dica").textContent = pago ? "Prévia embaçada até o fã pagar" : "Grátis no feed, visível para todos";
     $("#pub-rot-texto").textContent = pago ? "Legenda" : "Texto";
     $("#pub-texto").placeholder = pago ? "Conte o que tem nesse pack…" : "Escreva algo para seus fãs…";
-    $("#pub-escolher").textContent = pago ? "🖼️ Escolher fotos e vídeos" : "📷 Adicionar foto (opcional)";
-    const inp = $("#pub-arqs"); inp.multiple = pago; inp.accept = pago ? "image/*,video/*" : "image/*";
-    if(!pago){ const f = arqs.find(x => x.type.startsWith("image")); arqs = f ? [f] : [] }
+    $("#pub-escolher").textContent = pago ? "🖼️ Escolher fotos e vídeos" : "📷 Adicionar foto ou vídeo (opcional)";
+    const inp = $("#pub-arqs"); inp.multiple = pago; inp.accept = "image/*,video/*";
+    if(!pago) arqs = arqs.slice(0, 1);
     miniaturas(arqs, "#pub-mini");
     $("#pub-enq-wrap").classList.toggle("ocultar", pago);
     $("#pub-cd-linha").classList.toggle("ocultar", !pago);
@@ -1799,10 +1800,14 @@ function novaPublicacao(pago){
       const ops = [...document.querySelectorAll(".pub-op")].map(i => i.value.trim()).filter(Boolean);
       if(ops.length === 1) return toast("A enquete precisa de pelo menos 2 opções");
       if(ops.length && !texto) return toast("Escreva a pergunta da enquete no texto");
-      if(!texto && !arqs.length) return toast("Escreva algo ou escolha uma foto");
+      if(!texto && !arqs.length) return toast("Escreva algo ou escolha uma foto ou vídeo");
+      if(arqs[0]?.size > 700 * 1024 * 1024) return toast("O vídeo passa de 700 MB. Corte em partes antes de enviar.");
+      const vid = arqs[0]?.type.startsWith("video");
       b.disabled = true; b.textContent = "Publicando…";
-      const r = await enviarForm("/api/criadora/post", {texto, enquete: ops.length ? JSON.stringify(ops) : "", agendar: quando()}, arqs.length ? [["foto", arqs[0]]] : []);
-      if(!r.ok){ b.disabled = false; b.textContent = agendar ? "Agendar" : "Publicar"; return toast(r.erro || "Não consegui publicar") }
+      if(vid) $("#pub-prog").classList.remove("ocultar");
+      const r = await enviarForm("/api/criadora/post", {texto, enquete: ops.length ? JSON.stringify(ops) : "", agendar: quando()}, arqs.length ? [["foto", arqs[0]]] : [],
+        vid ? p => { $("#pub-barra").style.width = `${Math.round(p * 100)}%`; $("#pub-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : "Preparando o vídeo para o feed… pode levar um minuto" } : undefined);
+      if(!r.ok){ b.disabled = false; b.textContent = agendar ? "Agendar" : "Publicar"; $("#pub-prog").classList.add("ocultar"); return toast(r.erro || "Não consegui publicar") }
       vibrar("success"); fecharFolha(true); PAINEL = null; ANIMAR = true;
       if(r.agendado){ toast(`Agendado para ${r.agendado} 🗓️`); ABA = "painel" }
       else if(r.fila){ toast("Na fila de revisão 📝"); ABA = "painel" } else { toast("Publicado ✓"); confete(40); ABA = "inicio"; FILTRO = "todos" }

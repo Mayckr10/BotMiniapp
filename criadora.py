@@ -50,6 +50,7 @@ from database import Database, agora, fmt_reais
 
 log = logging.getLogger(__name__)
 LIMITE_FOTO = 9 * 1024 * 1024          # Telegram aceita fotos de até 10 MB
+LIMITE_VIDEO_POST = 19 * 1024 * 1024   # vídeo de publicação grátis: a loja toca pelo download da Bot API (20 MB)
 LIMITE_VIDEO = 49 * 1024 * 1024        # e arquivos de até 50 MB pela Bot API
 MAX_ARQUIVOS = 30
 
@@ -256,7 +257,39 @@ def _enquete(campos: dict) -> tuple[list[str] | None, str | None]:
 async def novo_post(request: web.Request) -> web.Response:
     user = _admin(request)
     db: Database = request.app["db"]
-    campos, arquivos = await _ler_multipart(request)
+    campos, arquivos = await _ler_multipart(request, em_disco=True)
+    try:
+        return await _novo_post(request, user, db, campos, arquivos)
+    finally:
+        for _, _, d in arquivos:
+            if isinstance(d, Path):
+                d.unlink(missing_ok=True)
+
+
+async def _video_do_post(bot: Bot, chat_id: int, dados) -> tuple[str, str] | str:
+    """Prepara o vídeo de uma publicação grátis. Devolve (file_id da capa, file_id do vídeo) ou a mensagem de erro.
+    Fica com até 19 MB: a loja só consegue buscar no Telegram arquivos de até 20 MB para tocar no feed."""
+    if isinstance(dados, Path) or len(dados) > LIMITE_VIDEO_POST:
+        origem, tmp = dados, None
+        if not isinstance(dados, Path):
+            tmp = Path(tempfile.mkstemp(prefix="post_", suffix=".mp4")[1])
+            tmp.write_bytes(dados)
+            origem = tmp
+        try:
+            dados = await asyncio.to_thread(comprimir_video, origem, LIMITE_VIDEO_POST)
+        finally:
+            if tmp:
+                tmp.unlink(missing_ok=True)
+        if dados is None:
+            return ("Não consegui preparar esse vídeo para o feed. Ele pode ser longo demais: "
+                    "corte em partes de até uns 3 minutos.")
+    frame = await asyncio.to_thread(_frame_ffmpeg, dados)
+    capa = await asyncio.to_thread(_ajustar_foto, frame) if frame else _capa_video_generica()
+    return (await _subir(bot, chat_id, "photo", capa, "capa.jpg"),
+            await _subir(bot, chat_id, "video", dados, "post.mp4"))
+
+
+async def _novo_post(request: web.Request, user: dict, db: Database, campos: dict, arquivos: list) -> web.Response:
     texto = campos.get("texto", "")[:4000]
     enquete, erro = _enquete(campos)
     quando, erro2 = _quando(campos)
@@ -264,14 +297,26 @@ async def novo_post(request: web.Request) -> web.Response:
         return _erro(erro or erro2)
     if not texto and not arquivos:
         return _erro("Escreva algo ou escolha uma foto.")
-    foto = None
+    foto = video = None
     if arquivos:
-        try:
-            jpg = await asyncio.to_thread(_ajustar_foto, arquivos[0][2])
-        except Exception:
-            return _erro("Não consegui ler essa imagem.")
-        foto = await _subir(request.app["bot"], user["id"], "photo", jpg, "post.jpg")
-    post_id = await db.criar_post(texto, foto, enquete)
+        _, ctype, dados = arquivos[0]
+        eh_video = isinstance(dados, Path) or _tipo(ctype, "", dados) == "video"
+        if eh_video:
+            try:
+                r = await _video_do_post(request.app["bot"], user["id"], dados)
+            except Exception:
+                log.exception("Painel: falha no vídeo da publicação")
+                return _erro("Não consegui processar o vídeo. Tente de novo.", 502)
+            if isinstance(r, str):
+                return _erro(r)
+            foto, video = r
+        else:
+            try:
+                jpg = await asyncio.to_thread(_ajustar_foto, dados)
+            except Exception:
+                return _erro("Não consegui ler essa imagem.")
+            foto = await _subir(request.app["bot"], user["id"], "photo", jpg, "post.jpg")
+    post_id = await db.criar_post(texto, foto, enquete, video)
     if quando:                                 # agendado: ela já decidiu quando vai ao ar, não passa pela fila
         await db.agendar_post(post_id, quando)
         return _ok(id=post_id, agendado=data_local(quando, request.app["cfg"]))
@@ -429,6 +474,21 @@ async def post_foto(request: web.Request) -> web.Response:
         raise web.HTTPNotFound()
     return web.Response(body=await _imagem(request.app["bot"], post["foto"]), content_type="image/jpeg",
                         headers={"Cache-Control": "public, max-age=86400"})
+
+
+async def post_video(request: web.Request) -> web.Response:
+    from galeria import _baixar, _resposta_com_range
+    post = await request.app["db"].get_post(int(request.match_info["id"]))
+    if not post or not post.get("video"):
+        raise web.HTTPNotFound()
+    try:
+        dados = await _baixar(request.app["bot"], post["video"])
+    except Exception:
+        log.exception("Não consegui baixar o vídeo do post %s", post["id"])
+        raise web.HTTPNotFound()
+    resp = _resposta_com_range(request, dados, "video/mp4")
+    resp.headers["Cache-Control"] = "public, max-age=86400"
+    return resp
 
 
 async def _revisao(db: Database) -> bool:
@@ -677,5 +737,6 @@ def registrar_rotas(app: web.Application) -> None:
     app.router.add_post("/api/criadora/pack/{id}/apagar", apagar_pack)
     app.router.add_post("/api/criadora/pack/{id}", editar_pack)
     app.router.add_get("/api/loja/post_foto/{id:\\d+}", post_foto)
+    app.router.add_get("/api/loja/post_video/{id:\\d+}", post_video)
     app.router.add_post("/api/criadora/mensagem", salvar_mensagem)
     app.router.add_get("/api/loja/msg_foto/{chave}", mensagem_foto)

@@ -30,6 +30,7 @@ import mensagens
 import agenda
 import notificacoes
 import protecao
+import reset_banco
 from webhook import criar_app_web
 
 
@@ -54,6 +55,7 @@ async def run(cfg: Config) -> None:
     dp = Dispatcher(storage=MemoryStorage(), db=db, cfg=cfg, gateway=gateway)
     dp.message.outer_middleware(protecao.Bloqueio(db, cfg))          # fã bloqueado não passa daqui
     dp.callback_query.outer_middleware(protecao.Bloqueio(db, cfg))
+    dp.include_router(reset_banco.get_router(cfg))      # /resetar_banco: só para RESET_IDS
     dp.include_router(admin_handlers.get_router(cfg))   # admin primeiro
     dp.include_router(admin_vendas.get_router(cfg))
     dp.include_router(protecao.get_router(cfg))
@@ -62,15 +64,13 @@ async def run(cfg: Config) -> None:
     dp.include_router(client_handlers.fallback_router)   # por último: mensagens livres mostram o menu
 
     me = await bot.get_me()
-    await bot.set_my_commands([BotCommand(command="start", description="Perfil e menu"),
-                               BotCommand(command="assinar", description="Assinar o VIP"),
-                               BotCommand(command="assinatura", description="Minha assinatura"),
-                               BotCommand(command="meus_packs", description="Meus packs comprados"),
-                               BotCommand(command="gorjeta", description="Mandar uma gorjeta")])
-    for admin_id in cfg.admin_ids:
-        try:
-            await bot.set_my_commands(
-                [BotCommand(command="admin", description="Painel da criadora"),
+    cmds_fa = [BotCommand(command="start", description="Perfil e menu"),
+               BotCommand(command="assinar", description="Assinar o VIP"),
+               BotCommand(command="assinatura", description="Minha assinatura"),
+               BotCommand(command="meus_packs", description="Meus packs comprados"),
+               BotCommand(command="gorjeta", description="Mandar uma gorjeta")]
+    await bot.set_my_commands(cmds_fa)
+    cmds_admin = [BotCommand(command="admin", description="Painel da criadora"),
                  BotCommand(command="novo_pack", description="Criar novo pack"),
                  BotCommand(command="ppv", description="Mensagem paga (pay per view)"),
                  BotCommand(command="novo_combo", description="Criar combo"),
@@ -83,11 +83,15 @@ async def run(cfg: Config) -> None:
                  BotCommand(command="backup", description="Receber backup do banco agora"),
                  BotCommand(command="bloquear", description="Bloquear um fã pelo ID"),
                  BotCommand(command="bloqueados", description="Fãs bloqueados"),
-                 BotCommand(command="cancelar", description="Cancelar operação")],
-                scope=BotCommandScopeChat(chat_id=admin_id),
-            )
+                 BotCommand(command="cancelar", description="Cancelar operação")]
+    for chat_id in cfg.admin_ids | cfg.reset_ids:
+        cmds = list(cmds_admin if chat_id in cfg.admin_ids else cmds_fa)
+        if chat_id in cfg.reset_ids:
+            cmds.append(BotCommand(command="resetar_banco", description="⚠️ Apagar todo o banco de dados"))
+        try:
+            await bot.set_my_commands(cmds, scope=BotCommandScopeChat(chat_id=chat_id))
         except Exception:
-            pass  # o admin ainda não abriu conversa com o bot
+            pass  # ainda não abriu conversa com o bot
 
     app = criar_app_web(bot, db, gateway, cfg)
     loja.registrar_rotas(app)
