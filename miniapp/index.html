@@ -435,7 +435,7 @@ function render(){
       .map(([id,i,t]) => `<button data-aba="${id}" class="${ABA===id?"on":""}"><span class="ico">${i}</span>${t}</button>`).join("")}
   </nav>`;
   $("#fab")?.remove();
-  if(criadora() && ABA === "inicio"){ const f = document.createElement("button"); f.className = "fab"; f.id = "fab"; f.textContent = "+"; f.onclick = escolherCriacao; document.body.appendChild(f) }
+  if(criadora() && ABA === "inicio"){ const f = document.createElement("button"); f.className = "fab"; f.id = "fab"; f.textContent = "+"; f.onclick = () => novaPublicacao(false); document.body.appendChild(f) }
   if(criadora() && ABA === "painel" && !PAINEL) carregarPainel();
   $("#volta-criadora")?.remove();
   if(D.sou_criadora && COMO_FA){
@@ -710,8 +710,7 @@ function painel(){
     ${estatisticas()}
     <div class="secao-titulo"><h2>Criar</h2></div>
     <div class="acoes">
-      <button class="acao" data-criar="post"><span class="ico">📝</span><div><b>Nova publicação</b><small>Texto e foto, visível para todos</small></div><span class="seta">›</span></button>
-      <button class="acao" data-criar="pack"><span class="ico">📦</span><div><b>Novo pack pago</b><small>Fotos e vídeos com prévia embaçada</small></div><span class="seta">›</span></button>
+      <button class="acao" data-criar="post"><span class="ico">✨</span><div><b>Nova publicação</b><small>Post grátis ou pack pago, escolhe na chave</small></div><span class="seta">›</span></button>
     </div>
     <div class="secao-titulo"><h2>Ajustes</h2></div>
     <div class="acoes lista-msg">
@@ -778,14 +777,6 @@ async function curtir(el){
   if(r.ok){ c.eu = r.curtido; c.n = r.total; pintar() }
 }
 
-function escolherCriacao(){
-  abrirFolha(`<h2>Criar</h2><p class="sub">O que você quer publicar?</p>
-    <div class="acoes" style="padding:0">
-      <button class="acao" data-criar="post"><span class="ico">📝</span><div><b>Publicação</b><small>Texto com foto opcional, grátis no feed</small></div><span class="seta">›</span></button>
-      <button class="acao" data-criar="pack"><span class="ico">📦</span><div><b>Pack pago</b><small>Conteúdo bloqueado com preço e legenda</small></div><span class="seta">›</span></button>
-    </div>`);
-}
-
 function seletor(id, multiplo, aceitar){
   return `<input type="file" id="${id}" accept="${aceitar}" ${multiplo ? "multiple" : ""} hidden>`;
 }
@@ -814,54 +805,60 @@ function editarPerfil(){
   };
 }
 
-function novoPost(){
-  let foto = null;
-  abrirFolha(`<h2>Nova publicação</h2><p class="sub">Aparece no feed para todos, sem cobrança.</p>
-    <textarea id="post-texto" maxlength="4000" placeholder="Escreva algo para seus fãs…"></textarea>
-    <div class="gap"></div>
-    <label class="escolher" for="post-foto">📷 Adicionar foto (opcional)</label>${seletor("post-foto", false, "image/*")}
-    <div class="miniaturas" id="post-mini"></div>
-    <div class="gap"></div><button class="btn" id="post-publicar">Publicar</button>`);
-  $("#post-foto").onchange = e => { foto = e.target.files[0] || null; miniaturas(foto ? [foto] : [], "#post-mini") };
-  $("#post-mini").onclick = e => { if(e.target.dataset.tirar !== undefined){ foto = null; miniaturas([], "#post-mini") } };
-  $("#post-publicar").onclick = async () => {
-    const texto = $("#post-texto").value.trim();
-    if(!texto && !foto) return toast("Escreva algo ou escolha uma foto");
-    const b = $("#post-publicar"); b.disabled = true; b.textContent = "Publicando…";
-    const r = await enviarForm("/api/criadora/post", {texto}, foto ? [["foto", foto]] : []);
-    if(!r.ok){ b.disabled = false; b.textContent = "Publicar"; return toast(r.erro || "Não consegui publicar") }
-    vibrar("success"); toast("Publicado ✓"); fecharFolha(); ABA = "inicio"; FILTRO = "todos"; PAINEL = null; carregar();
-  };
-}
-
-function novoPack(){
+function novaPublicacao(pago){
   let arqs = [];
-  abrirFolha(`<h2>Novo pack pago</h2><p class="sub">As prévias com desfoque são geradas sozinhas.</p>
-    <label class="escolher" for="pack-arqs">🖼️ Escolher fotos e vídeos</label>${seletor("pack-arqs", true, "image/*,video/*")}
-    <div class="miniaturas" id="pack-mini"></div>
-    <span class="rotulo">Título</span><input type="text" id="pack-titulo" maxlength="80" placeholder="Ex: Ensaio de verão">
-    <span class="rotulo">Preço</span><input type="text" id="pack-preco" inputmode="decimal" placeholder="29,90">
-    <span class="rotulo">Legenda</span><textarea id="pack-legenda" maxlength="2000" placeholder="Conte o que tem nesse pack…"></textarea>
-    ${PAINEL?.canal !== false ? `<div class="troca" style="margin:14px 0 0"><div><b>Postar prévia no canal</b><br><small class="muted">Canal de amostras, com botão de compra</small></div><span class="chave on" id="pack-canal"></span></div>` : ""}
-    <div id="pack-prog" class="ocultar"><div class="progresso"><i id="pack-barra"></i></div><p class="dica" id="pack-etapa">Enviando…</p></div>
-    <div class="gap"></div><button class="btn" id="pack-publicar">Publicar pack</button>`);
-  $("#pack-arqs").onchange = e => { arqs = [...arqs, ...e.target.files].slice(0, 30); miniaturas(arqs, "#pack-mini"); e.target.value = "" };
-  $("#pack-mini").onclick = e => { const i = e.target.dataset.tirar; if(i !== undefined){ arqs.splice(+i, 1); miniaturas(arqs, "#pack-mini") } };
-  $("#pack-canal") && ($("#pack-canal").onclick = e => e.currentTarget.classList.toggle("on"));
-  $("#pack-publicar").onclick = async () => {
+  const canal = PAINEL?.canal !== false;
+  abrirFolha(`<h2>Nova publicação</h2>
+    <div class="troca" style="margin:12px 0 0"><div><b>🔒 Conteúdo pago</b><br><small class="muted" id="pub-dica"></small></div><span class="chave" id="pub-pago"></span></div>
+    <span class="rotulo" id="pub-rot-texto"></span><textarea id="pub-texto" maxlength="4000"></textarea>
+    <div class="gap"></div>
+    <label class="escolher" for="pub-arqs" id="pub-escolher"></label><input type="file" id="pub-arqs" hidden>
+    <div class="miniaturas" id="pub-mini"></div>
+    <div id="pub-pagos">
+      <span class="rotulo">Título</span><input type="text" id="pub-titulo" maxlength="80" placeholder="Ex: Ensaio de verão">
+      <span class="rotulo">Preço</span><input type="text" id="pub-preco" inputmode="decimal" placeholder="29,90">
+      ${canal ? `<div class="troca" style="margin:14px 0 0"><div><b>Postar prévia no canal</b><br><small class="muted">Canal de amostras, com botão de compra</small></div><span class="chave on" id="pub-canal"></span></div>` : ""}
+    </div>
+    <div id="pub-prog" class="ocultar"><div class="progresso"><i id="pub-barra"></i></div><p class="dica" id="pub-etapa">Enviando…</p></div>
+    <div class="gap"></div><button class="btn" id="pub-publicar"></button>`);
+  const modo = () => {
+    $("#pub-pago").classList.toggle("on", pago);
+    $("#pub-pagos").classList.toggle("ocultar", !pago);
+    $("#pub-dica").textContent = pago ? "Prévia embaçada até o fã pagar" : "Grátis no feed, visível para todos";
+    $("#pub-rot-texto").textContent = pago ? "Legenda" : "Texto";
+    $("#pub-texto").placeholder = pago ? "Conte o que tem nesse pack…" : "Escreva algo para seus fãs…";
+    $("#pub-escolher").textContent = pago ? "🖼️ Escolher fotos e vídeos" : "📷 Adicionar foto (opcional)";
+    const inp = $("#pub-arqs"); inp.multiple = pago; inp.accept = pago ? "image/*,video/*" : "image/*";
+    if(!pago){ const f = arqs.find(x => x.type.startsWith("image")); arqs = f ? [f] : [] }
+    miniaturas(arqs, "#pub-mini");
+    $("#pub-publicar").textContent = pago ? "Publicar pack" : "Publicar";
+  };
+  modo();
+  $("#pub-pago").onclick = () => { pago = !pago; vibrar("leve"); modo() };
+  $("#pub-arqs").onchange = e => { arqs = pago ? [...arqs, ...e.target.files].slice(0, 30) : [...e.target.files].slice(0, 1); miniaturas(arqs, "#pub-mini"); e.target.value = "" };
+  $("#pub-mini").onclick = e => { const i = e.target.dataset.tirar; if(i !== undefined){ arqs.splice(+i, 1); miniaturas(arqs, "#pub-mini") } };
+  $("#pub-canal") && ($("#pub-canal").onclick = e => e.currentTarget.classList.toggle("on"));
+  $("#pub-publicar").onclick = async () => {
+    const texto = $("#pub-texto").value.trim(), b = $("#pub-publicar");
+    if(!pago){
+      if(!texto && !arqs.length) return toast("Escreva algo ou escolha uma foto");
+      b.disabled = true; b.textContent = "Publicando…";
+      const r = await enviarForm("/api/criadora/post", {texto}, arqs.length ? [["foto", arqs[0]]] : []);
+      if(!r.ok){ b.disabled = false; b.textContent = "Publicar"; return toast(r.erro || "Não consegui publicar") }
+      vibrar("success"); toast("Publicado ✓"); fecharFolha(); ABA = "inicio"; FILTRO = "todos"; PAINEL = null; carregar();
+      return;
+    }
     if(!arqs.length) return toast("Escolha pelo menos uma foto ou vídeo");
-    const titulo = $("#pack-titulo").value.trim(), preco = $("#pack-preco").value.trim();
+    const titulo = $("#pub-titulo").value.trim(), preco = $("#pub-preco").value.trim();
     if(!titulo) return toast("Dê um título ao pack");
     if(!preco) return toast("Defina o preço");
-    const grande = arqs.find(f => f.type.startsWith("video") && f.size > 49 * 1024 * 1024);
-    if(grande) return toast("Um vídeo passa de 50 MB, o limite do Telegram. Envie esse pelo bot.");
-    const b = $("#pack-publicar"); b.disabled = true; b.textContent = "Publicando…";
-    $("#pack-prog").classList.remove("ocultar");
+    if(arqs.find(f => f.type.startsWith("video") && f.size > 49 * 1024 * 1024)) return toast("Um vídeo passa de 50 MB, o limite do Telegram. Envie esse pelo bot.");
+    b.disabled = true; b.textContent = "Publicando…"; $("#pub-prog").classList.remove("ocultar");
     const r = await enviarForm("/api/criadora/pack",
-      {titulo, preco, legenda: $("#pack-legenda").value.trim(), canal: $("#pack-canal")?.classList.contains("on") ? "1" : "0"},
+      {titulo, preco, legenda: texto, canal: $("#pub-canal")?.classList.contains("on") ? "1" : "0"},
       arqs.map(f => ["arquivos", f]),
-      p => { $("#pack-barra").style.width = `${Math.round(p * 100)}%`; $("#pack-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : "Gerando as prévias com desfoque…" });
-    if(!r.ok){ b.disabled = false; b.textContent = "Publicar pack"; $("#pack-prog").classList.add("ocultar"); return toast(r.erro || "Não consegui publicar") }
+      p => { $("#pub-barra").style.width = `${Math.round(p * 100)}%`; $("#pub-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : "Gerando as prévias com desfoque…" });
+    if(!r.ok){ b.disabled = false; b.textContent = "Publicar pack"; $("#pub-prog").classList.add("ocultar"); return toast(r.erro || "Não consegui publicar") }
     vibrar("success"); toast(r.no_canal ? "Pack publicado e postado no canal ✓" : "Pack publicado ✓");
     fecharFolha(); ABA = "inicio"; FILTRO = "todos"; PAINEL = null; carregar();
   };
@@ -1002,7 +999,7 @@ document.addEventListener("click", e => {
   }
   if(el.dataset.periodo){ PERIODO = el.dataset.periodo; vibrar("leve"); $("#conteudo").innerHTML = painel(); return }
   if(el.dataset.menu){ e.stopPropagation(); return menuItem(el.dataset.menu) }
-  if(el.dataset.criar){ return el.dataset.criar === "post" ? novoPost() : novoPack() }
+  if(el.dataset.criar){ return novaPublicacao(el.dataset.criar === "pack") }
   if(el.dataset.msg){ return editarMensagem(el.dataset.msg) }
   if(el.id === "ed-perfil" || el.id === "ed-perfil2"){ return editarPerfil() }
   if(el.id === "ed-msgs"){ return PAINEL ? editarMensagens() : carregarPainel().then(editarMensagens) }
