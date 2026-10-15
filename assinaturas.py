@@ -74,15 +74,28 @@ async def ativar_assinatura(bot: Bot, db: Database, cfg: Config, venda: Venda, p
     if await esta_no_canal(bot, cfg, venda.user_id):
         await bot.send_message(venda.user_id, f"⭐ <b>Assinatura renovada!</b>\nVálida até {data_local(vence, cfg)}.")
     else:
-        teclado = InlineKeyboardMarkup(inline_keyboard=[[
-            InlineKeyboardButton(text="🔐 Entrar no canal VIP", url=await link_vip(bot, db, cfg))
-        ]])
-        await bot.send_message(
-            venda.user_id,
-            f"⭐ <b>Bem-vindo(a) ao VIP!</b>\nSua assinatura vale até {data_local(vence, cfg)}.\n\n"
-            "Toque no botão para pedir a entrada no canal. A aprovação é automática.",
-            reply_markup=teclado,
-        )
+        try:
+            teclado = InlineKeyboardMarkup(inline_keyboard=[[
+                InlineKeyboardButton(text="🔐 Entrar no canal VIP", url=await link_vip(bot, db, cfg))
+            ]])
+            await bot.send_message(
+                venda.user_id,
+                f"⭐ <b>Bem-vindo(a) ao VIP!</b>\nSua assinatura vale até {data_local(vence, cfg)}.\n\n"
+                "Toque no botão para pedir a entrada no canal. A aprovação é automática.",
+                reply_markup=teclado,
+            )
+        except Exception as e:
+            # Pagamento e assinatura já estão salvos; só o link do canal falhou (bot sem permissão, ID errado...)
+            log.exception("Não consegui gerar o link do canal VIP")
+            await bot.send_message(venda.user_id, f"⭐ <b>Assinatura ativada até {data_local(vence, cfg)}!</b>\n"
+                                                  "Estou preparando seu acesso ao canal e já te aviso.")
+            for admin_id in cfg.admin_ids:
+                try:
+                    await bot.send_message(admin_id, "⚠️ Não consegui gerar o link do canal VIP "
+                                                     f"(<code>{html.escape(str(e))}</code>). Confira se o bot é admin do canal "
+                                                     "com permissão de convidar usuários e se VIP_CHANNEL_ID está certo.")
+                except Exception:
+                    pass
     for admin_id in cfg.admin_ids:
         try:
             await bot.send_message(admin_id, f"⭐ {'Renovação' if renovacao else 'Nova assinatura'}: "
