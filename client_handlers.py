@@ -31,7 +31,7 @@ from assinaturas import data_local, teclado_planos
 import mensagens
 from config import Config
 from database import STATUS_EXPIRADO, Combo, Database, Gorjeta, Pack, Plano, fmt_reais
-from payments import MockPixGateway, PixGateway
+from payments import PixGateway
 from remarketing import teclado_novo_pix
 from loja import url_loja
 import protecao
@@ -154,7 +154,7 @@ async def iniciar_compra(msg: Message, user: User, item_id: str, codigo_cupom: s
     )
     teclado = InlineKeyboardMarkup(inline_keyboard=[[
         InlineKeyboardButton(text="✅ Já paguei", callback_data=f"pix:{cobranca.pix_id}")
-    ]] + teclado_teste(gateway, cobranca.pix_id))
+    ]] + await teclado_teste(gateway, cobranca.pix_id))
     await msg.answer_photo(
         BufferedInputFile(cobranca.qr_png, filename="pix.png"), caption=legenda, reply_markup=teclado
     )
@@ -421,9 +421,9 @@ async def novo_pix(cb: CallbackQuery, bot: Bot, db: Database, gateway: PixGatewa
     await iniciar_compra(cb.message, cb.from_user, venda.pack_id, venda.cupom, bot, db, gateway, cfg)
 
 
-def teclado_teste(gateway: PixGateway, pix_id: str) -> list:
-    """Só com PIX_GATEWAY=mock: botão para simular o pagamento direto no Telegram (testar pelo celular)."""
-    if not isinstance(gateway, MockPixGateway):
+async def teclado_teste(gateway: PixGateway, pix_id: str) -> list:
+    """Só no modo teste: botão para simular o pagamento direto no Telegram (testar pelo celular)."""
+    if not await gateway.em_teste():
         return []
     return [[InlineKeyboardButton(text="🧪 Simular pagamento (teste)", callback_data=f"testepix:{pix_id}")]]
 
@@ -431,7 +431,7 @@ def teclado_teste(gateway: PixGateway, pix_id: str) -> list:
 @router.callback_query(F.data.startswith("testepix:"))
 async def simular_pagamento(cb: CallbackQuery, bot: Bot, db: Database, gateway: PixGateway, cfg: Config):
     pix_id = cb.data.split(":", 1)[1]
-    if not isinstance(gateway, MockPixGateway) or not gateway.marcar_pago_teste(pix_id):
+    if not await gateway.marcar_pago_teste(pix_id):
         await cb.answer("Cobrança de teste não encontrada (o bot reiniciou?). Gere um novo PIX.", show_alert=True)
         return
     await ja_paguei(cb, bot, db, gateway, cfg)

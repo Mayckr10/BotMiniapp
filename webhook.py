@@ -27,7 +27,7 @@ from config import Config
 from assinaturas import ativar_assinatura
 from notificacoes import avisar_venda
 from database import Database, Pack, fmt_reais
-from payments import MockPixGateway, PixGateway
+from payments import GatewaySeletor, MockPixGateway, PixGateway
 
 log = logging.getLogger(__name__)
 
@@ -149,12 +149,12 @@ async def health(_: web.Request) -> web.Response:
 
 # ── Rotas do mock (simulam o lado do gateway) ──────────────────────────────
 async def mock_listar(request: web.Request) -> web.Response:
-    gw: MockPixGateway = request.app["gateway"]
+    gw: MockPixGateway = request.app["gateway"].mock
     return web.json_response(list(gw.cobrancas.values()))
 
 
 async def mock_pagar(request: web.Request) -> web.Response:
-    gw: MockPixGateway = request.app["gateway"]
+    gw: MockPixGateway = request.app["gateway"].mock
     cfg: Config = request.app["cfg"]
     pix_id = request.match_info["pix_id"]
     if pix_id not in gw.cobrancas:
@@ -173,7 +173,7 @@ def criar_app_web(bot: Bot, db: Database, gateway: PixGateway, cfg: Config) -> w
     app["bot"], app["db"], app["gateway"], app["cfg"] = bot, db, gateway, cfg
     app.router.add_post("/webhook/pix", webhook_pix)
     app.router.add_get("/health", health)
-    if isinstance(gateway, MockPixGateway):
+    if isinstance(gateway, GatewaySeletor):   # rotas de teste: só agem sobre cobranças do modo teste
         app.router.add_get("/mock/cobrancas", mock_listar)
         app.router.add_post("/mock/pagar/{pix_id}", mock_pagar)
     return app

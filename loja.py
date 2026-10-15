@@ -34,7 +34,6 @@ from assinaturas import data_local
 from config import Config
 import mensagens
 from database import Database, Pack, fmt_reais
-from payments import MockPixGateway
 import protecao
 from vendas import aplicar_pct, criar_pedido, desconto_primeiro_mes
 from webhook import processar_pagamento
@@ -170,7 +169,7 @@ async def dados(request: web.Request) -> web.Response:
         "agendados": {"posts": [post_json(p) for p in ag["posts"]],
                       "packs": [pack_ag(a) for a in ag["packs"] if a["pack"]]} if criadora else None,
         "idade": await _idade_ok(db, cfg, user["id"]),
-        "teste": isinstance(request.app["gateway"], MockPixGateway),
+        "teste": await request.app["gateway"].em_teste(),
         "assinatura": info_vip,
         "planos": [{"id": p.item_id, "nome": p.nome, "dias": p.dias, "preco_fmt": p.preco_fmt,
                     "economia": economia(p), "promo": promo.get(p.item_id)} for p in planos],
@@ -317,8 +316,7 @@ async def teste_pagar(request: web.Request) -> web.Response:
     user = _usuario(request)
     pix_id = str((await request.json()).get("pix_id", ""))
     venda = await request.app["db"].get_venda_por_pix(pix_id)
-    if not isinstance(gw, MockPixGateway) or not venda or venda.user_id != user["id"] \
-            or not gw.marcar_pago_teste(pix_id):
+    if not venda or venda.user_id != user["id"] or not await gw.marcar_pago_teste(pix_id):
         raise web.HTTPNotFound()
     await processar_pagamento(request.app["bot"], request.app["db"], gw, pix_id, request.app["cfg"])
     return web.json_response({"ok": True})

@@ -32,7 +32,10 @@ class Config:
 
     # PIX
     pix_gateway: str = os.getenv("PIX_GATEWAY", "mock").lower()
-    pushinpay_token: str = os.getenv("PUSHINPAY_TOKEN", "")
+    pushinpay_token: str = os.getenv("PUSHINPAY_TOKEN", "")      # opcional: a criadora cadastra o dela no painel
+    # Split da plataforma: % de cada venda que vai para a conta Pushin Pay da plataforma (máx. 50%, regra da Pushin Pay)
+    plataforma_account_id: str = os.getenv("PLATAFORMA_ACCOUNT_ID", "")
+    plataforma_pct: int = min(50, max(0, int(os.getenv("PLATAFORMA_PCT", "10"))))
     pix_chave_mock: str = os.getenv("PIX_CHAVE_MOCK", "contato@exemplo.com")
     pix_nome: str = os.getenv("PIX_NOME_RECEBEDOR", "CRIADORA DE CONTEUDO")
     pix_cidade: str = os.getenv("PIX_CIDADE_RECEBEDOR", "SAO PAULO")

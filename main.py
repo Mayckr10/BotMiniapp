@@ -47,7 +47,7 @@ async def run(cfg: Config) -> None:
     # nome editado pelo painel do Mini App (Config é imutável, por isso o __setattr__)
     object.__setattr__(cfg, "criadora_nome", await db.get_ajuste("nome", cfg.criadora_nome))
     mensagens.configurar(db, cfg)
-    gateway = criar_gateway(cfg)
+    gateway = criar_gateway(cfg, db)
     bot = criar_bot(cfg)
 
     # Tudo que for passado aqui é injetado nos handlers pelo nome do parâmetro
