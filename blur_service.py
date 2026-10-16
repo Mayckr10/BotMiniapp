@@ -108,6 +108,43 @@ def _duracao(caminho: Path) -> float:
         return 0.0
 
 
+def medidas_video(dados) -> tuple[int, int, int] | None:
+    """(largura, altura, duração em s) como o vídeo APARECE na tela, já considerando a rotação gravada pelo celular.
+    Sem isso o Telegram chuta as medidas e o vídeo vertical (9:16) chega esticado em 16:9."""
+    import json
+    import subprocess
+    tmp = None
+    try:
+        if isinstance(dados, Path):
+            caminho = dados
+        else:
+            tmp = Path(tempfile.mkstemp(prefix="med_", suffix=".mp4")[1])
+            tmp.write_bytes(dados)
+            caminho = tmp
+        proc = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
+                               "stream=width,height:stream_tags=rotate:stream_side_data=rotation:format=duration",
+                               "-of", "json", str(caminho)], capture_output=True, text=True, timeout=60)
+        info = json.loads(proc.stdout or "{}")
+        st = (info.get("streams") or [{}])[0]
+        w, h = int(st.get("width") or 0), int(st.get("height") or 0)
+        if not w or not h:
+            return None
+        rot = st.get("tags", {}).get("rotate")
+        for sd in st.get("side_data_list", []) or []:
+            if "rotation" in sd:
+                rot = sd["rotation"]
+        if rot is not None and abs(int(float(rot))) % 180 == 90:
+            w, h = h, w
+        dur = int(float(info.get("format", {}).get("duration") or 0))
+        return w, h, dur
+    except Exception:
+        log.warning("Não consegui medir o vídeo", exc_info=True)
+        return None
+    finally:
+        if tmp:
+            tmp.unlink(missing_ok=True)
+
+
 def comprimir_video(origem: Path, limite: int) -> bytes | None:
     """Recomprime um vídeo (H.264 + AAC, até 1280px no lado maior) para caber em `limite` bytes.
     Calcula o bitrate pela duração e tenta de novo mais baixo se ainda passar. None se não der."""

@@ -250,6 +250,8 @@ async def despachar(metodo: str, p: dict, uploads: dict) -> web.Response:
         campo = metodo[4:]
         chat_id = chat_valido(p)
         file_id = resolver_midia(p.get(campo), uploads, campo)
+        if p.get("width") and p.get("height") and file_id in S.arquivos:   # como o Telegram: usa as medidas informadas
+            S.arquivos[file_id]["w"], S.arquivos[file_id]["h"] = int(p["width"]), int(p["height"])
         msg = S.nova_msg(chat_id, remetente(chat_id),
                          caption=p.get("caption"), **S.midia_campo(file_id), **extras())
         return ok(publico(msg))

@@ -128,7 +128,8 @@ async def run(cfg: Config) -> None:
             asyncio.create_task(notificacoes.loop_resumo(bot, db, cfg)),
             asyncio.create_task(agenda.loop_agenda(bot, db, cfg)),
             asyncio.create_task(galeria.autoteste_marca()),
-            asyncio.create_task(extras.loop_extras(bot, db, cfg))]
+            asyncio.create_task(extras.loop_extras(bot, db, cfg)),
+            asyncio.create_task(criadora.corrigir_videos_antigos(bot, db, cfg))]
     if cfg.backup_ativo:
         jobs.append(asyncio.create_task(loop_backup(bot, db, cfg)))
     try:

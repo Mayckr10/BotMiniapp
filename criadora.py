@@ -53,7 +53,7 @@ import mensagens
 import recursos as R
 import protecao
 from admin_handlers import parse_preco, postar_no_canal
-from blur_service import _capa_video_generica, _frame_ffmpeg, aplicar_blur, comprimir_video
+from blur_service import _capa_video_generica, _frame_ffmpeg, aplicar_blur, comprimir_video, medidas_video
 from config import Config
 from assinaturas import data_local
 from database import Database, agora, fmt_reais
@@ -232,7 +232,9 @@ async def _subir(bot: Bot, chat_id: int, tipo: str, dados: bytes, nome: str) -> 
                 msg = await bot.send_photo(chat_id, arquivo, disable_notification=True)
                 file_id = msg.photo[-1].file_id
             else:
-                msg = await bot.send_video(chat_id, arquivo, disable_notification=True, supports_streaming=True)
+                med = await asyncio.to_thread(medidas_video, dados)
+                extra = {"width": med[0], "height": med[1], "duration": med[2] or None} if med else {}
+                msg = await bot.send_video(chat_id, arquivo, disable_notification=True, supports_streaming=True, **extra)
                 file_id = msg.video.file_id
             break
         except TelegramRetryAfter as e:
@@ -1148,3 +1150,53 @@ def registrar_rotas(app: web.Application) -> None:
     app.router.add_get("/api/loja/post_video/{id:\\d+}", post_video)
     app.router.add_post("/api/criadora/mensagem", salvar_mensagem)
     app.router.add_get("/api/loja/msg_foto/{chave}", mensagem_foto)
+
+
+async def corrigir_videos_antigos(bot: Bot, db: Database, cfg: Config) -> None:
+    """Uma vez só: vídeos verticais enviados antes da correção das medidas chegavam esticados no chat.
+    Baixa cada vídeo de pack/post (até 20 MB, o limite do bot), e os verticais sobem de novo com as medidas certas."""
+    if await db.get_ajuste("videos_medidas_v1") == "1":
+        return
+    import galeria
+    chats = sorted(cfg.admin_ids)
+    trocas: dict[str, str] = {}
+
+    async def refazer(file_id: str) -> str | None:
+        if file_id in trocas:
+            return trocas[file_id]
+        try:
+            arq = await bot.get_file(file_id)
+            if (arq.file_size or 0) > galeria.LIMITE_BOT_API:
+                return None
+            dados = await galeria._baixar(bot, file_id)
+            med = await asyncio.to_thread(medidas_video, dados)
+            if not med or med[1] <= med[0]:          # horizontal: o Telegram já mostra certo
+                return None
+            for chat in chats:
+                try:
+                    trocas[file_id] = await _subir(bot, chat, "video", dados, "video.mp4")
+                    return trocas[file_id]
+                except Exception:
+                    continue
+        except Exception:
+            log.warning("Correção de vídeo antigo falhou (%s)", file_id[:20], exc_info=True)
+        return None
+
+    n = 0
+    for r in await db._todos("SELECT id, file_ids_originais FROM packs"):
+        midias = json.loads(r["file_ids_originais"])
+        mudou = False
+        for m in midias:
+            if m["tipo"] == "video" and (novo := await refazer(m["file_id"])):
+                m["file_id"], mudou = novo, True
+                n += 1
+        if mudou:
+            await db.conn.execute("UPDATE packs SET file_ids_originais = ? WHERE id = ?", (json.dumps(midias), r["id"]))
+            await db.conn.commit()
+    for r in await db._todos("SELECT id, video FROM posts WHERE video IS NOT NULL"):
+        if novo := await refazer(r["video"]):
+            await db.conn.execute("UPDATE posts SET video = ? WHERE id = ?", (novo, r["id"]))
+            await db.conn.commit()
+            n += 1
+    await db.set_ajuste("videos_medidas_v1", "1")
+    log.info("Vídeos verticais antigos corrigidos: %d", n)
