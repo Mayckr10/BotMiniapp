@@ -40,7 +40,8 @@ CLIENTE = {"id": 222, "is_bot": False, "first_name": "Cliente", "username": "cli
 CANAL = {"id": -1001234567890, "type": "channel", "title": "Canal de Amostras 🔥", "username": "amostras_vip"}
 VIP = {"id": -1009876543210, "type": "channel", "title": "VIP 🔒 (privado)"}
 CANAIS = {CANAL["id"]: CANAL, VIP["id"]: VIP}
-USUARIOS = {"admin": ADMIN, "client": CLIENTE}
+AJUDANTE = {"id": 444, "is_bot": False, "first_name": "Ana", "username": "ana_equipe", "language_code": "pt-br"}
+USUARIOS = {"admin": ADMIN, "client": CLIENTE, "ajudante": AJUDANTE}
 # Usuário fictício que "bloqueou o bot": qualquer envio para ele devolve 403 (testa o broadcast)
 BLOQUEADO_ID = 333
 LIMITE_POR_SEGUNDO = 30          # acima disso a falsa API responde 429, como o Telegram
@@ -57,7 +58,7 @@ class EstadoSim:
     def __init__(self):
         self.ids = itertools.count(1)
         self.update_ids = itertools.count(1)
-        self.chats: dict[int, list[dict]] = {ADMIN["id"]: [], CLIENTE["id"]: [], CANAL["id"]: [], VIP["id"]: []}
+        self.chats: dict[int, list[dict]] = {ADMIN["id"]: [], CLIENTE["id"]: [], AJUDANTE["id"]: [], CANAL["id"]: [], VIP["id"]: []}
         self.arquivos: dict[str, dict] = {}            # file_id -> {"bytes", "tipo", "w", "h"}
         self.updates: list[dict] = []
         self.cond = asyncio.Condition()
@@ -505,7 +506,7 @@ async def sim_estado(request: web.Request) -> web.Response:
         "v": S.versao,
         "online": agora - S.ultimo_poll < 30,
         "bot": BOT_USER, "admin": ADMIN, "client": CLIENTE, "canal": CANAL, "vip": VIP,
-        "chats": {"admin": S.chats[ADMIN["id"]], "client": S.chats[CLIENTE["id"]], "canal": S.chats[CANAL["id"]],
+        "chats": {"admin": S.chats[ADMIN["id"]], "client": S.chats[CLIENTE["id"]], "ajudante": S.chats[AJUDANTE["id"]], "canal": S.chats[CANAL["id"]],
                   "vip": S.chats[VIP["id"]]},
         "cliente_no_vip": CLIENTE["id"] in S.membros_vip,
         "menu_loja": S.menu_loja,

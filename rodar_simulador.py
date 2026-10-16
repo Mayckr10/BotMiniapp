@@ -19,6 +19,7 @@ SIM_PORT = int(os.getenv("SIM_PORT", "8081"))
 os.environ.update({
     "BOT_TOKEN": "123456:SIMULADOR",
     "ADMIN_IDS": "111",
+    "DONO_IDS": os.getenv("DONO_IDS", "111"),
     "CHANNEL_ID": "-1001234567890",
     "VIP_CHANNEL_ID": "-1009876543210",
     "TELEGRAM_API_BASE": f"http://127.0.0.1:{SIM_PORT}",

@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Painel da criadora</title>
+<link rel="icon" href="/favicon.ico">
+<style>
+:root{
+  --bg:#0b0d12; --bg2:#141821; --card:#171b25; --text:#f4f5f8; --muted:#8b93a3; --line:rgba(255,255,255,.09);
+  --a1:#ff2e7e; --a2:#ff7a3d; --grad:linear-gradient(135deg,var(--a1),var(--a2)); --ok:#2fd27a; --err:#ff5d5d;
+}
+@media (prefers-color-scheme: light){
+  :root{--bg:#f6f6f9; --bg2:#fff; --card:#fff; --text:#15171c; --muted:#6b7280; --line:rgba(0,0,0,.08)}
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif}
+body{display:grid;place-items:center;padding:24px 16px;min-height:100vh;position:relative;overflow-x:hidden}
+.bolha{position:fixed;border-radius:50%;filter:blur(60px);opacity:.35;z-index:0;animation:flutua 12s ease-in-out infinite alternate;pointer-events:none}
+.b1{width:340px;height:340px;background:var(--a1);left:-120px;top:-120px}
+.b2{width:300px;height:300px;background:var(--a2);right:-100px;bottom:-80px;animation-delay:-5s}
+@keyframes flutua{to{transform:translate(30px,20px) scale(1.1)}}
+.caixa{position:relative;z-index:1;width:100%;max-width:400px;background:var(--card);border:1px solid var(--line);border-radius:24px;padding:28px 22px;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:entra .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes entra{from{opacity:0;transform:translateY(14px) scale(.98)}}
+.logo{width:56px;height:56px;border-radius:18px;background:var(--grad);display:grid;place-items:center;margin:0 auto 14px;box-shadow:0 10px 26px color-mix(in srgb,var(--a1) 40%,transparent)}
+.logo svg{width:28px;height:28px;color:#fff}
+h1{font-size:22px;margin:0 0 4px;text-align:center;letter-spacing:-.02em}
+.sub{color:var(--muted);text-align:center;margin:0 0 20px;font-size:14px}
+label{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:14px 0 6px}
+input{width:100%;padding:13px 14px;border-radius:14px;border:1px solid var(--line);background:var(--bg2);color:var(--text);font:inherit;outline:none;transition:border-color .2s,box-shadow .2s}
+input:focus{border-color:var(--a1);box-shadow:0 0 0 4px color-mix(in srgb,var(--a1) 18%,transparent)}
+.senha{position:relative}
+.senha button{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--muted);cursor:pointer;padding:6px;font:inherit;font-size:13px}
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:20px;padding:14px;border:0;border-radius:14px;background:var(--grad);color:#fff;font:inherit;font-weight:700;font-size:15px;cursor:pointer;transition:transform .15s,opacity .2s}
+.btn:active{transform:scale(.98)}
+.btn[disabled]{opacity:.6;cursor:default}
+.btn.sec{background:var(--bg2);color:var(--text);border:1px solid var(--line)}
+.link{display:block;text-align:center;margin-top:14px;color:var(--muted);font-size:13.5px;background:none;border:0;cursor:pointer;width:100%;font:inherit}
+.link b{color:var(--text)}
+.erro{color:var(--err);font-size:13.5px;margin-top:12px;text-align:center;min-height:1em}
+.ok{color:var(--ok)}
+.forca{height:4px;border-radius:4px;background:var(--line);margin-top:8px;overflow:hidden}
+.forca i{display:block;height:100%;width:0;transition:width .3s,background .3s}
+.passos{display:grid;gap:12px;margin:18px 0 4px}
+.passo{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:14px;background:var(--bg2);border:1px solid var(--line)}
+.passo .n{width:26px;height:26px;border-radius:50%;background:var(--grad);color:#fff;display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}
+.passo small{color:var(--muted);display:block}
+.lista{margin:12px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+.lista li{font-size:13.5px;color:var(--muted);display:flex;gap:8px}
+.lista li::before{content:"✓";color:var(--ok);font-weight:800}
+.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:gira .7s linear infinite}
+@keyframes gira{to{transform:rotate(360deg)}}
+.esperando{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--muted);font-size:13px;margin-top:14px}
+.esperando .spin{border-color:var(--line);border-top-color:var(--a1)}
+</style>
+</head>
+<body>
+<span class="bolha b1"></span><span class="bolha b2"></span>
+<main class="caixa" id="app"></main>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LOGO = `<div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z"/></svg></div>`;
+const params = new URLSearchParams(location.search);
+
+async function api(caminho, corpo){
+  try{
+    const r = await fetch(caminho, {method: corpo ? "POST" : "GET", credentials: "same-origin",
+      headers: {"X-Requested-With": "painel", ...(corpo ? {"Content-Type": "application/json"} : {})},
+      body: corpo ? JSON.stringify(corpo) : undefined});
+    const j = await r.json().catch(() => ({}));
+    return {ok: r.ok, status: r.status, ...j};
+  }catch(e){ return {ok: false, erro: "Sem conexão. Tente de novo."} }
+}
+function campoSenha(id, rotulo, auto){
+  return `<label for="${id}">${rotulo}</label><div class="senha"><input type="password" id="${id}" autocomplete="${auto}" required minlength="8"><button type="button" data-ver="${id}">mostrar</button></div>`;
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-ver]"); if(!b) return;
+  const i = document.getElementById(b.dataset.ver); i.type = i.type === "password" ? "text" : "password"; b.textContent = i.type === "password" ? "mostrar" : "esconder";
+});
+function forca(input, barra){
+  input.addEventListener("input", () => {
+    const v = input.value; let p = 0;
+    if(v.length >= 8) p++; if(v.length >= 12) p++; if(/\d/.test(v) && /[a-z]/i.test(v)) p++; if(/[^a-z0-9]/i.test(v)) p++;
+    barra.style.width = `${p * 25}%`; barra.style.background = ["var(--err)","var(--err)","#ffb648","#9bd22f","var(--ok)"][p];
+  });
+}
+async function enviando(btn, fn){
+  const txt = btn.innerHTML; btn.disabled = true; btn.innerHTML = `<span class="spin"></span>`;
+  try{ await fn() } finally { btn.disabled = false; btn.innerHTML = txt }
+}
+
+// ── Telas ────────────────────────────────────────────────────────────────
+function telaEntrar(msg){
+  $("#app").innerHTML = `${LOGO}<h1>Painel da criadora</h1><p class="sub">Entre para gerenciar sua loja pelo navegador</p>
+    <form id="f"><label for="email">E-mail</label><input type="email" id="email" autocomplete="email" required>
+    ${campoSenha("senha", "Senha", "current-password")}
+    <button class="btn" id="b">Entrar</button><div class="erro ${msg ? "ok" : ""}" id="erro">${esc(msg || "")}</div></form>
+    <button class="link" id="esq">Esqueci a senha</button>`;
+  $("#email").focus();
+  $("#f").onsubmit = e => { e.preventDefault(); enviando($("#b"), async () => {
+    const r = await api("/api/conta/entrar", {email: $("#email").value, senha: $("#senha").value});
+    if(!r.ok) return $("#erro").textContent = r.erro || "Não consegui entrar.";
+    seguir(r.conta);
+  })};
+  $("#esq").onclick = telaEsqueci;
+}
+function telaEsqueci(){
+  $("#app").innerHTML = `${LOGO}<h1>Trocar a senha</h1><p class="sub">O link para criar uma senha nova chega no seu chat com o bot no Telegram</p>
+    <form id="f"><label for="email">E-mail da conta</label><input type="email" id="email" autocomplete="email" required>
+    <button class="btn" id="b">Enviar link</button><div class="erro" id="erro"></div></form>
+    <button class="link" id="volta">Voltar para entrar</button>`;
+  $("#volta").onclick = () => telaEntrar();
+  $("#f").onsubmit = e => { e.preventDefault(); enviando($("#b"), async () => {
+    const r = await api("/api/conta/esqueci", {email: $("#email").value});
+    if(!r.ok) return $("#erro").textContent = r.erro || "Tente de novo.";
+    telaEntrar(r.mensagem);
+  })};
+}
+async function telaCadastro(codigo){
+  $("#app").innerHTML = `${LOGO}<h1>Carregando convite…</h1>`;
+  const c = await api(`/api/conta/convite/${encodeURIComponent(codigo)}`);
+  if(!c.ok){
+    $("#app").innerHTML = `${LOGO}<h1>Convite inválido</h1><p class="sub">${esc(c.erro || "Esse convite não vale mais.")}</p><button class="btn sec" id="ja">Já tenho conta</button>`;
+    $("#ja").onclick = () => { history.replaceState(null, "", "/painel"); telaEntrar() }; return;
+  }
+  const equipe = c.papel === "equipe";
+  $("#app").innerHTML = `${LOGO}<h1>${equipe ? `Entrar para a equipe` : "Criar sua conta"}</h1>
+    <p class="sub">${equipe ? `Você foi convidada para ajudar ${esc(c.criadora)}` : "Você vai ser a criadora deste bot"}</p>
+    ${equipe ? `<ul class="lista">${c.permissoes.map(p => `<li>${esc(p)}</li>`).join("")}</ul>` : ""}
+    <form id="f"><label for="nome">Seu nome</label><input id="nome" autocomplete="name" required maxlength="60" value="${esc(c.nome)}">
+    <label for="email">E-mail</label><input type="email" id="email" autocomplete="email" required>
+    ${campoSenha("senha", "Senha (mínimo 8 caracteres)", "new-password")}<div class="forca"><i id="fb"></i></div>
+    <button class="btn" id="b">Criar conta</button><div class="erro" id="erro"></div></form>
+    <button class="link" id="ja">Já tenho conta? <b>Entrar</b></button>`;
+  forca($("#senha"), $("#fb"));
+  $("#ja").onclick = () => { history.replaceState(null, "", "/painel"); telaEntrar() };
+  $("#f").onsubmit = e => { e.preventDefault(); enviando($("#b"), async () => {
+    const r = await api("/api/conta/cadastrar", {convite: codigo, nome: $("#nome").value, email: $("#email").value, senha: $("#senha").value});
+    if(!r.ok) return $("#erro").textContent = r.erro || "Não consegui criar a conta.";
+    history.replaceState(null, "", "/painel"); seguir(r.conta);
+  })};
+}
+function telaRedefinir(token){
+  $("#app").innerHTML = `${LOGO}<h1>Nova senha</h1><p class="sub">Escolha uma senha nova para o painel</p>
+    <form id="f">${campoSenha("senha", "Nova senha", "new-password")}<div class="forca"><i id="fb"></i></div>
+    <button class="btn" id="b">Salvar senha</button><div class="erro" id="erro"></div></form>`;
+  forca($("#senha"), $("#fb"));
+  $("#f").onsubmit = e => { e.preventDefault(); enviando($("#b"), async () => {
+    const r = await api("/api/conta/redefinir", {token, senha: $("#senha").value});
+    if(!r.ok) return $("#erro").textContent = r.erro || "Não consegui salvar.";
+    history.replaceState(null, "", "/painel"); seguir(r.conta);
+  })};
+}
+let ESPERA = null;
+async function telaVincular(){
+  const r = await api("/api/conta/eu");
+  if(!r.ok) return telaEntrar();
+  if(r.conta.vinculado) return irParaLoja();
+  $("#app").innerHTML = `${LOGO}<h1>Falta um passo, ${esc(r.conta.nome.split(" ")[0])}</h1>
+    <p class="sub">Vincule seu Telegram para o bot saber que é você</p>
+    <div class="passos">
+      <div class="passo"><span class="n">1</span><div><b>Toque em "Abrir o Telegram"</b><small>Abre o bot com o código da sua conta</small></div></div>
+      <div class="passo"><span class="n">2</span><div><b>Toque em "Começar"</b><small>O bot confirma o vínculo na hora</small></div></div>
+    </div>
+    <a class="btn" href="${esc(r.link_vinculo)}" target="_blank" rel="noopener">Abrir o Telegram</a>
+    <div class="esperando"><span class="spin"></span>Esperando a confirmação…</div>
+    <button class="link" id="sair">Sair</button>`;
+  $("#sair").onclick = sair;
+  clearInterval(ESPERA);
+  ESPERA = setInterval(async () => { const x = await api("/api/conta/eu"); if(x.ok && x.conta.vinculado){ clearInterval(ESPERA); irParaLoja() } }, 3000);
+}
+function seguir(conta){ conta.vinculado ? irParaLoja() : telaVincular() }
+function irParaLoja(){ location.href = "/loja" }
+async function sair(){ await api("/api/conta/sair", {}); clearInterval(ESPERA); telaEntrar() }
+
+// ── Início ───────────────────────────────────────────────────────────────
+(async () => {
+  if(location.pathname.endsWith("/cadastro") && params.get("c")) return telaCadastro(params.get("c"));
+  if(location.pathname.endsWith("/redefinir") && params.get("t")) return telaRedefinir(params.get("t"));
+  if(params.get("sair")){ await api("/api/conta/sair", {}); history.replaceState(null, "", "/painel"); return telaEntrar() }
+  const r = await api("/api/conta/eu");
+  if(r.ok) return seguir(r.conta);
+  telaEntrar();
+})();
+</script>
+</body>
+</html>

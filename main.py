@@ -29,6 +29,7 @@ import galeria
 import loja
 import mensagens
 import agenda
+import contas
 import notificacoes
 import protecao
 import reset_banco
@@ -50,6 +51,8 @@ async def run(cfg: Config) -> None:
     # nome editado pelo painel do Mini App (Config é imutável, por isso o __setattr__)
     object.__setattr__(cfg, "criadora_nome", await db.get_ajuste("nome", cfg.criadora_nome))
     mensagens.configurar(db, cfg)
+    contas_app = contas.Contas(db, cfg)
+    await contas_app.iniciar()                    # soma as criadoras cadastradas ao ADMIN_IDS
     gateway = criar_gateway(cfg, db)
     bot = criar_bot(cfg)
 
@@ -57,6 +60,7 @@ async def run(cfg: Config) -> None:
     dp = Dispatcher(storage=MemoryStorage(), db=db, cfg=cfg, gateway=gateway)
     dp.message.outer_middleware(protecao.Bloqueio(db, cfg))          # fã bloqueado não passa daqui
     dp.callback_query.outer_middleware(protecao.Bloqueio(db, cfg))
+    dp.include_router(contas.get_router(cfg, contas_app))   # /convite (dono) e vínculo do Telegram
     dp.include_router(reset_banco.get_router(cfg))      # /resetar_banco: só para RESET_IDS
     dp.include_router(admin_handlers.get_router(cfg))   # admin primeiro
     dp.include_router(admin_vendas.get_router(cfg))
@@ -86,8 +90,11 @@ async def run(cfg: Config) -> None:
                  BotCommand(command="bloquear", description="Bloquear um fã pelo ID"),
                  BotCommand(command="bloqueados", description="Fãs bloqueados"),
                  BotCommand(command="cancelar", description="Cancelar operação")]
-    for chat_id in cfg.admin_ids | cfg.reset_ids:
+    contas.CMDS_ADMIN[:] = cmds_admin
+    for chat_id in cfg.admin_ids | cfg.reset_ids | cfg.dono_ids:
         cmds = list(cmds_admin if chat_id in cfg.admin_ids else cmds_fa)
+        if chat_id in cfg.dono_ids:
+            cmds.append(BotCommand(command="convite", description="Convidar uma criadora (link de cadastro)"))
         if chat_id in cfg.reset_ids:
             cmds.append(BotCommand(command="resetar_banco", description="⚠️ Apagar todo o banco de dados"))
         try:
@@ -96,6 +103,8 @@ async def run(cfg: Config) -> None:
             pass  # ainda não abriu conversa com o bot
 
     app = criar_app_web(bot, db, gateway, cfg)
+    app["contas"] = contas_app
+    contas.registrar_rotas(app)
     loja.registrar_rotas(app)
     criadora.registrar_rotas(app)
     url = loja.url_loja(cfg)

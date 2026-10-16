@@ -725,6 +725,20 @@ try{ tg?.ready(); tg?.expand(); tg?.setHeaderColor?.("bg_color"); tg?.setBackgro
 
 // ── Ícones (desenhados à mão em SVG, grade 24x24, cor = currentColor) ──────────
 const ICONES = {
+  "link": "<path d=\"M10 14a4.5 4.5 0 006.4 0l3-3a4.5 4.5 0 00-6.4-6.4l-1.2 1.2\"/><path d=\"M14 10a4.5 4.5 0 00-6.4 0l-3 3a4.5 4.5 0 006.4 6.4l1.2-1.2\"/>",
+  "copiar": "<rect x=\"8.5\" y=\"8.5\" width=\"11\" height=\"11\" rx=\"2.5\"/><path d=\"M15.5 8.5V6.5a2 2 0 00-2-2h-7a2 2 0 00-2 2v7a2 2 0 002 2h2\"/>",
+  "carteira": "<path d=\"M4 7.5A2.5 2.5 0 016.5 5H17v3\"/><rect x=\"4\" y=\"8\" width=\"16\" height=\"11\" rx=\"2.5\"/><path d=\"M16 13.5h1.5\"/>",
+  "pergunta": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M9.6 9.6a2.5 2.5 0 114 2c-.9.6-1.6 1.1-1.6 2.2\"/><path d=\"M12 16.6v.1\"/>",
+  "dado": "<rect x=\"4.5\" y=\"4.5\" width=\"15\" height=\"15\" rx=\"3.5\"/><path d=\"M9 9h.01M15 9h.01M12 12h.01M9 15h.01M15 15h.01\" stroke-width=\"2.6\"/>",
+  "raio": "<path d=\"M13 3L5.5 13.5H12L11 21l7.5-10.5H12z\"/>",
+  "subir": "<path d=\"M12 19V5M6.5 10.5L12 5l5.5 5.5\"/>",
+  "bolo": "<path d=\"M4.5 20.5h15M5.5 20.5v-6.5a2 2 0 012-2h9a2 2 0 012 2v6.5\"/><path d=\"M5.5 15.5c1.5 1.2 3 1.2 4.5 0s3-1.2 4.5 0 3 1.2 4 0M12 12V8.5\"/><path d=\"M12 5.2c.8.8.8 2-.1 2.6-.9-.6-.9-1.8.1-2.6z\"/>",
+  "nuvem": "<path d=\"M7.5 18.5h9.5a4 4 0 00.6-7.95A5.5 5.5 0 006.9 9.7 4.4 4.4 0 007.5 18.5z\"/>",
+  "planilha": "<rect x=\"4.5\" y=\"3.5\" width=\"15\" height=\"17\" rx=\"2.5\"/><path d=\"M4.5 9h15M4.5 14.5h15M10 9v11.5\"/>",
+  "usuarios": "<circle cx=\"9\" cy=\"8.5\" r=\"3.2\"/><path d=\"M3.5 19c.6-3.2 2.9-5 5.5-5s4.9 1.8 5.5 5\"/><path d=\"M15.5 5.6a3 3 0 010 5.8M17.2 14.3c1.8.6 3 2.3 3.3 4.7\"/>",
+  "filtro-cor": "<circle cx=\"12\" cy=\"12\" r=\"8.5\"/><path d=\"M12 3.5v17\"/><path d=\"M12 3.5a8.5 8.5 0 010 17\" fill=\"currentColor\" stroke=\"none\"/>",
+  "lupa-id": "<circle cx=\"10.5\" cy=\"10.5\" r=\"6\"/><path d=\"M15 15l5 5M8.5 10.5h4M10.5 8.5v4\"/>",
+  "foguinho": "<path d=\"M12 21a6 6 0 006-6c0-4-3.5-5.5-3.5-9.5C12 7 9.5 9 9.5 12 8.4 11.4 8 10 8 9c-1.3 1.4-2 3.6-2 6a6 6 0 006 6z\"/>",
   "check": "<path d=\"M5 12.6l4.3 4.3L19 7.2\"/>",
   "fechar": "<path d=\"M6.5 6.5l11 11M17.5 6.5l-11 11\"/>",
   "mais": "<path d=\"M12 5v14M5 12h14\"/>",
@@ -832,7 +846,7 @@ let COMO_FA = false, PAINEL = null, ULTIMO = null, D = null, ABA = "inicio", FIL
 async function api(caminho, corpo){
   const r = await fetch(caminho, {
     method: corpo ? "POST" : "GET",
-    headers: {"X-Telegram-Init-Data": INIT, ...(corpo ? {"Content-Type": "application/json"} : {})},
+    headers: {"X-Telegram-Init-Data": INIT, "X-Requested-With": "painel", ...(corpo ? {"Content-Type": "application/json"} : {})},
     body: corpo ? JSON.stringify(corpo) : undefined,
   });
   const j = await r.json().catch(() => ({}));
@@ -845,7 +859,7 @@ function enviarForm(caminho, campos, arquivos = [], aoProgresso){
     arquivos.forEach(([nome, f]) => fd.append(nome, f, f.name || "arquivo"));
     const x = new XMLHttpRequest();
     x.open("POST", caminho);
-    x.setRequestHeader("X-Telegram-Init-Data", INIT);
+    x.setRequestHeader("X-Telegram-Init-Data", INIT); x.setRequestHeader("X-Requested-With", "painel");
     x.upload.onprogress = e => e.lengthComputable && aoProgresso?.(e.loaded / e.total);
     x.onload = () => { let j = {}; try{ j = JSON.parse(x.responseText) }catch(e){} res({ok: x.status < 300, status: x.status, ...j}) };
     x.onerror = () => res({ok:false, erro:"Sem conexão. Tente de novo."});
@@ -942,7 +956,7 @@ function midias(x){
 async function carregar(){
   const r = await api("/api/loja/dados");
   if(r.erro === "bloqueado"){ $("#barra").innerHTML = ""; $("#app").innerHTML = `<div class="bloqueado-tela"><div><div style="font-size:48px">${ic("bloqueio")}</div><h2 style="color:var(--text);margin:8px 0 6px">Acesso indisponível</h2>Seu acesso a este perfil foi bloqueado.</div></div>`; return }
-  if(!r.ok){ $("#app").innerHTML = `<div class="vazio"><div class="ico">${ic("cadeado")}</div>Abra a loja pelo botão do bot no Telegram.</div>`; return }
+  if(!r.ok){ $("#app").innerHTML = `<div class="vazio"><div class="ico">${ic("cadeado")}</div>Abra a loja pelo botão do bot no Telegram.${INIT ? "" : `<div class="gap"></div><a class="btn" style="max-width:260px;margin:0 auto" href="/painel">${ic("coroa")} Sou a criadora: entrar</a>`}</div>`; return }
   const primeira = !D;
   D = r;
   if(primeira && D.sou_criadora) return escolherModo();
@@ -1001,7 +1015,7 @@ function render(){
   $("#fab")?.remove();
   if(criadora() && ABA === "inicio"){ const f = document.createElement("button"); f.className = "fab"; f.id = "fab"; f.textContent = "+"; f.onclick = () => novaPublicacao(false); document.body.appendChild(f) }
   if(criadora() && ABA === "painel" && !PAINEL) carregarPainel();
-  if(criadora() && ABA === "config" && !CONFIG) carregarConfig();
+  if(criadora() && ABA === "config" && !CONFIG && pode("ajustes")) carregarConfig();
   $("#volta-criadora")?.remove();
   if(D.sou_criadora && COMO_FA){
     const v = document.createElement("button"); v.id = "volta-criadora"; v.className = "selo-criadora"; v.dataset.volta = "1";
@@ -1806,6 +1820,19 @@ async function carregarPainel(){
 function painel(){
   if(!PAINEL) return `<div class="kpis" style="margin-top:20px"><div class="sk" style="height:84px"></div><div class="sk" style="height:84px"></div></div>`;
   const R = PAINEL.resumo;
+  if(!R.hoje) return `
+    <div class="ola vivo"><span class="deco">${ic("brilho")}</span><small>${saudacao()}, ${esc((D.usuario.nome || "").split(" ")[0])}!</small>
+      <b>Equipe</b><span>Você ajuda ${esc(D.criadora.nome)}</span></div>
+    <div class="kpis" style="margin-top:14px">
+      <div class="kpi"><small>Assinantes VIP</small><b>${R.assinantes}</b><span>${R.vencendo} vencem em 7 dias</span></div>
+      <div class="kpi"><small>Packs à venda</small><b>${R.packs}</b><span>no catálogo</span></div>
+    </div>
+    ${pedidosPainel()}${pode("publicar") ? filaRevisao() + agendadosPainel() : ""}${topFas()}
+    ${pode("publicar") ? `<div class="secao-titulo"><h2>Criar</h2></div>
+    <div class="acoes">
+      <button class="acao" data-criar="post"><span class="ico">${ic("brilho")}</span><div><b>Nova publicação</b><small>Post grátis ou pack pago, escolhe na chave</small></div><span class="seta">›</span></button>
+      <button class="acao" data-criar="story"><span class="ico">${ic("camera")}</span><div><b>Novo story</b><small>Foto ou vídeo que some em 24h</small></div><span class="seta">›</span></button>
+    </div>` : ""}<div class="gap"></div>`;
   return `
     <div class="ola vivo"><span class="deco">${ic("brilho")}</span><small>${saudacao()}, ${esc((D.criadora.nome || "").split(" ")[0])}!</small>
       <b>${esc(R.hoje.valor)}</b><span>${R.hoje.vendas ? `hoje em ${pl(R.hoje.vendas, "venda", "vendas")}` : `hoje, ainda sem vendas. Bora publicar? ${ic("beijo")}`}${PAINEL.stats ? ` · ${ic("coracao-cheio")} ${PAINEL.stats.periodos.hoje.curtidas}` : ""}</span></div>
@@ -1876,6 +1903,7 @@ function pedidosPainel(){
       <span class="seta muted">›</span></div>`).join("")}</div>`;
 }
 function topFas(){
+  if(!PAINEL.top_fas) return "";
   const T = (PAINEL.top_fas || {})[RANK] || [];
   return `<div class="secao-titulo"><h2>${ic("trofeu")} Top fãs</h2><small class="muted">quem mais gastou</small></div>
     <div class="seg">${[["30d","30 dias"],["sempre","Desde o início"]].map(([k, t]) => `<button class="${RANK === k ? "on" : ""}" data-rank="${k}">${t}</button>`).join("")}</div>
@@ -2259,19 +2287,30 @@ async function carregarConfig(){
   const r = await api("/api/criadora/config");
   if(r.ok){ CONFIG = r; D.revisao = r.revisao; if(ABA === "config"){ const c = $("#conteudo"); c.innerHTML = config(); animarEntrada(c) } }
 }
+function pode(perm){ return !D || D.papel !== "equipe" || (D.permissoes || []).includes(perm) }
+function secaoConta(){
+  const dona = D.papel !== "equipe";
+  return `<div class="secao-titulo"><h2>Conta e equipe</h2></div>
+    <div class="grupo">
+      <button class="linha-c" data-acao="minha-conta"><span class="ico">${ic("cadeado")}</span><span class="txt"><b>Minha conta de acesso</b><small>E-mail, senha e o painel no navegador</small></span><span class="seta">›</span></button>
+      ${dona ? `<button class="linha-c" data-acao="equipe"><span class="ico">${ic("usuario")}</span><span class="txt"><b>Equipe</b><small>Convide ajudantes e escolha o que cada um pode fazer</small></span><span class="seta">›</span></button>` : ""}
+      ${D.web ? `<a class="linha-c" href="/painel?sair=1"><span class="ico">${ic("fechar")}</span><span class="txt"><b>Sair deste navegador</b></span><span class="seta">›</span></a>` : ""}
+    </div>`;
+}
 function config(){
+  if(!pode("ajustes")) return secaoConta() + `<p class="dica" style="text-align:center;margin:18px 16px">As configurações da loja ficam com ${esc(D.criadora.nome)}.</p>`;
   if(!CONFIG) return `<div class="gap"></div><div class="pad"><div class="sk" style="height:120px"></div><div class="gap"></div><div class="sk" style="height:180px"></div></div>`;
   const C = CONFIG;
   const linha = (attrs, ico, titulo, sub, dir = `<span class="seta">›</span>`) =>
     `<button class="linha-c" ${attrs}><span class="ico">${ico}</span><span class="txt"><b>${titulo}</b>${sub ? `<small>${sub}</small>` : ""}</span>${dir}</button>`;
-  return `
+  return `${secaoConta()}
     <div class="secao-titulo"><h2>Perfil</h2></div>
     <div class="grupo">
       ${linha('id="ed-perfil2"', `${ic("usuario")}`, "Foto, nome e bio", esc(D.criadora.nome))}
       ${linha('id="ed-msgs"', `${ic("chat")}`, "Mensagens do bot", "Boas-vindas, pós-compra e VIP")}
     </div>
 
-    <div class="secao-titulo"><h2>Assinatura VIP</h2><small class="muted">${pl(C.planos.length, "plano", "planos")}</small></div>
+    ${pode("financeiro") ? `    <div class="secao-titulo"><h2>Assinatura VIP</h2><small class="muted">${pl(C.planos.length, "plano", "planos")}</small></div>
     <div class="grupo">
       ${C.planos.map(p => linha(`data-plano-ed="${p.id}"`, `${ic("estrela-cheia")}`, esc(p.nome), `${p.dias} dias · ${reais(Math.round(p.preco / p.dias * 30))}/mês`, `<span class="v">${esc(p.preco_fmt)}</span><span class="seta">›</span>`)).join("")}
       <button class="linha-c add" data-plano-ed="novo">＋ Novo plano</button>
@@ -2282,6 +2321,7 @@ function config(){
       ${linha('id="ed-promo"', `${ic("presente")}`, "Desconto no 1º mês", C.vip_1mes_pct ? `${C.vip_1mes_pct}% OFF para quem nunca assinou` : "Desligado", `${C.vip_1mes_pct ? `<span class="v">-${C.vip_1mes_pct}%</span>` : ""}<span class="seta">›</span>`)}
     </div>
 
+` : ""}
     <div class="secao-titulo"><h2>Mimos</h2></div>
     <div class="grupo">
       ${linha('id="ed-mimos"', `${ic("mimo")}`, "Valores sugeridos", `<span class="chips-valor" style="margin-top:6px">${C.gorjetas.map(v => `<span>R$ ${v}</span>`).join("")}</span>`)}
@@ -2305,12 +2345,13 @@ function config(){
       ${linha('id="ed-carrinho"', `${ic("carrinho")}`, "Desconto levando vários packs", C.carrinho.pct ? `${C.carrinho.pct}% OFF a partir de ${C.carrinho.min} packs` : "Desligado (o carrinho funciona sem desconto)", `${C.carrinho.pct ? `<span class="v">-${C.carrinho.pct}%</span>` : ""}<span class="seta">›</span>`)}
     </div>
 
-    <div class="secao-titulo"><h2>Cupons de desconto</h2><small class="muted">${pl(C.cupons.length, "ativo", "ativos")}</small></div>
+    ${pode("financeiro") ? `    <div class="secao-titulo"><h2>Cupons de desconto</h2><small class="muted">${pl(C.cupons.length, "ativo", "ativos")}</small></div>
     <div class="grupo">
       ${C.cupons.length ? C.cupons.map(c => linha(`data-cupom-ed="${esc(c.codigo)}"`, `${ic("etiqueta")}`, esc(c.codigo), `${esc(c.descricao)} · ${c.usos}${c.usos_max ? `/${c.usos_max}` : ""} ${(c.usos_max || c.usos) === 1 ? "uso" : "usos"}${c.expira ? ` · até ${esc(c.expira)}` : ""}`, `<span class="seta perigo">${ic("fechar")}</span>`)).join("") : `<div class="vazio-c">Nenhum cupom ativo.</div>`}
       <button class="linha-c add" id="cupom-novo">＋ Novo cupom</button>
     </div>
 
+` : ""}
     <div class="secao-titulo"><h2>Notificações</h2><small class="muted">no chat com o bot</small></div>
     <div class="grupo">
       <div class="linha-c"><span class="ico">${ic("moeda")}</span><span class="txt"><b>Avisar a cada venda</b><small>Quem comprou, o quê e quanto, com botão de bloquear</small></span><span class="chave ${C.notif_vendas ? "on" : ""}" id="notif-chave"></span></div>
@@ -2773,6 +2814,97 @@ function fecharGaleria(){
   g.remove(); document.body.style.overflow = "";
   try{ tg?.BackButton?.offClick(fecharGaleria); tg?.BackButton?.hide() }catch(e){}
 }
+
+/* ── Ações novas (data-acao) ───────────────────────────────────────────── */
+const ACOES = {};
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-acao]"); if(!el || !ACOES[el.dataset.acao]) return;
+  e.preventDefault(); ACOES[el.dataset.acao](el);
+});
+async function copiar(texto, msg){
+  try{ await navigator.clipboard.writeText(texto); vibrar("leve"); toast(msg || `Copiado ${ic("check")}`) }
+  catch(e){ prompt("Copie:", texto) }
+}
+
+/* ── Conta de acesso e equipe ──────────────────────────────────────────── */
+ACOES["minha-conta"] = async () => {
+  abrirFolha(`<h2>Minha conta</h2><div class="sk" style="height:120px"></div>`);
+  const r = await api("/api/conta/minha"); if(!r.ok) return toast("Não consegui abrir");
+  const c = r.conta;
+  if(!c){
+    return abrirFolha(`<h2>Minha conta</h2><p class="sub">Você entra pelo Telegram. Para ter login com e-mail e senha (e usar o painel no navegador), peça um convite para quem administra a plataforma.</p>
+      <div class="gap"></div><button class="btn sec" data-acao="copiar" data-texto="${esc(r.painel_url)}">${ic("link")} Copiar link do painel</button>`);
+  }
+  abrirFolha(`<h2>Minha conta</h2><p class="sub">${c.papel === "dona" ? "Criadora" : "Equipe"} · ${esc(c.email)}</p>
+    <div class="grupo" style="margin:0">
+      <div class="linha-c"><span class="ico">${ic("usuario")}</span><span class="txt"><b>${esc(c.nome)}</b><small>${c.vinculado ? "Telegram vinculado" : "Telegram ainda não vinculado"}</small></span></div>
+      <button class="linha-c" data-acao="copiar" data-texto="${esc(r.painel_url)}"><span class="ico">${ic("link")}</span><span class="txt"><b>Painel no navegador</b><small>${esc(r.painel_url.replace(/^https?:\/\//, ""))}</small></span><span class="seta">${ic("copiar")}</span></button>
+    </div>
+    <span class="rotulo">Trocar a senha</span>
+    <input type="password" id="sn-atual" placeholder="Senha atual" autocomplete="current-password">
+    <div class="gap" style="height:8px"></div><input type="password" id="sn-nova" placeholder="Nova senha (mínimo 8)" autocomplete="new-password">
+    <div class="gap"></div><button class="btn" id="sn-salvar">Salvar nova senha</button>
+    <div class="gap"></div><button class="btn fantasma perigo" id="sn-todos">Sair de todos os outros aparelhos</button>`);
+  $("#sn-salvar").onclick = async () => {
+    const x = await api("/api/conta/senha", {atual: $("#sn-atual").value, nova: $("#sn-nova").value});
+    if(!x.ok) return toast(x.erro || "Não consegui trocar");
+    vibrar("success"); toast(`Senha trocada ${ic("check")}`); fecharFolha(true);
+  };
+  $("#sn-todos").onclick = () => confirmar("Desconectar o painel em todos os outros navegadores? Você continua conectada aqui.", async () => {
+    const x = await api("/api/conta/sair_todos", {}); toast(x.ok ? "Pronto, os outros aparelhos saíram" : (x.erro || "Não consegui")); fecharFolha(true) });
+};
+ACOES["copiar"] = el => copiar(el.dataset.texto, `Link copiado ${ic("check")}`);
+let ACESSO = null;
+ACOES["equipe"] = async () => {
+  abrirFolha(`<h2>Equipe</h2><div class="sk" style="height:160px"></div>`);
+  const r = await api("/api/criadora/acesso"); if(!r.ok) return toast(r.erro || "Não consegui abrir");
+  ACESSO = r; folhaEquipe();
+};
+function folhaEquipe(){
+  const A = ACESSO, nomePerm = id => (A.permissoes.find(p => p.id === id) || {}).nome || id;
+  abrirFolha(`<h2>Equipe</h2><p class="sub">Quem ajuda você a cuidar da loja. Cada pessoa entra com e-mail e senha e só faz o que você liberar.</p>
+    ${A.equipe.length ? `<div class="grupo" style="margin:0">${A.equipe.map(m => `<button class="linha-c" data-acao="membro" data-id="${m.id}">
+      <span class="ico">${esc(m.nome[0].toUpperCase())}</span><span class="txt"><b>${esc(m.nome)}${m.ativo ? "" : " · desativado"}</b><small>${m.permissoes.length} permiss${m.permissoes.length === 1 ? "ão" : "ões"}${m.vinculado ? "" : " · falta vincular o Telegram"}</small></span><span class="seta">›</span></button>`).join("")}</div>`
+      : `<div class="vazio-c">Ninguém na equipe ainda.</div>`}
+    ${A.convites.length ? `<span class="rotulo">Convites esperando cadastro</span><div class="grupo" style="margin:0">${A.convites.map(c => `<div class="linha-c">
+      <span class="ico">${ic("envelope")}</span><span class="txt"><b>${esc(c.nome || "Convite")}</b><small>${c.permissoes.map(nomePerm).join(", ")}</small></span>
+      <button class="btn mini sec" data-acao="copiar" data-texto="${esc(c.link)}">${ic("copiar")}</button>
+      <button class="btn mini fantasma perigo" data-acao="cancelar-convite" data-codigo="${esc(c.codigo)}">${ic("fechar")}</button></div>`).join("")}</div>` : ""}
+    <div class="gap"></div><button class="btn" data-acao="convidar">＋ Convidar alguém</button>`);
+}
+function checksPerm(marcadas){
+  return `<div class="grupo" style="margin:0">${ACESSO.permissoes.map(p => `<label class="linha-c"><span class="txt"><b>${esc(p.nome)}</b></span>
+    <input type="checkbox" class="perm" value="${p.id}" ${marcadas.includes(p.id) ? "checked" : ""} style="width:22px;height:22px;accent-color:var(--a1)"></label>`).join("")}</div>`;
+}
+const permsMarcadas = () => [...document.querySelectorAll(".folha .perm:checked")].map(i => i.value);
+ACOES["convidar"] = () => {
+  abrirFolha(`<h2>Convidar para a equipe</h2><p class="sub">Você recebe um link para mandar à pessoa. Vale 7 dias e só uma vez.</p>
+    <span class="rotulo">Nome (só para você lembrar)</span><input type="text" id="cv-nome" maxlength="60" placeholder="Ex: Ana, editora">
+    <span class="rotulo">O que ela pode fazer</span>${checksPerm(["publicar"])}
+    <div class="gap"></div><button class="btn" id="cv-ok">Gerar link de convite</button>`);
+  $("#cv-ok").onclick = async () => {
+    const r = await api("/api/criadora/equipe/convidar", {nome: $("#cv-nome").value, permissoes: permsMarcadas()});
+    if(!r.ok) return toast(r.erro || "Não consegui gerar");
+    vibrar("success");
+    abrirFolha(`<h2>Convite pronto ${ic("festa")}</h2><p class="sub">Mande este link para a pessoa. Ela cria a conta e vincula o Telegram.</p>
+      <div class="texto-pedido" style="word-break:break-all">${esc(r.link)}</div>
+      <div class="gap"></div><button class="btn" data-acao="copiar" data-texto="${esc(r.link)}">${ic("copiar")} Copiar link</button>
+      <div class="gap"></div><button class="btn sec" data-acao="equipe">Voltar para a equipe</button>`);
+  };
+};
+ACOES["cancelar-convite"] = el => confirmar("Cancelar este convite? O link para de funcionar.", async () => {
+  await api(`/api/criadora/equipe/convite/${el.dataset.codigo}/cancelar`, {}); ACOES.equipe() });
+ACOES["membro"] = el => {
+  const m = ACESSO.equipe.find(x => x.id === +el.dataset.id); if(!m) return;
+  abrirFolha(`<h2>${esc(m.nome)}</h2><p class="sub">${esc(m.email)}${m.ultimo_login ? ` · último acesso ${relativo(m.ultimo_login)}` : ""}</p>
+    <span class="rotulo">Pode fazer</span>${checksPerm(m.permissoes)}
+    <div class="gap"></div><button class="btn" id="mb-salvar">Salvar</button>
+    <div class="gap"></div><button class="btn fantasma ${m.ativo ? "perigo" : ""}" id="mb-ativo">${m.ativo ? "Desativar acesso" : "Reativar acesso"}</button>`);
+  $("#mb-salvar").onclick = async () => { const r = await api(`/api/criadora/equipe/${m.id}`, {permissoes: permsMarcadas()});
+    if(!r.ok) return toast(r.erro || "Não consegui salvar"); toast(`Salvo ${ic("check")}`); ACOES.equipe() };
+  $("#mb-ativo").onclick = () => confirmar(m.ativo ? `Tirar o acesso de ${m.nome}? Ela sai do painel na hora.` : `Devolver o acesso de ${m.nome}?`, async () => {
+    await api(`/api/criadora/equipe/${m.id}`, {ativo: !m.ativo}); ACOES.equipe() });
+};
 
 /* ── Eventos ───────────────────────────────────────────────────────────── */
 document.addEventListener("click", e => {

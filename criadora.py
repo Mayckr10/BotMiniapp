@@ -63,11 +63,17 @@ LIMITE_VIDEO = 49 * 1024 * 1024        # e arquivos de até 50 MB pela Bot API
 MAX_ARQUIVOS = 30
 
 
-def _admin(request: web.Request) -> dict:
+def _admin(request: web.Request, perm: str | None = None) -> dict:
+    """A criadora (ou alguém da equipe com a permissão `perm`). Sem perm: qualquer pessoa da equipe."""
     from loja import _usuario            # evita import circular
     user = _usuario(request)
-    if user["id"] not in request.app["cfg"].admin_ids:
+    perms = request.app["contas"].permissoes(user["id"])
+    if perms is None:
         raise web.HTTPForbidden(text='{"erro":"so_criadora"}', content_type="application/json")
+    if perm and perm not in perms:
+        raise web.HTTPForbidden(text='{"erro":"Você não tem permissão para isso. Fale com a criadora."}',
+                                content_type="application/json")
+    user["permissoes"] = perms
     return user
 
 
@@ -245,7 +251,7 @@ async def _subir(bot: Bot, chat_id: int, tipo: str, dados: bytes, nome: str) -> 
 
 # ════════════════════════════════════════════════════════════════════════════
 async def painel(request: web.Request) -> web.Response:
-    _admin(request)
+    perms = _admin(request)["permissoes"]
     db: Database = request.app["db"]
     cfg: Config = request.app["cfg"]
     fuso = ZoneInfo(cfg.fuso_horario)
@@ -286,7 +292,7 @@ async def painel(request: web.Request) -> web.Response:
                  "conversao": round(v["conversao"] * 100) if v["conversao"] is not None else None,
                  "novos": v["novos_usuarios"], "cupom": v["com_cupom"], "pix": v["pix_gerados"],
                  "curtidas": await db.curtidas_desde(periodos[k])} for k, v in st.items()}
-    return web.json_response({
+    resposta = {
         "resumo": {
             "hoje": {"vendas": s_hoje["vendas"], "valor": fmt_reais(s_hoje["faturamento"])},
             "semana": {"vendas": s_7d["vendas"], "valor": fmt_reais(s_7d["faturamento"])},
@@ -313,11 +319,21 @@ async def painel(request: web.Request) -> web.Response:
         "mensagens": [{"chave": k, "rotulo": mensagens.ROTULOS[k], "texto": await db.get_ajuste(f"msg_{k}", "") or "",
                        "padrao": mensagens.PADRAO[k], "foto": bool(await mensagens.foto(db, k))}
                       for k in mensagens.PADRAO],
-    })
+        "permissoes": perms,
+    }
+    # equipe: só o que a permissão deixa ver
+    if "financeiro" not in perms:
+        resposta["resumo"] = {"assinantes": vip["ativos"], "vencendo": vip["vencendo_7d"], "packs": len(packs)}
+        resposta["stats"] = None
+    if "fas" not in perms:
+        resposta["top_fas"] = None
+    if "pedidos" not in perms:
+        resposta["pedidos"] = []
+    return web.json_response(resposta)
 
 
 async def perfil(request: web.Request) -> web.Response:
-    user = _admin(request)
+    user = _admin(request, "ajustes")
     db: Database = request.app["db"]
     campos, arquivos = await _ler_multipart(request)
     if "nome" in campos and campos["nome"]:
@@ -367,7 +383,7 @@ def _enquete(campos: dict) -> tuple[list[str] | None, str | None]:
 
 
 async def novo_post(request: web.Request) -> web.Response:
-    user = _admin(request)
+    user = _admin(request, "publicar")
     db: Database = request.app["db"]
     campos, arquivos = await _ler_multipart(request, em_disco=True)
     pesado = bool(arquivos) and _tipo_arquivo(arquivos[0][1], arquivos[0][2]) == "video"
@@ -447,7 +463,7 @@ async def _novo_post(request: web.Request, user: dict, db: Database, campos: dic
 
 
 async def editar_post(request: web.Request) -> web.Response:
-    _admin(request)
+    _admin(request, "publicar")
     db: Database = request.app["db"]
     post_id = int(request.match_info["id"])
     if not await db.get_post(post_id):
@@ -457,13 +473,13 @@ async def editar_post(request: web.Request) -> web.Response:
 
 
 async def apagar_post(request: web.Request) -> web.Response:
-    _admin(request)
+    _admin(request, "publicar")
     await request.app["db"].apagar_post(int(request.match_info["id"]))
     return _ok()
 
 
 async def novo_pack(request: web.Request) -> web.Response:
-    user = _admin(request)
+    user = _admin(request, "publicar")
     db: Database = request.app["db"]
     cfg: Config = request.app["cfg"]
     bot: Bot = request.app["bot"]
@@ -567,7 +583,7 @@ async def _processar_midias(bot: Bot, chat_id: int, cfg: Config, arquivos: list,
 
 
 async def editar_pack(request: web.Request) -> web.Response:
-    _admin(request)
+    _admin(request, "publicar")
     db: Database = request.app["db"]
     pack = await db.get_pack(request.match_info["id"])
     if not pack:
@@ -582,13 +598,13 @@ async def editar_pack(request: web.Request) -> web.Response:
 
 
 async def apagar_pack(request: web.Request) -> web.Response:
-    _admin(request)
+    _admin(request, "publicar")
     await request.app["db"].apagar_pack(request.match_info["id"])
     return _ok()
 
 
 async def salvar_mensagem(request: web.Request) -> web.Response:
-    user = _admin(request)
+    user = _admin(request, "ajustes")
     db: Database = request.app["db"]
     campos, arquivos = await _ler_multipart(request)
     chave = campos.get("chave", "")
@@ -653,7 +669,7 @@ async def post_video(request: web.Request) -> web.Response:
 #  Stories (somem em 24h)
 # ════════════════════════════════════════════════════════════════════════════
 async def novo_story(request: web.Request) -> web.Response:
-    user = _admin(request)
+    user = _admin(request, "publicar")
     db: Database = request.app["db"]
     campos, arquivos = await _ler_multipart(request, em_disco=True)
     if not arquivos:
@@ -691,14 +707,14 @@ async def novo_story(request: web.Request) -> web.Response:
 
 
 async def apagar_story(request: web.Request) -> web.Response:
-    _admin(request)
+    _admin(request, "publicar")
     if not await request.app["db"].apagar_story(int(request.match_info["id"])):
         return _erro("Esse story já saiu do ar.", 404)
     return _ok()
 
 
 async def vistos_story(request: web.Request) -> web.Response:
-    _admin(request)
+    _admin(request, "publicar")
     cfg: Config = request.app["cfg"]
     lista = await request.app["db"].quem_viu_story(int(request.match_info["id"]), cfg.admin_ids)
     return _ok(vistos=[{"id": v["user_id"], "nome": v["nome"] or "", "username": v["username"] or "",
@@ -719,7 +735,7 @@ async def _pedido_novo(request: web.Request) -> "tuple[object, web.Response | No
 
 
 async def entregar_pedido(request: web.Request) -> web.Response:
-    user = _admin(request)
+    user = _admin(request, "pedidos")
     db: Database = request.app["db"]
     cfg: Config = request.app["cfg"]
     pedido, erro = await _pedido_novo(request)
@@ -764,7 +780,7 @@ async def entregar_pedido(request: web.Request) -> web.Response:
 
 
 async def recusar_pedido(request: web.Request) -> web.Response:
-    _admin(request)
+    _admin(request, "pedidos")
     db: Database = request.app["db"]
     cfg: Config = request.app["cfg"]
     pedido, erro = await _pedido_novo(request)
@@ -788,7 +804,7 @@ async def recusar_pedido(request: web.Request) -> web.Response:
 #  Meta de mimos
 # ════════════════════════════════════════════════════════════════════════════
 async def salvar_meta(request: web.Request) -> web.Response:
-    _admin(request)
+    _admin(request, "ajustes")
     corpo = await request.json()
     titulo = str(corpo.get("titulo", "")).strip()[:60]
     descricao = str(corpo.get("descricao", "")).strip()[:200]
@@ -804,7 +820,7 @@ async def salvar_meta(request: web.Request) -> web.Response:
 
 
 async def encerrar_meta(request: web.Request) -> web.Response:
-    _admin(request)
+    _admin(request, "ajustes")
     await request.app["db"].encerrar_meta()
     return _ok()
 
@@ -823,7 +839,7 @@ async def _revisao(db: Database) -> bool:
 
 
 async def ajustes(request: web.Request) -> web.Response:
-    _admin(request)
+    _admin(request, "ajustes")
     corpo = await request.json()
     db: Database = request.app["db"]
     if "revisao" in corpo:
@@ -898,7 +914,7 @@ async def config_carrinho(db: Database) -> dict:
 
 async def config(request: web.Request) -> web.Response:
     """Tudo que a aba Ajustes mostra: planos, cupons, mimos e preferências."""
-    _admin(request)
+    _admin(request, "ajustes")
     db: Database = request.app["db"]
     cupons = []
     for c in await db.listar_cupons():
@@ -929,7 +945,7 @@ async def config(request: web.Request) -> web.Response:
 
 async def bloquear(request: web.Request) -> web.Response:
     """Bloqueia (ou desbloqueia) um fã pelo ID do Telegram."""
-    _admin(request)
+    _admin(request, "fas")
     corpo = await request.json()
     try:
         user_id = int(str(corpo.get("user_id", "")).strip())
@@ -949,7 +965,7 @@ async def bloquear(request: web.Request) -> web.Response:
 
 async def fa(request: web.Request) -> web.Response:
     """Ficha de um fã para a criadora: quem é, quanto já gastou, VIP e se está bloqueado."""
-    _admin(request)
+    _admin(request, "fas")
     db: Database = request.app["db"]
     cfg: Config = request.app["cfg"]
     user_id = int(request.match_info["id"])
@@ -963,7 +979,7 @@ async def fa(request: web.Request) -> web.Response:
 
 
 async def salvar_plano(request: web.Request) -> web.Response:
-    _admin(request)
+    _admin(request, "financeiro")
     db: Database = request.app["db"]
     corpo = await request.json()
     nome = str(corpo.get("nome", "")).strip()[:40]
@@ -986,7 +1002,7 @@ async def salvar_plano(request: web.Request) -> web.Response:
 
 
 async def apagar_plano(request: web.Request) -> web.Response:
-    _admin(request)
+    _admin(request, "financeiro")
     db: Database = request.app["db"]
     if len(await db.listar_planos()) <= 1:
         return _erro("Mantenha pelo menos um plano ativo.")
@@ -995,7 +1011,7 @@ async def apagar_plano(request: web.Request) -> web.Response:
 
 
 async def salvar_cupom(request: web.Request) -> web.Response:
-    _admin(request)
+    _admin(request, "financeiro")
     db: Database = request.app["db"]
     corpo = await request.json()
     sem_acento = unicodedata.normalize("NFKD", str(corpo.get("codigo", ""))).encode("ascii", "ignore").decode()
@@ -1022,14 +1038,14 @@ async def salvar_cupom(request: web.Request) -> web.Response:
 
 
 async def apagar_cupom(request: web.Request) -> web.Response:
-    _admin(request)
+    _admin(request, "financeiro")
     await request.app["db"].desativar_cupom(request.match_info["codigo"])
     return _ok()
 
 
 async def aprovar(request: web.Request) -> web.Response:
     """Fila de revisão: publica (ou descarta) um post/pack que estava aguardando."""
-    _admin(request)
+    _admin(request, "publicar")
     db: Database = request.app["db"]
     cfg: Config = request.app["cfg"]
     tipo, item_id, acao = request.match_info["tipo"], request.match_info["id"], request.match_info["acao"]
@@ -1059,7 +1075,7 @@ async def aprovar(request: web.Request) -> web.Response:
 
 async def agendado(request: web.Request) -> web.Response:
     """Publicar agora, mudar o horário ou cancelar um post/pack agendado."""
-    _admin(request)
+    _admin(request, "publicar")
     db: Database = request.app["db"]
     cfg: Config = request.app["cfg"]
     tipo, item_id, acao = request.match_info["tipo"], request.match_info["id"], request.match_info["acao"]

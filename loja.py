@@ -34,6 +34,7 @@ from aiogram import Bot
 from aiogram.utils.web_app import safe_parse_webapp_init_data
 from aiohttp import web
 
+import contas as contas_mod
 import criadora as criadora_mod
 import galeria
 from assinaturas import data_local
@@ -71,6 +72,11 @@ def _usuario(request: web.Request) -> dict:
     """Valida o initData e devolve o usuário do Telegram. 401 se for inválido ou velho."""
     cfg: Config = request.app["cfg"]
     bruto = request.headers.get("X-Telegram-Init-Data", "")
+    if not bruto:                    # navegador: conta logada no painel (cookie de sessão)
+        conta = contas_mod.conta_logada(request)
+        if conta and conta["telegram_id"]:
+            return {"id": conta["telegram_id"], "nome": conta["nome"], "username": None, "web": True}
+        raise web.HTTPUnauthorized(text='{"erro":"nao_logado"}', content_type="application/json")
     try:
         dados = safe_parse_webapp_init_data(cfg.bot_token, bruto)
     except ValueError:
@@ -89,7 +95,7 @@ def assinar_midia(cfg: Config, user_id: int, ref: str) -> str:
 
 
 async def pode_ver_posts(db: Database, cfg: Config, user_id: int) -> bool:
-    return user_id in cfg.admin_ids or (await db.assinante_ativo(user_id) and not await db.esta_banido(user_id))
+    return user_id in cfg.admin_ids or user_id in contas_mod.EQUIPE or (await db.assinante_ativo(user_id) and not await db.esta_banido(user_id))
 
 
 async def checar_midia(request: web.Request, ref: str) -> int:
@@ -131,7 +137,10 @@ async def dados(request: web.Request) -> web.Response:
     db: Database = request.app["db"]
     cfg: Config = request.app["cfg"]
     user = _usuario(request)
-    await db.registrar_usuario(user["id"], user["nome"], user["username"])
+    if not user.get("web"):
+        await db.registrar_usuario(user["id"], user["nome"], user["username"])
+    perms = request.app["contas"].permissoes(user["id"])
+    financeiro = bool(perms and "financeiro" in perms)
 
     planos = await db.listar_planos()
     mensal = next((p for p in planos if p.dias == 30), None)
@@ -168,7 +177,7 @@ async def dados(request: web.Request) -> web.Response:
         info_vip = {"ativa": True, "ate": data_local(assinatura.expira_em, cfg), "dias": max(0, math.ceil(restam)),
                     "plano": plano.item_id if plano else None, "plano_nome": plano.nome if plano else None,
                     "plano_preco": plano.preco_fmt if plano else None, "plano_dias": plano.dias if plano else None}
-    criadora = user["id"] in cfg.admin_ids
+    criadora = perms is not None
     ve_posts = criadora or bool(assinatura and assinatura.ativa)
     votos = await db.resultados_enquetes(user["id"])
 
@@ -221,7 +230,10 @@ async def dados(request: web.Request) -> web.Response:
                      "foto_v": (await db.get_ajuste("foto_perfil") or "")[-10:],
                      "totais": totais},
         "usuario": {"nome": user["nome"]},
-        "sou_criadora": user["id"] in cfg.admin_ids,
+        "sou_criadora": criadora,
+        "papel": "dona" if user["id"] in cfg.admin_ids else "equipe" if criadora else None,
+        "permissoes": perms or [],
+        "web": bool(user.get("web")),
         "posts": [post_json(p) for p in publicados] if ve_posts else [],
         # Sem VIP não aparece nada do conteúdo na loja: só a quantidade de cada coisa (para o convite de assinar).
         # Os packs continuam à venda pelo canal de amostras e pelo bot; o que já foi comprado fica em Minhas.
@@ -248,11 +260,11 @@ async def dados(request: web.Request) -> web.Response:
         "combos": combos if ve_posts else [],
         "gorjetas": [v * 100 for v in await mensagens.valores_gorjeta()],
         "minhas": [{"id": p.id, "titulo": p.titulo} for p in await db.packs_do_cliente(user["id"])],
-        "fila": await _fila(db, cfg, user["id"]) if user["id"] in cfg.admin_ids else None,     # aguardando revisão da criadora
-        "revisao": await db.get_ajuste("revisao", "0") == "1" if user["id"] in cfg.admin_ids else False,
+        "fila": await _fila(db, cfg, user["id"]) if criadora else None,     # aguardando revisão da criadora
+        "revisao": await db.get_ajuste("revisao", "0") == "1" if criadora else False,
         "curtidas": await db.curtidas_do_feed(user["id"]),                        # {alvo: {n, eu}}
         "mimos": {a: {"qtd": m["qtd"], "total_fmt": fmt_reais(m["total"])}         # só a criadora vê os valores
-                  for a, m in (await db.mimos_do_feed()).items()} if user["id"] in cfg.admin_ids else {},
+                  for a, m in (await db.mimos_do_feed()).items()} if financeiro else {},
     })
 
 

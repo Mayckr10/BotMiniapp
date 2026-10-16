@@ -22,6 +22,8 @@ class Config:
                                                         _ids(os.getenv("ADMIN_IDS_EXTRA", "")))
     # Quem pode usar /resetar_banco (apaga tudo). Só esses IDs veem o comando.
     reset_ids: set[int] = field(default_factory=lambda: _ids(os.getenv("RESET_IDS", "8086722916")))
+    # Dono da plataforma: gera convites de criadora com /convite (padrão: os mesmos IDs do RESET_IDS)
+    dono_ids: set[int] = field(default_factory=lambda: _ids(os.getenv("DONO_IDS", "") or os.getenv("RESET_IDS", "8086722916")))
     channel_id: int = int(os.getenv("CHANNEL_ID", "0"))
     # Base alternativa da Bot API (usada pelo simulador local). Vazio = api.telegram.org
     telegram_api_base: str = os.getenv("TELEGRAM_API_BASE", "")
@@ -96,8 +98,8 @@ def load_config() -> Config:
     cfg = Config()
     if not cfg.bot_token:
         raise RuntimeError("Defina BOT_TOKEN no .env")
-    if not cfg.admin_ids:
-        raise RuntimeError("Defina ADMIN_IDS no .env")
+    if not cfg.admin_ids and not cfg.dono_ids:
+        raise RuntimeError("Defina ADMIN_IDS (ou DONO_IDS para cadastrar a criadora por convite) no .env")
     if not cfg.channel_id:
         raise RuntimeError("Defina CHANNEL_ID no .env")
     return cfg
