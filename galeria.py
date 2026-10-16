@@ -148,12 +148,68 @@ def _podar_disco() -> None:
         log.warning("Não consegui limpar o cache de vídeos marcados", exc_info=True)
 
 
+# Jeitos de gerar o H.264, do mais rápido ao mais compatível. "asm=0" desliga as instruções
+# especiais de CPU do x264, que em algumas máquinas do Railway derrubam o processo na hora.
+_VARIANTES_X264 = ([], ["-x264-params", "asm=0"])
+_variante_ok: int | None = None                  # a primeira que funcionou neste servidor
+
+
+def _tamanho_video(entrada: Path) -> tuple[int, int] | None:
+    from blur_service import _frame_ffmpeg
+    frame = _frame_ffmpeg(entrada.read_bytes())       # tamanho já na orientação certa (rotação do celular)
+    if frame:
+        return Image.open(BytesIO(frame)).size
+    proc = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
+                           "stream=width,height", "-of", "csv=p=0", str(entrada)],
+                          capture_output=True, text=True, timeout=60)
+    try:
+        w, h = (int(x) for x in proc.stdout.strip().split(",")[:2])
+        return w, h
+    except ValueError:
+        log.warning("Não consegui ler o tamanho do vídeo (código %s): %s", proc.returncode, proc.stderr[-300:])
+        return None
+
+
 def _gravar_marca_video(dados: bytes, destino: Path, texto: str) -> bool:
     """Grava a marca d'água nos quadros do vídeo (H.264, até 1280px). True se deu certo."""
-    from blur_service import _frame_ffmpeg
-    frame = _frame_ffmpeg(dados)                      # tamanho já na orientação certa (rotação do celular)
-    if not frame:
-        return False
+    global _variante_ok
+    DIR_VIDEOS.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory() as tmp:
+        entrada, marca, saida = Path(tmp, "in.mp4"), Path(tmp, "marca.png"), Path(tmp, "out.mp4")
+        entrada.write_bytes(dados)
+        tam = _tamanho_video(entrada)
+        if not tam:
+            return False
+        w, h = tam
+        escala = min(1.0, LADO_VIDEO / max(w, h))
+        w, h = max(2, int(w * escala) // 2 * 2), max(2, int(h * escala) // 2 * 2)
+        _camada_marca((w, h), texto, alfa=40).save(marca)
+        variantes = [_variante_ok] if _variante_ok is not None else range(len(_VARIANTES_X264))
+        for v in variantes:
+            for audio in (["-c:a", "copy"], ["-c:a", "aac", "-b:a", "128k"]):   # copiar o áudio é mais rápido
+                # Pouca memória: o servidor tem 1 GB e o bot já usa ~450 MB. No padrão o FFmpeg abre um
+                # thread de decodificação por CPU da máquina física (dezenas no Railway). Decodifica com 1.
+                proc = subprocess.run(
+                    ["ffmpeg", "-y", "-loglevel", "warning", "-threads", "1", "-i", str(entrada), "-i", str(marca),
+                     "-filter_complex", f"[0:v]scale={w}:{h},setsar=1[v];[v][1:v]overlay=0:0,format=yuv420p[s]",
+                     "-filter_threads", "1", "-filter_complex_threads", "1",
+                     "-map", "[s]", "-map", "0:a?", "-threads", "2", "-c:v", "libx264", "-preset", "ultrafast",
+                     "-tune", "fastdecode", "-crf", "24", *_VARIANTES_X264[v], "-max_muxing_queue_size", "1024",
+                     *audio, "-movflags", "+faststart", str(saida)],
+                    capture_output=True, timeout=900,
+                )
+                if proc.returncode == 0 and saida.exists() and saida.stat().st_size > 0:
+                    _variante_ok = v
+                    temp = destino.with_suffix(".parcial")
+                    shutil.move(str(saida), temp)
+                    os.replace(temp, destino)             # só aparece no cache quando está completo
+                    return True
+                log.warning("ffmpeg falhou ao marcar vídeo (variante %s, áudio %s, código %s, %s KB): %s",
+                            v, audio[1], proc.returncode, len(dados) // 1024,
+                            proc.stderr.decode(errors="replace")[-400:] or "sem mensagem (processo morto?)")
+                if proc.returncode < 0:
+                    break                                  # morto por sinal: trocar o áudio não adianta
+    return False
     w, h = Image.open(BytesIO(frame)).size
     escala = min(1.0, LADO_VIDEO / max(w, h))
     w, h = max(2, int(w * escala) // 2 * 2), max(2, int(h * escala) // 2 * 2)
@@ -227,13 +283,18 @@ async def autoteste_marca() -> None:
             amostra = Path(tmp, "amostra.mp4")
             proc = await asyncio.create_subprocess_exec(
                 "ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", "testsrc=size=1080x1920:rate=30",
-                "-f", "lavfi", "-i", "sine", "-t", "3", "-c:v", "libx264", "-preset", "ultrafast",
+                "-f", "lavfi", "-i", "sine", "-t", "3", "-c:v", "mpeg4", "-q:v", "5",
                 "-c:a", "aac", "-shortest", str(amostra),
-                stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
-            await proc.wait()
+                stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.PIPE)
+            _, erro = await proc.communicate()
+            if proc.returncode != 0 or not amostra.exists():
+                log.warning("Autoteste: não consegui gerar o vídeo de amostra (código %s): %s",
+                            proc.returncode, erro.decode(errors="replace")[-300:])
+                return
             inicio = time.monotonic()
             ok = await asyncio.to_thread(_gravar_marca_video, amostra.read_bytes(), Path(tmp, "ok.mp4"), "@teste · ID 0")
-            log.info("Autoteste da marca d'água em vídeo: %s (%.1fs)", "ok" if ok else "FALHOU", time.monotonic() - inicio)
+            log.info("Autoteste da marca d'água em vídeo: %s (%.1fs, variante %s)", "ok" if ok else "FALHOU",
+                     time.monotonic() - inicio, _variante_ok)
     except Exception:
         log.exception("Autoteste da marca d'água em vídeo falhou")
 
