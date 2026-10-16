@@ -163,11 +163,16 @@ def _gravar_marca_video(dados: bytes, destino: Path, texto: str) -> bool:
         entrada.write_bytes(dados)
         _camada_marca((w, h), texto, alfa=40).save(marca)
         for audio in (["-c:a", "copy"], ["-c:a", "aac", "-b:a", "128k"]):   # copiar o áudio é mais rápido
+            # Pouca memória: o servidor tem 1 GB e o bot já usa ~450 MB. No padrão o FFmpeg abre um
+            # thread de decodificação por CPU da máquina física (dezenas no Railway), cada um com
+            # seus quadros na memória, e o sistema matava o processo. Decodifica com 1 thread.
             proc = subprocess.run(
-                ["ffmpeg", "-y", "-loglevel", "error", "-i", str(entrada), "-i", str(marca),
+                ["ffmpeg", "-y", "-loglevel", "warning", "-threads", "1", "-i", str(entrada), "-i", str(marca),
                  "-filter_complex", f"[0:v]scale={w}:{h},setsar=1[v];[v][1:v]overlay=0:0,format=yuv420p[s]",
-                 "-map", "[s]", "-map", "0:a?", "-threads", "2", "-c:v", "libx264", "-preset", "superfast",
-                 "-crf", "23", *audio, "-movflags", "+faststart", str(saida)],
+                 "-filter_threads", "1", "-filter_complex_threads", "1",
+                 "-map", "[s]", "-map", "0:a?", "-threads", "2", "-c:v", "libx264", "-preset", "ultrafast",
+                 "-tune", "fastdecode", "-crf", "24", "-max_muxing_queue_size", "1024",
+                 *audio, "-movflags", "+faststart", str(saida)],
                 capture_output=True, timeout=900,
             )
             if proc.returncode == 0 and saida.exists() and saida.stat().st_size > 0:
@@ -175,7 +180,8 @@ def _gravar_marca_video(dados: bytes, destino: Path, texto: str) -> bool:
                 shutil.move(str(saida), temp)
                 os.replace(temp, destino)             # só aparece no cache quando está completo
                 return True
-            log.warning("ffmpeg falhou ao marcar vídeo (%s): %s", audio[1], proc.stderr[-400:])
+            log.warning("ffmpeg falhou ao marcar vídeo (%s, código %s, %s KB): %s", audio[1], proc.returncode,
+                        len(dados) // 1024, proc.stderr.decode(errors="replace")[-400:] or "sem mensagem (processo morto?)")
     return False
 
 
@@ -212,6 +218,24 @@ async def video_marcado(bot: Bot, file_id: str, uid: int, texto: str) -> Path | 
                 _marcando.pop(chave, None)
         tarefa = _marcando[chave] = asyncio.create_task(marcar())
     return await asyncio.shield(tarefa)               # o fã fechar a galeria não cancela a marcação
+
+
+async def autoteste_marca() -> None:
+    """Na partida, marca um vídeo sintético de 1080p para confirmar que o FFmpeg funciona aqui."""
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            amostra = Path(tmp, "amostra.mp4")
+            proc = await asyncio.create_subprocess_exec(
+                "ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", "testsrc=size=1080x1920:rate=30",
+                "-f", "lavfi", "-i", "sine", "-t", "3", "-c:v", "libx264", "-preset", "ultrafast",
+                "-c:a", "aac", "-shortest", str(amostra),
+                stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
+            await proc.wait()
+            inicio = time.monotonic()
+            ok = await asyncio.to_thread(_gravar_marca_video, amostra.read_bytes(), Path(tmp, "ok.mp4"), "@teste · ID 0")
+            log.info("Autoteste da marca d'água em vídeo: %s (%.1fs)", "ok" if ok else "FALHOU", time.monotonic() - inicio)
+    except Exception:
+        log.exception("Autoteste da marca d'água em vídeo falhou")
 
 
 async def _texto_do_usuario(db: Database, uid: int) -> str:
@@ -301,7 +325,9 @@ async def midia(request: web.Request) -> web.Response:
         if caminho:
             return web.FileResponse(caminho, headers={"Cache-Control": "private, no-store",
                                                       "Content-Type": "video/mp4"})
-        log.warning("Galeria: vídeo %s saiu sem marca (FFmpeg indisponível ou falhou)", m["file_id"])
+        # sem marca o vídeo não sai pela página: o app mostra "Assistir no chat" (envio protegido)
+        log.warning("Galeria: vídeo %s não foi marcado; bloqueado na página", m["file_id"])
+        raise web.HTTPServiceUnavailable(text='{"erro":"video_sem_marca"}', content_type="application/json")
 
     try:
         dados = await _baixar(bot, m["file_id"])

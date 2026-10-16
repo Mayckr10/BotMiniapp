@@ -25,6 +25,7 @@ from payments import criar_gateway
 from backup import loop_backup
 from remarketing import loop_remarketing
 import criadora
+import galeria
 import loja
 import mensagens
 import agenda
@@ -108,7 +109,8 @@ async def run(cfg: Config) -> None:
 
     jobs = [asyncio.create_task(loop_remarketing(bot, db, cfg)),
             asyncio.create_task(notificacoes.loop_resumo(bot, db, cfg)),
-            asyncio.create_task(agenda.loop_agenda(bot, db, cfg))]
+            asyncio.create_task(agenda.loop_agenda(bot, db, cfg)),
+            asyncio.create_task(galeria.autoteste_marca())]
     if cfg.backup_ativo:
         jobs.append(asyncio.create_task(loop_backup(bot, db, cfg)))
     try:
