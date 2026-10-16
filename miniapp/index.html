@@ -190,6 +190,9 @@ input::placeholder{color:var(--muted)}
 .sub{color:var(--muted);font-size:14px;margin:4px 0 12px}
 .aviso{font-size:13px;color:var(--warn);margin:-4px 0 10px}
 .aviso.ok{color:var(--ok)}
+.rb-outra summary{cursor:pointer;color:var(--muted);font-size:14px;font-weight:600;padding:12px 0 0;text-align:center;list-style:none}
+.rb-outra summary::-webkit-details-marker{display:none}
+.rb-outra[open] summary{color:var(--text)}
 /* PIX */
 .valor-pix{text-align:center;margin:4px 0 14px}
 .valor-pix .v{font-size:34px;font-weight:900;letter-spacing:-.03em}
@@ -2396,9 +2399,9 @@ function configCompleto(){
 
     ${C.recebimento ? `    <div class="secao-titulo"><h2>Recebimento</h2></div>
     <div class="grupo">
-      ${linha('data-acao="recebimento"', `${ic("moeda")}`, "Conta que recebe os pagamentos", C.recebimento.conectado ? `Pushin Pay conectada · token final ${esc(C.recebimento.final)}` : C.recebimento.pelo_servidor ? "Pushin Pay configurada no servidor" : "Não conectada: as vendas estão em modo teste", C.recebimento.em_teste ? `<span class="v" style="color:var(--warn)">teste</span><span class="seta">›</span>` : `<span class="v" style="color:var(--ok)">ativa</span><span class="seta">›</span>`)}
+      ${linha('data-acao="recebimento"', `${ic("moeda")}`, "Conta que recebe os pagamentos", subRecebimento(C.recebimento), C.recebimento.em_teste ? `<span class="v" style="color:var(--warn)">teste</span><span class="seta">›</span>` : `<span class="v" style="color:var(--ok)">ativa</span><span class="seta">›</span>`)}
     </div>
-    <p class="legenda-grupo">O PIX cai direto na sua conta Pushin Pay.${C.recebimento.taxa_pct ? ` A taxa da plataforma (${C.recebimento.taxa_pct}%) é separada automaticamente em cada venda.` : ""}</p>
+    <p class="legenda-grupo">O PIX cai direto na sua conta${C.recebimento.gateway ? " " + esc(C.recebimento.gateway) : ""}.${C.recebimento.taxa_pct ? ` A taxa da plataforma (${C.recebimento.taxa_pct}%) é separada automaticamente em cada venda.` : ""}</p>
 
 ` : ""}
     ${pode("financeiro") ? `    <div class="secao-titulo"><h2>Assinatura VIP</h2><small class="muted">${pl(C.planos.length, "plano", "planos")}</small></div>
@@ -3054,32 +3057,77 @@ ACOES["aj-aba"] = el => {
   vibrar("leve"); const c = $("#conteudo"); c.innerHTML = config();
   const topo = $(".aj-topo"); if(topo && topo.getBoundingClientRect().top < 0) topo.scrollIntoView({block: "start"});
 };
+function subRecebimento(R){
+  if(R.ativo === "mercadopago") return `Mercado Pago conectado${R.mp.conta ? ` · ${esc(R.mp.conta)}` : ""}`;
+  if(R.ativo === "pushinpay") return R.pushin ? `Pushin Pay conectada · token final ${esc(R.final)}` : "Pushin Pay configurada no servidor";
+  return "Não conectada: as vendas estão em modo teste";
+}
+async function atualizarRecebimento(msg){
+  const r = await api("/api/criadora/recebimento");
+  if(r.ok && CONFIG){ CONFIG.recebimento = r; if(ABA === "config") $("#conteudo").innerHTML = config() }
+  if(msg && r.ok) toast(msg);
+  return r;
+}
 ACOES["recebimento"] = () => {
-  const R = CONFIG?.recebimento || {};
-  abrirFolha(`<h2>Conta de recebimento</h2><p class="sub">Cada PIX pago pelos fãs cai direto na sua conta Pushin Pay. Ninguém mais vê o seu token.</p>
-    ${R.conectado ? `<p class="aviso ok">${ic("check")} Conectada · token final ${esc(R.final)}</p>` : R.em_teste ? `<p class="aviso">Sem conta conectada, as compras ficam em modo teste (ninguém paga de verdade).</p>` : ""}
+  const R = CONFIG?.recebimento || {}, MP = R.mp || {};
+  const taxa = R.taxa_pct ? `<p class="dica" style="margin-top:12px">A taxa da plataforma (${R.taxa_pct}%) é separada automaticamente em cada venda.</p>` : "";
+  const blocoMP = MP.conectado
+    ? `<div class="troca" style="margin:0 0 10px"><div><b>${ic("check")} Mercado Pago conectado</b><br><small class="muted">${MP.conta ? esc(MP.conta) + " · " : ""}cada PIX cai direto na sua conta</small></div></div>
+       <button class="btn fantasma" id="rb-mp-sair">Desconectar Mercado Pago</button>`
+    : MP.disponivel ? `<button class="btn brilho" id="rb-mp">Conectar Mercado Pago</button>
+       <p class="dica" style="margin:8px 0 0">Abre o site do Mercado Pago: você entra na sua conta, toca em Permitir e volta para cá. Não precisa copiar nada.</p>` : "";
+  const blocoPP = `
     <ol class="dica" style="padding-left:18px;margin:0 0 12px;line-height:1.55">
       <li>Crie ou entre na sua conta em <b>app.pushinpay.com.br</b>.</li>
       <li>Vá em <b>Configurações › API / Tokens</b> e gere um token.</li>
       <li>Copie o token inteiro e cole aqui.</li>
     </ol>
-    <span class="rotulo">Token da Pushin Pay</span><input type="password" id="rb-token" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${R.conectado ? "Cole um novo token para trocar" : "Cole o token aqui"}">
-    <div class="gap"></div><button class="btn brilho" id="rb-salvar">${R.conectado ? "Trocar conta" : "Conectar"}</button>
-    ${R.conectado ? `<div class="gap"></div><button class="btn fantasma" id="rb-sair">Desconectar</button>` : ""}
-    ${R.taxa_pct ? `<p class="dica" style="margin-top:12px">A taxa da plataforma (${R.taxa_pct}%) é separada pela própria Pushin Pay em cada venda.</p>` : ""}`);
+    ${R.pushin ? `<p class="aviso ok">${ic("check")} Pushin Pay conectada · token final ${esc(R.final)}</p>` : ""}
+    <span class="rotulo">Token da Pushin Pay</span><input type="password" id="rb-token" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${R.pushin ? "Cole um novo token para trocar" : "Cole o token aqui"}">
+    <div class="gap"></div><button class="btn ${MP.disponivel ? "sec" : "brilho"}" id="rb-salvar">${R.pushin ? "Trocar token" : "Conectar Pushin Pay"}</button>
+    ${R.pushin ? `<div class="gap"></div><button class="btn fantasma" id="rb-sair">Desconectar Pushin Pay</button>` : ""}`;
+  abrirFolha(`<h2>Conta de recebimento</h2><p class="sub">Cada PIX pago pelos fãs cai direto na sua conta. Ninguém mais vê os seus dados de acesso.</p>
+    ${R.em_teste ? `<p class="aviso">Sem conta conectada, as compras ficam em modo teste (ninguém paga de verdade).</p>` : ""}
+    ${blocoMP}
+    ${MP.disponivel && !MP.conectado ? `<div class="gap"></div><details class="rb-outra" ${R.pushin ? "open" : ""}><summary>Usar Pushin Pay</summary><div class="gap"></div>${blocoPP}</details>`
+      : MP.conectado ? "" : blocoPP}
+    ${taxa}`);
+  const bmp = $("#rb-mp");
+  if(bmp) bmp.onclick = async () => {
+    bmp.disabled = true; bmp.textContent = "Abrindo o Mercado Pago…";
+    const r = await api("/api/criadora/recebimento/mp/link");
+    bmp.disabled = false; bmp.textContent = "Conectar Mercado Pago";
+    if(!r.ok) return toast(r.erro || "Não consegui abrir o Mercado Pago");
+    try{ tg?.openLink ? tg.openLink(r.url) : window.open(r.url, "_blank") }catch(e){ location.href = r.url }
+    // quando ela voltar para o app, confere se conectou
+    const conferir = async avisar => {
+      const e = await atualizarRecebimento();
+      if(e.mp?.conectado){ document.removeEventListener("visibilitychange", volta); fecharFolha(true); vibrar("success"); toast("Mercado Pago conectado. As vendas já caem nele!") }
+      else if(avisar) toast("Ainda não apareceu. Termine no site do Mercado Pago e toque de novo.");
+    };
+    const volta = () => document.visibilityState === "visible" && conferir(false);
+    document.addEventListener("visibilitychange", volta);
+    bmp.textContent = "Já autorizei"; bmp.onclick = () => conferir(true);
+  };
+  const mpSair = $("#rb-mp-sair");
+  if(mpSair) mpSair.onclick = () => confirmar("Desconectar o Mercado Pago? Sem conta conectada as vendas voltam para o modo teste.", async () => {
+    const r = await api("/api/criadora/recebimento/mp/desconectar", {});
+    if(!r.ok) return toast(r.erro || "Não consegui");
+    CONFIG.recebimento = r; fecharFolha(true); toast("Mercado Pago desconectado"); $("#conteudo").innerHTML = config();
+  });
   const btn = $("#rb-salvar");
-  btn.onclick = async () => {
-    const token = $("#rb-token").value.trim();
+  if(btn) btn.onclick = async () => {
+    const token = $("#rb-token").value.trim(), txt = btn.textContent;
     if(!token){ toast("Cole o token primeiro"); $("#rb-token").focus(); return }
     btn.disabled = true; btn.textContent = "Conferindo na Pushin Pay…";
     const r = await api("/api/criadora/recebimento", {token});
-    btn.disabled = false; btn.textContent = R.conectado ? "Trocar conta" : "Conectar";
+    btn.disabled = false; btn.textContent = txt;
     if(!r.ok){ toast(r.erro || "Não consegui conectar"); vibrar("error"); return }
     CONFIG.recebimento = r; fecharFolha(true); vibrar("success"); toast(r.aviso || "Conta conectada. As vendas já caem nela!");
     $("#conteudo").innerHTML = config();
   };
   const sair = $("#rb-sair");
-  if(sair) sair.onclick = () => confirmar("Desconectar a conta? As vendas voltam para o modo teste.", async () => {
+  if(sair) sair.onclick = () => confirmar("Desconectar a Pushin Pay? As vendas voltam para o modo teste.", async () => {
     const r = await api("/api/criadora/recebimento/desconectar", {});
     if(!r.ok){ toast(r.erro || "Não consegui"); return }
     CONFIG.recebimento = r; fecharFolha(true); toast("Conta desconectada"); $("#conteudo").innerHTML = config();

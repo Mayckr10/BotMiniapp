@@ -171,7 +171,10 @@ async def webhook_pix(request: web.Request) -> web.Response:
         return web.json_response({"ok": False, "erro": "nao_autorizado"}, status=401)
 
     try:
-        evento = app["gateway"].ler_webhook(await _ler_corpo(request))
+        corpo = await _ler_corpo(request) if request.can_read_body else {}
+        # o Mercado Pago também manda os dados na URL (?type=payment&data.id=...)
+        extra = {k: v for k, v in request.query.items() if k != "token"}
+        evento = app["gateway"].ler_webhook({**extra, **corpo} if isinstance(corpo, dict) else corpo)
     except Exception:
         return web.json_response({"ok": False, "erro": "payload_invalido"}, status=400)
 

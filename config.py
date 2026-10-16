@@ -40,6 +40,10 @@ class Config:
     # Split da plataforma: % de cada venda que vai para a conta Pushin Pay da plataforma (máx. 50%, regra da Pushin Pay)
     plataforma_account_id: str = os.getenv("PLATAFORMA_ACCOUNT_ID", "")
     plataforma_pct: int = min(50, max(0, int(os.getenv("PLATAFORMA_PCT", "10"))))
+    # Mercado Pago (marketplace): a aplicação é do dono da plataforma, e a taxa (application_fee) cai na conta dele.
+    # Ficam só no ambiente: o banco vai para a criadora no backup diário, e o segredo não pode ir junto.
+    mp_client_id: str = os.getenv("MP_CLIENT_ID", "")
+    mp_client_secret: str = os.getenv("MP_CLIENT_SECRET", "")
     pix_chave_mock: str = os.getenv("PIX_CHAVE_MOCK", "contato@exemplo.com")
     pix_nome: str = os.getenv("PIX_NOME_RECEBEDOR", "CRIADORA DE CONTEUDO")
     pix_cidade: str = os.getenv("PIX_CIDADE_RECEBEDOR", "SAO PAULO")

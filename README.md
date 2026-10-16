@@ -221,8 +221,17 @@ Nesse ponto já dá para testar em produção com `PIX_GATEWAY=mock`: pague a co
 (o token é conferido na Pushin Pay e nunca volta para o app; só os 4 últimos dígitos aparecem). Assim que ela
 conecta, o modo teste desliga sozinho.
 
-**Split do dono da plataforma:** quem está em `DONO_IDS` manda `/split <account_id> <pct>` no bot (ex.:
-`/split 9c8a-...-41 10`) para receber essa % de cada venda direto na conta Pushin Pay dele. `/split` mostra o
+**Mercado Pago (marketplace, recomendado):**
+1. O dono entra em mercadopago.com.br/developers com a conta Mercado Pago **dele**, cria uma aplicação
+   (Pagamentos online › CheckoutAPI) e em *URLs de redirecionamento* cadastra `https://seu-dominio/mp/retorno`.
+2. No Railway: `MP_CLIENT_ID` e `MP_CLIENT_SECRET` com o Client ID e o Client Secret da aplicação
+   (só no ambiente: o banco vai para a criadora no backup diário).
+3. A criadora toca em *Ajustes › Vendas › Recebimento › Conectar Mercado Pago*, entra na conta dela e autoriza.
+   Cada PIX é criado na conta dela com `application_fee` = a % do `/split`, que cai na conta dona da aplicação.
+   O token dela é renovado sozinho antes de vencer (180 dias).
+
+**Split do dono da plataforma:** quem está em `DONO_IDS` manda `/split 10` (Mercado Pago) ou
+`/split <account_id> 10` (Pushin Pay, com o ID da conta Pushin Pay dele) para receber essa % de cada venda. `/split` mostra o
 que está valendo e `/split off` desliga. A % vai de 1 a 50 (limite da Pushin Pay) e vale no lugar de
 `PLATAFORMA_ACCOUNT_ID` / `PLATAFORMA_PCT`.
 
