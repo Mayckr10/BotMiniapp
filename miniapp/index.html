@@ -719,8 +719,8 @@ svg.i.laranja{color:#ff8a3d}
 .cores-tema button.on{border-color:var(--text);transform:scale(1.08)}
 
 /* ── Melhorias opcionais ─────────────────────────────────────────────── */
-:root[data-modo="escuro"]{--bg:#0b0d12;--bg2:#141821;--text:#f4f5f8;--muted:#8b93a3}
-:root[data-modo="claro"]{--bg:#ffffff;--bg2:#f3f4f8;--text:#16181f;--muted:#6b7280;--card:#f6f7fa;--sombra:0 8px 24px rgba(20,22,30,.08)}
+:root[data-tema-modo="escuro"]{--bg:#0b0d12;--bg2:#141821;--text:#f4f5f8;--muted:#8b93a3}
+:root[data-tema-modo="claro"]{--bg:#ffffff;--bg2:#f3f4f8;--text:#16181f;--muted:#6b7280;--card:#f6f7fa;--sombra:0 8px 24px rgba(20,22,30,.08)}
 .cards-extra{display:grid;gap:10px;padding:0 16px 14px}
 .card-extra{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r);background:var(--card);border:1px solid var(--line)}
 .card-extra .ico{width:44px;height:44px;border-radius:14px;background:var(--grad);display:grid;place-items:center;color:#fff;font-size:20px;flex:none}
@@ -763,6 +763,18 @@ svg.i.laranja{color:#ff8a3d}
 .coment-mod .metricas b{display:inline;color:var(--text)}
 .folha .campo{padding:10px 0 0}
 .teste-vip{background:linear-gradient(120deg,color-mix(in srgb,var(--a1) 14%,var(--card)),var(--card))}
+
+.aj-topo{position:sticky;top:58px;z-index:5;background:var(--bg);padding:12px 0 2px;margin-top:4px}
+.aj-chips{padding-bottom:8px;gap:6px}
+.aj-chips .chip{padding:8px 12px}
+.aj-painel .secao-titulo{padding:16px 16px 8px}
+.aj-painel .secao-titulo h2{font-size:15px}
+.aj-painel .legenda-grupo{font-size:12px;padding:6px 20px 0}
+.grupo .linha-c{padding:11px 14px}
+.rec-sec .linha-c:not(.rec-cab){display:none}
+.rec-sec.aberta .linha-c:not(.rec-cab){display:flex}
+.rec-sec .linha-c.ocultar{display:none !important}
+.rec-cab .seta{font-size:13px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -1723,7 +1735,7 @@ function abrirFolha(html){
   fecharFolha();
   const f = document.createElement("div"); f.className = "fundo"; f.id = "fundo";
   f.innerHTML = `<div class="folha"><div class="alca"></div><button class="fechar" id="fechar">${ic("fechar")}</button>${html}</div>`;
-  f.addEventListener("click", e => { if(e.target === f || e.target.id === "fechar") fecharFolha(true) });
+  f.addEventListener("click", e => { if(e.target === f || e.target.closest("#fechar")) fecharFolha(true) });
   document.body.appendChild(f);
   arrastavel(f.querySelector(".folha"));
   suavizarImagens(f);
@@ -2368,7 +2380,8 @@ function secaoConta(){
       ${D.web ? `<a class="linha-c" href="/painel?sair=1"><span class="ico">${ic("fechar")}</span><span class="txt"><b>Sair deste navegador</b></span><span class="seta">›</span></a>` : ""}
     </div>`;
 }
-function config(){
+function config(){ return organizarAjustes(configCompleto()) }
+function configCompleto(){
   if(!pode("ajustes")) return secaoConta() + `<p class="dica" style="text-align:center;margin:18px 16px">As configurações da loja ficam com ${esc(D.criadora.nome)}.</p>`;
   if(!CONFIG) return `<div class="gap"></div><div class="pad"><div class="sk" style="height:120px"></div><div class="gap"></div><div class="sk" style="height:180px"></div></div>`;
   const C = CONFIG;
@@ -2917,16 +2930,68 @@ async function carregarRecursos(){
   const r = await api("/api/criadora/recursos");
   if(r.ok){ RECURSOS = r.grupos; if(ABA === "config"){ const c = $("#conteudo"); c.innerHTML = config() } }
 }
+const REC_ABERTAS = new Set();
 function secaoRecursos(){
   if(!RECURSOS){ carregarRecursos(); return `<div class="secao-titulo"><h2>Recursos</h2></div><div class="pad"><div class="sk" style="height:140px"></div></div>` }
   const secoes = [...new Set(RECURSOS.map(g => g.secao))];
-  return `<div class="secao-titulo"><h2>Recursos</h2><small class="muted">liga e ajusta cada um</small></div>` + secoes.map(sec => `
-    <p class="legenda-grupo" style="padding:4px 20px 8px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11.5px">${esc(sec)}</p>
-    <div class="grupo">${RECURSOS.filter(g => g.secao === sec).map(g => `<button class="linha-c" data-acao="recurso" data-id="${g.id}">
-      <span class="ico">${ic(g.icone)}</span><span class="txt"><b>${esc(g.titulo)}</b><small class="lim">${esc(g.descricao)}</small></span>
-      ${g.ligado === null ? "" : `<span class="status-rec ${g.ligado ? "on" : ""}">${g.ligado ? "Ligado" : "Desligado"}</span>`}<span class="seta">›</span></button>`).join("")}</div>
-    <div class="gap" style="height:10px"></div>`).join("");
+  return `<div class="secao-titulo"><h2>Recursos</h2><small class="muted">${RECURSOS.filter(g => g.ligado).length} de ${RECURSOS.length} ligados</small></div>` + secoes.map(sec => {
+    const gs = RECURSOS.filter(g => g.secao === sec), on = gs.filter(g => g.ligado).length, aberta = REC_ABERTAS.has(sec);
+    return `<div class="grupo rec-sec ${aberta ? "aberta" : ""}">
+      <button class="linha-c rec-cab" data-acao="rec-sec" data-sec="${esc(sec)}"><span class="txt"><b>${esc(sec)}</b><small>${on ? `${on} ligado${on > 1 ? "s" : ""} · ` : ""}${gs.length} recursos</small></span><span class="seta">${aberta ? "▴" : "▾"}</span></button>
+      ${gs.map(g => `<button class="linha-c" data-acao="recurso" data-id="${g.id}" data-busca="${esc(g.titulo + " " + g.descricao)}">
+        <span class="ico">${ic(g.icone)}</span><span class="txt"><b>${esc(g.titulo)}</b></span>
+        ${g.ligado === null ? "" : `<span class="status-rec ${g.ligado ? "on" : ""}">${g.ligado ? "Ligado" : "Desligado"}</span>`}<span class="seta">›</span></button>`).join("")}
+    </div>`}).join(`<div style="height:8px"></div>`);
 }
+ACOES["rec-sec"] = el => {
+  const sec = el.dataset.sec; REC_ABERTAS.has(sec) ? REC_ABERTAS.delete(sec) : REC_ABERTAS.add(sec); vibrar("leve");
+  const box = el.closest(".rec-sec"); box.classList.toggle("aberta"); el.querySelector(".seta").textContent = box.classList.contains("aberta") ? "▴" : "▾";
+};
+
+/* Ajustes em abas (Loja, Vendas, Recursos, Proteção, Conta) com busca */
+const ABAS_AJ = [["loja", "Loja"], ["vendas", "Vendas"], ["recursos", "Recursos"], ["protecao", "Proteção"], ["conta", "Conta"]];
+const SECAO_AJ = {"Conta e equipe": "conta", "Recursos": "recursos", "Perfil": "loja", "Assinatura VIP": "vendas", "Mimos": "vendas",
+  "Meta de mimos": "vendas", "Pedidos personalizados": "vendas", "Carrinho": "vendas", "Cupons de desconto": "vendas",
+  "Notificações": "loja", "Proteção": "protecao", "Publicação": "loja", "Visualização": "loja"};
+let AJ_ABA = (() => { try{ return localStorage.getItem("aj_aba") || "loja" }catch(e){ return "loja" } })(), AJ_BUSCA = "";
+function organizarAjustes(html){
+  const t = document.createElement("template"); t.innerHTML = html;
+  const blocos = {}; let atual = "loja";
+  [...t.content.childNodes].forEach(n => {
+    if(n.nodeType === 1 && n.classList.contains("secao-titulo")) atual = SECAO_AJ[n.querySelector("h2")?.textContent.trim()] || atual;
+    (blocos[atual] ||= document.createElement("div")).appendChild(n);
+  });
+  const abas = ABAS_AJ.filter(([id]) => blocos[id] && blocos[id].querySelector(".grupo, .sk"));
+  if(!abas.find(a => a[0] === AJ_ABA)) AJ_ABA = abas[0]?.[0] || "loja";
+  if(AJ_BUSCA) setTimeout(filtrarAjustes);
+  return `<div class="aj-topo">
+      <div class="busca" style="padding:0 16px 10px"><div class="campo-b"><span class="lupa">${ic("busca")}</span><input type="text" id="aj-busca" placeholder="Buscar ajuste (ex: cupom, carteira, marca)" value="${esc(AJ_BUSCA)}" autocomplete="off" enterkeyhint="search"></div></div>
+      <div class="chips aj-chips">${abas.map(([id, nome]) => `<button class="chip ${AJ_ABA === id && !AJ_BUSCA ? "on" : ""}" data-acao="aj-aba" data-aba-aj="${id}">${nome}</button>`).join("")}</div>
+    </div>
+    ${abas.map(([id]) => `<div class="aj-painel" data-painel="${id}" ${AJ_ABA === id || AJ_BUSCA ? "" : "hidden"}>${blocos[id].innerHTML}</div>`).join("")}
+    <div class="vazio ocultar" id="aj-nada"><div class="ico">${ic("busca")}</div>Nenhum ajuste encontrado.</div>`;
+}
+ACOES["aj-aba"] = el => {
+  AJ_ABA = el.dataset.abaAj; AJ_BUSCA = ""; try{ localStorage.setItem("aj_aba", AJ_ABA) }catch(e){}
+  vibrar("leve"); const c = $("#conteudo"); c.innerHTML = config();
+  const topo = $(".aj-topo"); if(topo && topo.getBoundingClientRect().top < 0) topo.scrollIntoView({block: "start"});
+};
+function filtrarAjustes(){
+  const q = semAcento(AJ_BUSCA.trim());
+  document.querySelectorAll(".aj-painel").forEach(p => p.hidden = q ? false : p.dataset.painel !== AJ_ABA);
+  document.querySelectorAll(".aj-chips .chip").forEach(b => b.classList.toggle("on", !q && b.dataset.abaAj === AJ_ABA));
+  if(q) document.querySelectorAll(".rec-sec").forEach(b => b.classList.add("aberta"));
+  let algum = false;
+  document.querySelectorAll(".aj-painel .grupo").forEach(g => {
+    let vis = 0;
+    g.querySelectorAll(".linha-c:not(.rec-cab)").forEach(l => { const ok = !q || semAcento(l.dataset.busca || l.textContent).includes(q); l.classList.toggle("ocultar", !ok); vis += ok });
+    g.classList.toggle("ocultar", !!q && !vis); algum ||= vis > 0;
+  });
+  document.querySelectorAll(".aj-painel .secao-titulo, .aj-painel .legenda-grupo, .aj-painel .dica").forEach(x => x.classList.toggle("ocultar", !!q));
+  $("#aj-nada")?.classList.toggle("ocultar", !q || algum);
+}
+document.addEventListener("input", e => { if(e.target.id === "aj-busca"){ AJ_BUSCA = e.target.value; filtrarAjustes() } });
+
 function campoRec(c){
   const dep = c.depende ? `data-dep="${c.depende}"` : "";
   const ajuda = c.ajuda ? `<small class="ajuda">${esc(c.ajuda)}</small>` : "";
@@ -2984,7 +3049,7 @@ function aplicarTema(t){
   const [a1, a2] = TEMAS[t.cor] || TEMAS.rosa, r = document.documentElement.style;
   r.setProperty("--a1", a1); r.setProperty("--a2", a2);
   if(t.modo){
-    document.documentElement.dataset.modo = t.modo;
+    document.documentElement.dataset.temaModo = t.modo;
     const bg = t.modo === "claro" ? "#ffffff" : t.modo === "escuro" ? "#0b0d12" : null;
     try{ if(bg){ tg?.setBackgroundColor?.(bg); tg?.setHeaderColor?.(bg) } }catch(e){}
   }
