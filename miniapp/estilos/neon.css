@@ -1,0 +1,93 @@
+/* NEON SUÍTE: letreiro de neon de motel; azulejo escuro, tubo de neon na cor da loja, placa amarela */
+:root{
+  --bg: color-mix(in oklab, var(--a1) 5%, #0C0A1F);
+  --bg2: color-mix(in oklab, var(--a1) 5%, #110E2B);
+  --card: color-mix(in oklab, var(--a1) 4%, #13102F);
+  --card2: color-mix(in oklab, var(--a1) 6%, #1B1742);
+  --text:#EDEBFF; --muted:#A39DD0;
+  --line:#7E6EFF2E; --line-forte:#7E6EFF4D;
+  --neon: color-mix(in oklab, var(--a1), #fff 22%);
+  --ciano:#7EF9FF; --placa:#FFD84D;
+  --papel: var(--card); --papel2: var(--card2); --tinta:#EDEBFF;
+  --holo: linear-gradient(var(--placa),var(--placa));
+  --ouro: var(--placa); --ouro-txt: var(--placa); --ouro-tinta:#221A00;
+  --f-titulo:"Big Shoulders Display","Arial Narrow",sans-serif;
+  --f-nome:"Neonderthaw",cursive;
+  --t-largura:100%; --t-largura-nome:100%; --t-caixa:uppercase;
+  --t-nome-peso:400; --t-nome-k:.56; --t-nome-min:50px; --t-nome-max:96px; --t-nome-alt:1.05;
+  --r-xl:14px; --r:12px; --rs:10px; --r-xs:8px;
+  --brilho: 0 0 4px #fff, 0 0 12px var(--neon), 0 0 30px var(--neon);
+  color-scheme: dark;
+}
+body{font-synthesis:none}
+body::before{background:
+  radial-gradient(70% 34% at 50% 0%, color-mix(in oklab,var(--neon) 30%,transparent), transparent 72%),
+  linear-gradient(#7E6EFF14 1px,transparent 1px) 0 0/26px 26px,
+  linear-gradient(90deg,#7E6EFF14 1px,transparent 1px) 0 0/26px 26px, var(--bg)}
+.perfil{text-align:center;grid-template-columns:1fr}
+.perfil>.nome{color:#fff;text-transform:none;text-shadow:var(--brilho);margin:6px 0 10px;text-align:center;letter-spacing:0}
+.perfil>.nome .verif{background:transparent;border:1.5px solid var(--ciano);color:var(--ciano);box-shadow:0 0 10px var(--ciano)}
+.perfil>.avatar-wrap,.perfil>.anel{grid-column:1;grid-row:2;justify-self:center}
+.perfil>.bio{grid-column:1;grid-row:3;margin-top:12px;text-align:center;justify-self:center;color:#CFCBF5}
+.perfil>.selo-criadora{justify-self:center}
+.perfil>.stats{text-align:center}
+.stats div{text-align:center}
+.stats b{color:var(--placa);text-shadow:0 0 10px color-mix(in oklab,var(--placa) 50%,transparent)}
+.avatar{border-color:var(--neon);box-shadow:0 0 16px var(--neon)}
+h2,.secao-titulo h2{letter-spacing:.04em}
+.secao-titulo h2{font:400 46px/1 "Neonderthaw",cursive;text-transform:none;color:#fff;text-shadow:0 0 8px var(--ciano),0 0 22px var(--ciano)}
+.btn{background:var(--neon);color:#1A0313;box-shadow:0 4px 0 var(--a1-fundo),0 0 22px color-mix(in oklab,var(--neon) 55%,transparent);letter-spacing:.05em}
+.btn.sec{background:transparent;color:var(--text);border:1.5px solid var(--line-forte);box-shadow:none}
+.chip.on,.seg button.on,.opcoes button.on,.grupo-filtro .opcoes button.on,.alt-vista button.on{background:transparent;border-color:var(--neon);color:#fff;box-shadow:0 0 12px color-mix(in oklab,var(--neon) 50%,transparent),inset 0 0 8px color-mix(in oklab,var(--neon) 35%,transparent)}
+/* quarto: o conteúdo é uma porta numerada */
+.post{border:1.5px solid var(--line-forte);--a1-claro:var(--neon)}
+.post .rodape{border-top:1.5px solid var(--line)}
+.post .rodape::before,.post .rodape::after{display:none}
+.post .rodape b{letter-spacing:.03em}
+.preco-tag{background:transparent;color:#fff;border:2px solid var(--neon);box-shadow:0 0 12px color-mix(in oklab,var(--neon) 50%,transparent),inset 0 0 10px color-mix(in oklab,var(--neon) 30%,transparent)}
+.preco-tag:active{box-shadow:0 0 22px var(--neon)}
+.tag-relampago{background:var(--placa) !important;color:#221A00 !important;border:0;transform:none;border-radius:14px 4px 4px 14px !important}
+.desbloq{background:var(--neon);color:#1A0313;box-shadow:0 4px 0 var(--a1-fundo),0 0 22px color-mix(in oklab,var(--neon) 55%,transparent)}
+.interacao,.btn-cart{color:var(--text)}
+.btn-cart{border-color:var(--line-forte)}
+/* VIP: placa de preços da suíte */
+.cta-vip{transform:none;margin:22px 16px 0;padding:16px;border-radius:12px;background:var(--card) !important;color:var(--text);border:2px solid #2B2660;box-shadow:inset 0 0 0 4px var(--bg),inset 0 0 0 5px #2B2660}
+.cta-vip b{color:var(--placa);text-shadow:0 0 10px color-mix(in oklab,var(--placa) 50%,transparent);letter-spacing:.05em}
+.cta-vip small{color:var(--muted);opacity:1}
+.cta-vip .seta{background:var(--neon);color:#1A0313;border-radius:8px}
+.cta-vip:active{transform:scale(.98)}
+.cta-vip.brilho::after{display:none}
+.hero-vip{transform:none;margin:16px;border-radius:12px;background:var(--card) !important;border:2px solid #2B2660;color:var(--text)}
+.hero-vip h2{color:var(--placa);text-shadow:0 0 12px color-mix(in oklab,var(--placa) 50%,transparent)}
+.hero-vip p{color:var(--muted)}
+.hero-vip.mimos-hero{background:var(--card) !important;transform:none}
+.hero-vip.mimos-hero h2{color:#fff;text-shadow:var(--brilho)}
+.plano.on{background:color-mix(in oklab,var(--placa) 10%,var(--card));border:1.5px solid var(--placa);color:var(--text);--muted:#A39DD0}
+.plano.on .radio{border-color:var(--placa);background:var(--placa)}
+.plano .valor b{color:var(--placa)}
+.popular{background:var(--placa);color:#221A00}
+.vip-ativo .ico{background:var(--placa)}
+/* painel */
+.ola{background:var(--card) !important;color:var(--text);border:1.5px solid var(--line-forte)}
+.ola::before,.ola::after{display:none}
+.ola b{color:var(--placa);text-shadow:0 0 14px color-mix(in oklab,var(--placa) 45%,transparent)}
+.ola .deco{color:var(--neon)}
+.kpi.destaque{background:var(--neon);color:#1A0313}
+/* dock flutuante */
+.barra{padding:0 12px calc(12px + env(safe-area-inset-bottom))}
+.barra nav{height:var(--nav-h);padding:6px;border-radius:14px;border:1.5px solid #2B2660;background:color-mix(in oklab,var(--bg2) 96%,transparent)}
+.barra nav .pilula{top:6px;bottom:6px;left:6px;background:transparent;border:1.5px solid var(--neon);box-shadow:0 0 14px color-mix(in oklab,var(--neon) 55%,transparent);border-radius:10px}
+.barra nav button.on,.barra nav button.on .ico{color:#fff;text-shadow:0 0 8px var(--neon)}
+.topo-fixo b{font:400 30px/1 "Neonderthaw",cursive;text-transform:none;color:#fff;text-shadow:var(--brilho)}
+/* folha e comprovante */
+.valor-pix{background:var(--card2);color:var(--text);--muted:#A39DD0}
+.valor-pix .v{color:var(--placa)}
+.valor-pix + .aviso{background:var(--card2);color:var(--ok)}
+.qr-card{background:linear-gradient(135deg,var(--bg2) 50%,transparent 50%) 0 100%/14px 10px repeat-x,linear-gradient(225deg,var(--bg2) 50%,transparent 50%) 0 100%/14px 10px repeat-x,var(--card2)}
+.passos i{background:var(--neon);color:#1A0313}
+.toast{background:var(--card2);color:var(--text);box-shadow:0 0 0 1.5px var(--neon),0 0 20px color-mix(in oklab,var(--neon) 45%,transparent)}
+.linha-preco .v{color:var(--placa)}
+@keyframes cartaz{from{opacity:0;filter:brightness(.2)}50%{opacity:1;filter:brightness(1.6)}62%{filter:brightness(.4)}74%{filter:brightness(1.3)}}
+.perfil>.nome{clip-path:none;animation:cartaz .9s steps(1,end) backwards}
+@media (prefers-reduced-motion: reduce){.perfil>.nome{animation:none}}
+.btn.fantasma{background:transparent;box-shadow:none;border:0;color:var(--muted);font:700 15px/1.2 var(--f-corpo);text-transform:none}

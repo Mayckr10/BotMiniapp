@@ -1,0 +1,97 @@
+/* ÁLBUM ÍNTIMO: o álbum pessoal dela; papel de seda na cor da loja, polaroids com fita, letra à mão, batom */
+:root{
+  --bg: color-mix(in oklab, var(--a1) 22%, #FBEFF1);
+  --bg2: color-mix(in oklab, var(--a1) 12%, #FFF7F8);
+  --card: color-mix(in oklab, var(--a1) 6%, #FFFCFC);
+  --card2: color-mix(in oklab, var(--a1) 12%, #FBEFF1);
+  --text:#2A1418; --muted: color-mix(in oklab, var(--a1) 25%, #6E4A52);
+  --line:#2A141814; --line-forte:#2A141829;
+  --pontos:transparent;
+  --papel:#FFFFFF; --papel2: color-mix(in oklab, var(--a1) 8%, #FFF8F9); --tinta:#2A1418;
+  --fita: rgba(255,232,160,.78);
+  --holo: linear-gradient(160deg, color-mix(in oklab,var(--a1) 10%,#FFF6F7), color-mix(in oklab,var(--a1) 18%,#FBE6EA));
+  --ouro: var(--a1); --ouro-txt: color-mix(in oklab,var(--a1),#000 15%); --ouro-tinta:#2A1418;
+  --a1-claro: color-mix(in oklab, var(--a1), #000 10%);
+  --f-titulo:"Caveat Brush","Comic Sans MS",cursive;
+  --t-largura:100%; --t-largura-nome:100%; --t-caixa:none;
+  --t-nome-peso:400; --t-nome-k:.46; --t-nome-min:48px; --t-nome-max:76px; --t-nome-alt:.95;
+  --r-xl:4px; --r:3px; --rs:8px; --r-xs:6px;
+  --ok:#11804A; --warn:#A35F00;
+  color-scheme: light;
+}
+body{font-synthesis:none}
+body::before{background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .25 0 0 0 0 .28 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),var(--bg)}
+h2{font-weight:400;font-size:30px}
+.secao-titulo h2{font-size:36px}
+.folha h2{font-size:36px}
+.perfil{padding-top:calc(24px + env(safe-area-inset-top))}
+.perfil>.nome{color:var(--tinta);letter-spacing:0;transform:rotate(-2deg);transform-origin:left}
+.perfil>.nome .verif{background:var(--a1)}
+.avatar{border:6px solid #fff;border-bottom-width:18px;border-radius:2px;width:84px;height:96px;transform:rotate(-5deg);box-shadow:0 8px 18px -6px rgba(80,20,30,.45)}
+.perfil>.avatar-wrap::before{content:"";position:absolute;z-index:2;top:-8px;left:20px;width:44px;height:16px;background:var(--fita);transform:rotate(5deg)}
+.perfil>.bio{font:400 22px/1.15 "Caveat Brush",cursive;color:var(--muted)}
+.stats{border-top:0}
+.stats b{font:800 18px/1 var(--f-corpo)}
+.selo-criadora{border-color:var(--a1);color:var(--a1-claro)}
+.btn{font-size:24px;font-weight:400;border-radius:8px;letter-spacing:0}
+.btn.fantasma{font-size:15px}
+.btn.mini{font-size:19px}
+.btn.sec{background:#fff;box-shadow:0 3px 0 var(--line-forte)}
+.chip{border-radius:999px;border-style:dashed}
+.chip.on{background:var(--tinta);border-color:var(--tinta);color:#fff;border-style:solid}
+.seg button.on,.opcoes button.on,.grupo-filtro .opcoes button.on,.alt-vista button.on{background:var(--tinta);color:#fff}
+.kpi,.grupo,.acao,.item,.beneficio,.renovar,.vip-ativo,.mimo,.plano,.card-extra{background:var(--card);box-shadow:0 6px 14px -10px rgba(80,20,30,.4);border-color:transparent}
+/* polaroid colada com fita */
+.feed{gap:28px;padding-top:8px}
+.post{background:#fff;padding:10px 10px 4px;border-radius:2px;box-shadow:0 14px 26px -14px rgba(80,20,30,.55);overflow:visible;transform:rotate(-.8deg)}
+.feed>.post:nth-child(even){transform:rotate(.9deg)}
+.post::before,.post::after{content:"";position:absolute;z-index:3;top:-9px;width:62px;height:20px;background:var(--fita);pointer-events:none}
+.post::before{left:-12px;transform:rotate(-30deg)}.post::after{right:-12px;transform:rotate(28deg)}
+.post .cab{padding:4px 4px 10px}
+.post .midia{border-radius:0}
+.post .rodape{border-top:0;padding:12px 4px 8px}
+.post .rodape::before,.post .rodape::after{display:none}
+.post .rodape b{font-size:28px;font-weight:400}
+.preco-tag{font:800 17px/1 var(--f-corpo);border-radius:0;padding:10px 14px 10px 22px;clip-path:polygon(12px 0,100% 0,100% 100%,12px 100%,0 50%);transform:rotate(-5deg);box-shadow:none}
+.preco-tag:active{transform:rotate(-5deg) scale(.94) !important}
+.preco-tag.ok{clip-path:none;transform:none;border-width:1.5px}
+.tag-relampago{font:400 20px/1 "Caveat Brush",cursive !important;background:#fff !important;border:0 !important;color:var(--a1) !important;transform:rotate(-6deg);box-shadow:0 4px 10px -4px rgba(80,20,30,.4) !important}
+.desbloq{font-size:23px;font-weight:400;border-radius:8px}
+/* VIP: carta com lacre de cera */
+.cta-vip{transform:rotate(.6deg);margin:22px 16px 0;padding:16px 16px 16px 78px;border-radius:3px;background:linear-gradient(160deg,transparent 49.6%,#2A141812 50%,transparent 50.6%),linear-gradient(20deg,transparent 49.6%,#2A141812 50%,transparent 50.6%),var(--papel2) !important;
+  color:var(--tinta);box-shadow:0 10px 20px -12px rgba(80,20,30,.45);position:relative}
+.cta-vip::before{display:block;content:"♥";position:absolute;left:14px;top:50%;margin-top:-26px;width:52px;height:52px;border-radius:47% 53% 50% 48%;display:grid;place-items:center;color:#FFE0E5;font:400 24px/1 "Caveat Brush";
+  background:radial-gradient(circle at 38% 32%,color-mix(in oklab,var(--a1),#fff 25%),var(--a1) 55%,color-mix(in oklab,var(--a1),#000 45%));box-shadow:0 3px 8px rgba(122,6,24,.45)}
+.cta-vip b{font-size:30px;font-weight:400}
+.cta-vip .seta{background:transparent;color:var(--tinta);border:1.5px solid var(--line-forte)}
+.cta-vip.brilho::after{display:none}
+.hero-vip{background:var(--papel2) !important;transform:rotate(-.6deg);border-radius:3px;margin:18px 16px 6px;box-shadow:0 10px 20px -12px rgba(80,20,30,.45)}
+.hero-vip h2{font-size:42px}
+.hero-vip.mimos-hero{background:var(--a1) !important}
+.plano.on{background:var(--papel2);border:1.5px solid var(--a1);box-shadow:0 0 0 4px color-mix(in oklab,var(--a1) 14%,transparent)}
+.plano.on .radio{border-color:var(--a1);background:var(--a1)}
+.plano .valor b{font:800 19px/1 var(--f-corpo)}
+.popular{background:var(--a1);color:#fff}
+.vip-ativo .ico,.bloqueio-vip.tela .ico{background:var(--a1);color:#fff}
+.vip-ativo .barra-prog i,.renovar .barra-prog i{background:var(--a1)}
+/* painel */
+.ola{background:#fff !important;border-radius:3px;transform:rotate(-.5deg);box-shadow:0 12px 24px -14px rgba(80,20,30,.5)}
+.ola::before,.ola::after{display:none}
+.ola b{font:800 40px/1 var(--f-corpo);letter-spacing:-.03em}
+.kpi b{font:800 24px/1.1 var(--f-corpo)}
+.stats b,.linha-preco .v,.valor-pix .v{font-family:var(--f-corpo);font-weight:800;letter-spacing:-.03em}
+/* dock de tinta */
+.barra nav{background:var(--tinta);border-top:0;border-radius:18px 18px 0 0;--muted:#C9A3AB}
+.barra nav button{font:400 17px/1 "Caveat Brush",cursive}
+.barra nav .pilula{background:var(--a1)}
+.barra nav button.on,.barra nav button.on .ico{color:#fff}
+.topo-fixo{background:var(--bg2)}
+.topo-fixo b{font-weight:400;font-size:28px}
+.folha{background:var(--bg2)}
+.valor-pix{background:#fff}
+.qr-card{background:linear-gradient(135deg,var(--bg2) 50%,transparent 50%) 0 100%/14px 10px repeat-x,linear-gradient(225deg,var(--bg2) 50%,transparent 50%) 0 100%/14px 10px repeat-x,#fff}
+.valor-pix + .aviso{background:#fff}
+.toast{background:#fff;font-family:"Caveat Brush",cursive;font-size:20px;font-weight:400;transform-origin:center}
+.passos i{background:var(--a1);color:#fff}
+.fundo{background:rgba(42,20,24,.5)}
+.btn.fantasma{background:transparent;box-shadow:none;border:0;color:var(--muted);font:700 15px/1.2 var(--f-corpo);text-transform:none}

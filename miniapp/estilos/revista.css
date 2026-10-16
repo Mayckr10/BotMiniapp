@@ -1,0 +1,94 @@
+/* REVISTA DE BANCA: ela é a capa; amarelo de banca, tinta preta, a cor da loja como manchete */
+:root{
+  --bg:#FFE03A; --bg2:#FFF8D6;
+  --card:#FFFDF2; --card2:#FFF4BF;
+  --text:#141014; --muted:#4A4036;
+  --line:#141014; --line-forte:#141014;
+  --pontos: rgba(20,16,20,.10); --pontos-tam:6px;
+  --papel:#FFFDF2; --papel2:#FFFDF2; --tinta:#141014;
+  --a1-claro: color-mix(in oklab, var(--a1), #000 18%);
+  --holo: linear-gradient(var(--a1),var(--a1));
+  --ouro: var(--a1); --ouro-txt: color-mix(in oklab,var(--a1),#000 18%); --ouro-tinta:#fff;
+  --f-titulo:"Bungee",Impact,sans-serif;
+  --t-largura:100%; --t-largura-nome:100%; --t-caixa:uppercase;
+  --t-nome-peso:400; --t-nome-k:.74; --t-nome-min:40px; --t-nome-max:78px; --t-nome-alt:.92;
+  --r-xl:0; --r:0; --rs:0; --r-xs:0;
+  --duro: 4px 4px 0 #141014;
+  --ok:#0B7A3E; --warn:#8A4B00;
+  color-scheme: light;
+}
+body{font-synthesis:none}
+h2{font-weight:400;letter-spacing:-.02em}
+.secao-titulo h2{font-size:28px}
+.perfil{padding-top:calc(16px + env(safe-area-inset-top))}
+.perfil>.nome{color:var(--a1);text-shadow:3px 3px 0 #141014;letter-spacing:-.04em;margin-bottom:8px}
+.perfil>.nome .verif{background:#141014;color:#FFE03A}
+.perfil>.bio{font-weight:700;background:#141014;color:#fff;padding:6px 9px;justify-self:start;max-width:none}
+.avatar{border:3px solid #141014;border-radius:0;box-shadow:4px 4px 0 #141014}
+.stats{border-top:3px solid #141014;border-bottom:3px solid #141014;padding:8px 0}
+.stats b{font-weight:400}
+.selo-criadora{border:2.5px solid #141014;color:#141014;background:#fff}
+.kpi,.grupo,.acao,.item,.beneficio,.troca,.renovar,.meta,.ranking,.grafico,.card-extra,.fila-item,.coment,.card-pedido,.vip-ativo,.mimo,.plano,.codigo,.bloqueio-vip{border:2.5px solid #141014;box-shadow:5px 5px 0 #141014;border-radius:0}
+.grupo .linha-c{border-color:#14101433}
+.btn{font-weight:400;font-size:18px;border:2.5px solid #141014;box-shadow:var(--duro)}
+.btn:active{transform:translate(4px,4px);box-shadow:0 0 0 #141014}
+.btn.sec{background:#fff;color:#141014;box-shadow:var(--duro)}
+.btn.mini{box-shadow:3px 3px 0 #141014}
+.btn.mini:active{transform:translate(3px,3px)}
+.chip{border:2.5px solid #141014;color:#141014;background:#fff;font-weight:800}
+.chip.on{background:#141014;color:#FFE03A;border-color:#141014}
+.seg button.on,.opcoes button.on,.grupo-filtro .opcoes button.on,.alt-vista button.on{background:#141014;color:#FFE03A}
+input[type=text],input[type=password],textarea{border:2.5px solid #141014;background:#fff}
+/* matéria: o conteúdo é uma página da revista */
+.post{border:2.5px solid #141014;box-shadow:6px 6px 0 #141014;border-radius:0}
+.post .rodape{border-top:2.5px solid #141014}
+.post .rodape::before,.post .rodape::after{display:none}
+.post .rodape b{font-weight:400;letter-spacing:-.02em}
+.preco-tag{font-weight:400;border:2.5px solid #141014;box-shadow:3px 3px 0 #141014}
+.preco-tag:active{transform:translate(3px,3px) !important}
+.tag-relampago{background:#FFE03A !important;color:#141014 !important;border:2.5px solid #141014 !important;font-weight:400 !important;transform:rotate(-5deg)}
+.desbloq{font-weight:400;border:2.5px solid #141014;box-shadow:4px 4px 0 #141014}
+/* VIP: selo estourado de capa */
+.cta-vip{transform:rotate(-1.4deg);margin:20px 12px 0;border:2.5px solid #141014;border-radius:0;background:#141014 !important;color:#fff;box-shadow:6px 6px 0 var(--a1)}
+.cta-vip b{color:#FFE03A;font-weight:400}
+.cta-vip small{color:#fff}
+.cta-vip .seta{width:52px;height:52px;background:#FFE03A;color:#141014;border-radius:0;
+  clip-path:polygon(50% 0,61% 13%,77% 6%,80% 22%,96% 24%,90% 39%,100% 50%,90% 61%,96% 76%,80% 78%,77% 94%,61% 87%,50% 100%,39% 87%,23% 94%,20% 78%,4% 76%,10% 61%,0 50%,10% 39%,4% 24%,20% 22%,23% 6%,39% 13%)}
+.cta-vip.brilho::after{display:none}
+.hero-vip{transform:rotate(-1deg);border:2.5px solid #141014;background:#141014 !important;color:#fff;box-shadow:6px 6px 0 var(--a1)}
+.hero-vip h2{color:#FFE03A}
+.hero-vip p{color:#fff}
+.hero-vip.mimos-hero{background:var(--a1) !important;box-shadow:6px 6px 0 #141014}
+.hero-vip.mimos-hero h2{color:#fff;text-shadow:3px 3px 0 #141014}
+.plano.on{background:#fff;color:#141014;box-shadow:6px 6px 0 var(--a1)}
+.plano.on .radio{background:var(--a1);border-color:#141014}
+.plano .valor b{font-weight:400}
+.popular{background:var(--a1);color:#fff;border:2px solid #141014}
+.vip-ativo .ico{background:var(--a1);color:#fff}
+.vip-ativo .barra-prog i,.renovar .barra-prog i{background:var(--a1)}
+.barra-prog{border:2px solid #141014;background:#fff;height:10px}
+/* painel */
+.ola{background:#fff !important;border:2.5px solid #141014;box-shadow:6px 6px 0 #141014;border-radius:0}
+.ola::before,.ola::after{display:none}
+.ola b{font-weight:400;color:var(--a1);text-shadow:2px 2px 0 #141014}
+.kpi b{font-weight:400}
+.kpi.destaque{background:var(--a1);color:#fff}
+.grafico .col{background:#14101440}
+.fab{border:2.5px solid #141014;box-shadow:5px 5px 0 #141014;border-radius:0}
+/* dock: rodapé de papel */
+.barra nav{background:#FFFDF2;border-top:2.5px solid #141014;--muted:#4A4036}
+.barra nav .pilula{background:var(--a1);border:2px solid #141014;border-radius:0}
+.barra nav button.on,.barra nav button.on .ico{color:#fff}
+.topo-fixo{background:#FFE03A;border-bottom:2.5px solid #141014}
+.topo-fixo b{font-weight:400;color:var(--a1);text-shadow:2px 2px 0 #141014}
+.folha{background:#FFF8D6;border-top:2.5px solid #141014;border-radius:0}
+.fechar{border:2px solid #141014;background:#fff}
+.valor-pix{border:2.5px solid #141014;border-bottom:0;background:#fff}
+.valor-pix .v{font-weight:400}
+.valor-pix + .aviso{background:#fff;border-left:2.5px solid #141014;border-right:2.5px solid #141014}
+.qr-card{border-left:2.5px solid #141014;border-right:2.5px solid #141014;background:linear-gradient(135deg,#FFF8D6 50%,transparent 50%) 0 100%/14px 10px repeat-x,linear-gradient(225deg,#FFF8D6 50%,transparent 50%) 0 100%/14px 10px repeat-x,#fff}
+.linha-preco .v{font-weight:400}
+.toast{background:#fff;border:2.5px solid #141014;box-shadow:4px 4px 0 #141014}
+.passos i{background:#141014;color:#FFE03A}
+.fundo{background:rgba(20,16,20,.55)}
+.btn.fantasma{background:transparent;box-shadow:none;border:0;color:var(--muted);font:700 15px/1.2 var(--f-corpo);text-transform:none}

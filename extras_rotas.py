@@ -62,8 +62,8 @@ async def dados_loja(request: web.Request, user: dict, criadora: bool, ve_posts:
                        "carteira_ativo", "comentarios_ativo", "comentarios_moderar", "sorteios_ativo", "novidades_ativo",
                        "aval_ativo", "aval_min", "indic_ativo", "indic_recompensa", "indic_amigo_pct", "indic_quando",
                        "colecoes_ativo", "teaser_ativo", "relampago_ativo", "ppv_ativo", "upsell_ativo",
-                       "tema_cor", "tema_modo")
-    r: dict = {"tema": {"cor": c["tema_cor"], "modo": c["tema_modo"]}}
+                       "tema_cor", "tema_modo", "tema_estilo")
+    r: dict = {"tema": {"cor": c["tema_cor"], "modo": c["tema_modo"], "estilo": c["tema_estilo"]}}
 
     # Packs: promoção relâmpago, nota, coleção, teaser
     ids = [p["id"] for p in packs]
