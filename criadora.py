@@ -926,13 +926,16 @@ async def config_carrinho(db: Database) -> dict:
 
 async def config(request: web.Request) -> web.Response:
     """Tudo que a aba Ajustes mostra: planos, cupons, mimos e preferências."""
-    _admin(request, "ajustes")
+    user = _admin(request, "ajustes")
     db: Database = request.app["db"]
+    import recebimento
+    receb = await recebimento._estado(request.app) if user["id"] in request.app["cfg"].admin_ids else None
     cupons = []
     for c in await db.listar_cupons():
         cupons.append({"codigo": c.codigo, "descricao": c.descricao, "usos": c.usos, "usos_max": c.usos_max,
                        "expira": data_local(c.expira_em, request.app["cfg"]) if c.expira_em else None})
     return web.json_response({
+        "recebimento": receb,
         "planos": [{"id": p.id, "nome": p.nome, "dias": p.dias, "preco": p.preco, "preco_fmt": p.preco_fmt}
                    for p in await db.listar_planos()],
         "cupons": cupons,

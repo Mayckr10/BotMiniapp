@@ -22,6 +22,7 @@ QUEM está comprando sem login, e ninguém consegue se passar por outro usuário
 As mídias originais nunca passam pela página: só o bot as envia, com protect_content.
 """
 import base64
+import gzip
 import hmac
 import logging
 import math
@@ -129,8 +130,41 @@ async def _imagem(bot: Bot, file_id: str) -> bytes:
 
 
 # ════════════════════════════════════════════════════════════════════════════
-async def pagina(_: web.Request) -> web.FileResponse:
-    return web.FileResponse(PAGINA, headers={"Cache-Control": "no-cache"})
+_ESTATICO: dict[Path, tuple[float, str, bytes, bytes]] = {}
+VENDOR = Path(__file__).parent / "miniapp" / "vendor"
+
+
+def _servir(request: web.Request, arq: Path, tipo: str, cache: str) -> web.Response:
+    """Arquivo da loja já comprimido em gzip (a página tem ~300 KB e vira ~70 KB), com ETag para o
+    Telegram não baixar de novo o que não mudou."""
+    mtime = arq.stat().st_mtime
+    item = _ESTATICO.get(arq)
+    if not item or item[0] != mtime:
+        bruto = arq.read_bytes()
+        item = (mtime, f'"{int(mtime)}-{len(bruto)}"', bruto, gzip.compress(bruto, 9))
+        _ESTATICO[arq] = item
+    _, etag, bruto, comprimido = item
+    cab = {"Cache-Control": cache, "ETag": etag, "Vary": "Accept-Encoding"}
+    if request.headers.get("If-None-Match") == etag:
+        return web.Response(status=304, headers=cab)
+    if "gzip" in request.headers.get("Accept-Encoding", ""):
+        cab["Content-Encoding"] = "gzip"
+        return web.Response(body=comprimido, content_type=tipo, charset="utf-8", headers=cab)
+    return web.Response(body=bruto, content_type=tipo, charset="utf-8", headers=cab)
+
+
+async def pagina(request: web.Request) -> web.Response:
+    return _servir(request, PAGINA, "text/html", "no-cache")
+
+
+async def vendor(request: web.Request) -> web.Response:
+    """Bibliotecas usadas no celular da criadora (ex.: mediabunny, que comprime vídeo antes do envio).
+    O nome tem a versão, então o cache pode ser de 1 ano."""
+    nome = request.match_info["nome"]
+    arq = VENDOR / nome
+    if "/" in nome or not nome.endswith(".mjs") or not arq.is_file():
+        raise web.HTTPNotFound()
+    return _servir(request, arq, "text/javascript", "public, max-age=31536000, immutable")
 
 
 async def dados(request: web.Request) -> web.Response:
@@ -551,6 +585,7 @@ async def barrar_bloqueados(request: web.Request, handler):
 def registrar_rotas(app: web.Application) -> None:
     app.middlewares.append(barrar_bloqueados)
     app.router.add_get("/loja", pagina)
+    app.router.add_get("/static/vendor/{nome}", vendor)
     app.router.add_get("/favicon.ico", favicon)
     app.router.add_get("/api/loja/dados", dados)
     app.router.add_get("/api/loja/previa/{item_id}", previa)

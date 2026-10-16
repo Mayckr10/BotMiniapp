@@ -217,6 +217,15 @@ Nesse ponto já dá para testar em produção com `PIX_GATEWAY=mock`: pague a co
 3. O bot envia o webhook como `https://seu-dominio/webhook/pix?token=<WEBHOOK_SECRET>` ao criar cada cobrança.
 4. Faça uma compra real de R$ 1,00 com um pack de teste antes de divulgar.
 
+**Sem mexer em variáveis:** a criadora cola o token da conta Pushin Pay dela em *Ajustes › Vendas › Recebimento*
+(o token é conferido na Pushin Pay e nunca volta para o app; só os 4 últimos dígitos aparecem). Assim que ela
+conecta, o modo teste desliga sozinho.
+
+**Split do dono da plataforma:** quem está em `DONO_IDS` manda `/split <account_id> <pct>` no bot (ex.:
+`/split 9c8a-...-41 10`) para receber essa % de cada venda direto na conta Pushin Pay dele. `/split` mostra o
+que está valendo e `/split off` desliga. A % vai de 1 a 50 (limite da Pushin Pay) e vale no lugar de
+`PLATAFORMA_ACCOUNT_ID` / `PLATAFORMA_PCT`.
+
 A classe `PushinPayGateway` em `payments.py` segue a documentação pública da Pushin Pay; **confira os
 nomes dos campos na documentação atual antes de ir para produção**. Para Asaas, OpenPix ou Mercado Pago,
 crie outra classe com os mesmos 3 métodos (`criar_cobranca`, `consultar_pago`, `ler_webhook`) e registre em `criar_gateway()`.

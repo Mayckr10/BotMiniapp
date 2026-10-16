@@ -145,7 +145,7 @@ h2{margin:0;font-size:19px;letter-spacing:-.01em}
 .mimo small{color:var(--muted);font-size:12px}
 .campo{display:flex;gap:8px;padding:12px 16px 0}
 .campo input{flex:1}
-input[type=text]{width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;color:var(--text);font-size:15px;outline:none;transition:.2s}
+input[type=text],input[type=password]{width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:13px 14px;color:var(--text);font-size:15px;outline:none;transition:.2s}
 input:focus{border-color:var(--a1)}
 input::placeholder{color:var(--muted)}
 
@@ -2394,6 +2394,13 @@ function configCompleto(){
       ${linha('id="ed-msgs"', `${ic("chat")}`, "Mensagens do bot", "Boas-vindas, pós-compra e VIP")}
     </div>
 
+    ${C.recebimento ? `    <div class="secao-titulo"><h2>Recebimento</h2></div>
+    <div class="grupo">
+      ${linha('data-acao="recebimento"', `${ic("moeda")}`, "Conta que recebe os pagamentos", C.recebimento.conectado ? `Pushin Pay conectada · token final ${esc(C.recebimento.final)}` : C.recebimento.pelo_servidor ? "Pushin Pay configurada no servidor" : "Não conectada: as vendas estão em modo teste", C.recebimento.em_teste ? `<span class="v" style="color:var(--warn)">teste</span><span class="seta">›</span>` : `<span class="v" style="color:var(--ok)">ativa</span><span class="seta">›</span>`)}
+    </div>
+    <p class="legenda-grupo">O PIX cai direto na sua conta Pushin Pay.${C.recebimento.taxa_pct ? ` A taxa da plataforma (${C.recebimento.taxa_pct}%) é separada automaticamente em cada venda.` : ""}</p>
+
+` : ""}
     ${pode("financeiro") ? `    <div class="secao-titulo"><h2>Assinatura VIP</h2><small class="muted">${pl(C.planos.length, "plano", "planos")}</small></div>
     <div class="grupo">
       ${C.planos.map(p => linha(`data-plano-ed="${p.id}"`, `${ic("estrela-cheia")}`, esc(p.nome), `${p.dias} dias · ${reais(Math.round(p.preco / p.dias * 30))}/mês`, `<span class="v">${esc(p.preco_fmt)}</span><span class="seta">›</span>`)).join("")}
@@ -2672,6 +2679,74 @@ function editarPerfil(){
   };
 }
 
+/* ── Compressão no celular antes de enviar ─────────────────────────────────
+   Vídeo: H.264 + AAC, no máx. 1280 px e com bitrate calculado para caber no limite do Telegram, usando o
+   próprio chip do celular (WebCodecs, via mediabunny). Foto: no máx. 2560 px em JPEG. Se o aparelho não
+   suportar ou algo falhar, vai o arquivo original e o servidor comprime como antes. */
+const MAX_LADO_VIDEO = 1280, MAX_LADO_FOTO = 2560;
+let MB = null;
+const carregarMB = () => MB ||= import("/static/vendor/mediabunny-1.59.1.min.mjs").catch(e => { MB = null; throw e });
+const par = n => Math.max(2, Math.round(n / 2) * 2);
+async function comprimirVideo(f, alvo, aoProgresso){
+  if(typeof VideoEncoder === "undefined" || typeof VideoDecoder === "undefined" || f.size <= alvo) return f;
+  let input;
+  try{
+    const M = await carregarMB();
+    input = new M.Input({source: new M.BlobSource(f), formats: M.ALL_FORMATS});
+    const vt = await input.getPrimaryVideoTrack();
+    if(!vt) return f;
+    const [dw, dh, dur, at] = [await vt.getDisplayWidth(), await vt.getDisplayHeight(), await input.computeDuration(), await input.getPrimaryAudioTrack()];
+    if(!dur || !dw || !dh) return f;
+    const k = Math.min(1, MAX_LADO_VIDEO / Math.max(dw, dh)), w = par(dw * k), h = par(dh * k);
+    const cod = window.__codecsTeste || {video: "avc", audio: "aac"};        // o teste automático troca (Chromium sem H.264)
+    // O som em AAC (o normal no celular) é copiado sem recodificar: mais rápido e funciona até onde não há AudioEncoder
+    const copiaAudio = at && (await at.getCodec()) === cod.audio;
+    if(at && !copiaAudio && !(await M.canEncodeAudio(cod.audio))) return f;
+    const audio = !at ? 0 : copiaAudio ? 192000 : 96000;
+    // 92% do limite para sobrar espaço do contêiner; nem tão baixo que fique borrado, nem acima do que 1280 px precisa
+    const vbr = Math.round(Math.min(4500000, Math.max(450000, alvo * 8 * 0.92 / dur - audio)));
+    if(!(await M.canEncodeVideo(cod.video, {width: w, height: h, bitrate: vbr}))) return f;
+    const output = new M.Output({format: new M.Mp4OutputFormat({fastStart: "in-memory"}), target: new M.BufferTarget()});
+    const conv = await M.Conversion.init({input, output,
+      video: {width: w, height: h, fit: "fill", codec: cod.video, bitrate: vbr, forceTranscode: true, allowTransformationMetadata: false},
+      audio: !at ? undefined : copiaAudio ? {} : {codec: cod.audio, bitrate: audio}});
+    if(!conv.isValid) return f;
+    if(at && conv.discardedTracks.some(d => d.track === at)) return f;     // sem o som não serve
+    conv.onProgress = p => aoProgresso?.(p);
+    await conv.execute();
+    const buf = output.target.buffer;
+    if(!buf || buf.byteLength >= f.size * 0.95) return f;
+    return new File([buf], f.name.replace(/\.[^.]+$/, "") + ".mp4", {type: "video/mp4", lastModified: f.lastModified});
+  }catch(e){ console.warn("compressão no celular falhou, vai o original", e); return f }
+  finally{ try{ input?.dispose?.() }catch(e){} }
+}
+async function reduzirFoto(f){
+  if(!f.type.startsWith("image/") || f.type === "image/gif" || typeof createImageBitmap === "undefined") return f;
+  try{
+    const bmp = await createImageBitmap(f, {imageOrientation: "from-image"});
+    const k = Math.min(1, MAX_LADO_FOTO / Math.max(bmp.width, bmp.height));
+    if(k === 1 && f.size < 2.5 * 1024 * 1024 && /jpe?g/.test(f.type)){ bmp.close?.(); return f }
+    const c = document.createElement("canvas"); c.width = Math.round(bmp.width * k); c.height = Math.round(bmp.height * k);
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height); bmp.close?.();
+    const blob = await new Promise(r => c.toBlob(r, "image/jpeg", 0.9));
+    if(!blob || blob.size >= f.size) return f;
+    return new File([blob], f.name.replace(/\.[^.]+$/, "") + ".jpg", {type: "image/jpeg", lastModified: f.lastModified});
+  }catch(e){ return f }
+}
+// Prepara a lista inteira, um arquivo por vez (o celular não aguenta dois vídeos em paralelo)
+async function prepararMidias(arqs, alvoVideo, aoEtapa){
+  const out = [], nv = arqs.filter(f => f.type.startsWith("video") && f.size > alvoVideo).length;
+  let iv = 0;
+  for(const f of arqs){
+    if(f.type.startsWith("video") && f.size > alvoVideo){
+      iv++;
+      const pre = nv > 1 ? `Comprimindo no celular (vídeo ${iv} de ${nv})` : "Comprimindo no celular";
+      aoEtapa(`${pre}…`, 0);
+      out.push(await comprimirVideo(f, alvoVideo, p => aoEtapa(`${pre} ${Math.round(p * 100)}%`, p)));
+    } else out.push(f.type.startsWith("image") ? await reduzirFoto(f) : f);
+  }
+  return out;
+}
 function novaPublicacao(pago){
   let arqs = [];
   const canal = PAINEL?.canal !== false;
@@ -2731,6 +2806,7 @@ function novaPublicacao(pago){
     ppvBox.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); vibrar("leve");
     $("#pub-ppv-dica").textContent = b.dataset.v ? "Mensagem paga: a prévia embaçada chega no chat de cada fã com o botão de desbloquear. Não aparece na vitrine." : "";
     $("#pub-agendar").parentNode.classList.toggle("ocultar", !!b.dataset.v) };
+  const etapa = (txt, p) => { $("#pub-prog").classList.remove("ocultar"); $("#pub-barra").style.width = `${Math.round(p * 100)}%`; $("#pub-etapa").textContent = txt };
   $("#pub-publicar").onclick = async () => {
     const texto = $("#pub-texto").value.trim(), b = $("#pub-publicar");
     if(agendar && !$("#pub-quando").value) return toast("Escolha o dia e a hora");
@@ -2743,7 +2819,8 @@ function novaPublicacao(pago){
       const vid = arqs[0]?.type.startsWith("video");
       b.disabled = true; b.textContent = "Publicando…";
       if(vid) $("#pub-prog").classList.remove("ocultar");
-      const r = await enviarForm("/api/criadora/post", {texto, enquete: ops.length ? JSON.stringify(ops) : "", agendar: quando()}, arqs.length ? [["foto", arqs[0]]] : [],
+      const prontos = await prepararMidias(arqs, 18 * 1024 * 1024, etapa);
+      const r = await enviarForm("/api/criadora/post", {texto, enquete: ops.length ? JSON.stringify(ops) : "", agendar: quando()}, prontos.length ? [["foto", prontos[0]]] : [],
         vid ? p => { $("#pub-barra").style.width = `${Math.round(p * 100)}%`; $("#pub-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : "Quase lá…" } : undefined);
       if(!r.ok){ b.disabled = false; b.textContent = agendar ? "Agendar" : "Publicar"; $("#pub-prog").classList.add("ocultar"); return toast(r.erro || "Não consegui publicar") }
       vibrar("success"); fecharFolha(true); PAINEL = null; ANIMAR = true;
@@ -2758,12 +2835,13 @@ function novaPublicacao(pago){
     if(!titulo) return toast("Dê um título ao pack");
     if(!preco) return toast("Defina o preço");
     if(arqs.find(f => f.type.startsWith("video") && f.size > 700 * 1024 * 1024)) return toast("Um vídeo passa de 700 MB. Corte em partes antes de enviar.");
-    const comprimir = arqs.some(f => f.type.startsWith("video") && f.size > 49 * 1024 * 1024);
     b.disabled = true; b.textContent = "Publicando…"; $("#pub-prog").classList.remove("ocultar");
+    const prontos = await prepararMidias(arqs, 45 * 1024 * 1024, etapa);
+    const comprimir = prontos.some(f => f.type.startsWith("video") && f.size > 49 * 1024 * 1024);
     const r = await enviarForm("/api/criadora/pack",
       {titulo, preco, legenda: texto, canal: $("#pub-canal")?.classList.contains("on") ? "1" : "0", ppv: ppvBox?.dataset.valor || "",
        agendar: quando(), contagem: $("#pub-contagem").classList.contains("on") ? "1" : "0"},
-      arqs.map(f => ["arquivos", f]),
+      prontos.map(f => ["arquivos", f]),
       p => { $("#pub-barra").style.width = `${Math.round(p * 100)}%`; $("#pub-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : (comprimir ? "Quase lá…" : "Gerando as prévias com desfoque…") });
     if(!r.ok){ b.disabled = false; b.textContent = "Publicar pack"; $("#pub-prog").classList.add("ocultar"); return toast(r.erro || "Não consegui publicar") }
     vibrar("success"); fecharFolha(true); PAINEL = null; ANIMAR = true;
@@ -2950,7 +3028,7 @@ ACOES["rec-sec"] = el => {
 
 /* Ajustes em abas (Loja, Vendas, Recursos, Proteção, Conta) com busca */
 const ABAS_AJ = [["loja", "Loja"], ["vendas", "Vendas"], ["recursos", "Recursos"], ["protecao", "Proteção"], ["conta", "Conta"]];
-const SECAO_AJ = {"Conta e equipe": "conta", "Recursos": "recursos", "Perfil": "loja", "Assinatura VIP": "vendas", "Mimos": "vendas",
+const SECAO_AJ = {"Conta e equipe": "conta", "Recursos": "recursos", "Perfil": "loja", "Recebimento": "vendas", "Assinatura VIP": "vendas", "Mimos": "vendas",
   "Meta de mimos": "vendas", "Pedidos personalizados": "vendas", "Carrinho": "vendas", "Cupons de desconto": "vendas",
   "Notificações": "loja", "Proteção": "protecao", "Publicação": "loja", "Visualização": "loja"};
 let AJ_ABA = (() => { try{ return localStorage.getItem("aj_aba") || "loja" }catch(e){ return "loja" } })(), AJ_BUSCA = "";
@@ -2975,6 +3053,37 @@ ACOES["aj-aba"] = el => {
   AJ_ABA = el.dataset.abaAj; AJ_BUSCA = ""; try{ localStorage.setItem("aj_aba", AJ_ABA) }catch(e){}
   vibrar("leve"); const c = $("#conteudo"); c.innerHTML = config();
   const topo = $(".aj-topo"); if(topo && topo.getBoundingClientRect().top < 0) topo.scrollIntoView({block: "start"});
+};
+ACOES["recebimento"] = () => {
+  const R = CONFIG?.recebimento || {};
+  abrirFolha(`<h2>Conta de recebimento</h2><p class="sub">Cada PIX pago pelos fãs cai direto na sua conta Pushin Pay. Ninguém mais vê o seu token.</p>
+    ${R.conectado ? `<p class="aviso ok">${ic("check")} Conectada · token final ${esc(R.final)}</p>` : R.em_teste ? `<p class="aviso">Sem conta conectada, as compras ficam em modo teste (ninguém paga de verdade).</p>` : ""}
+    <ol class="dica" style="padding-left:18px;margin:0 0 12px;line-height:1.55">
+      <li>Crie ou entre na sua conta em <b>app.pushinpay.com.br</b>.</li>
+      <li>Vá em <b>Configurações › API / Tokens</b> e gere um token.</li>
+      <li>Copie o token inteiro e cole aqui.</li>
+    </ol>
+    <span class="rotulo">Token da Pushin Pay</span><input type="password" id="rb-token" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${R.conectado ? "Cole um novo token para trocar" : "Cole o token aqui"}">
+    <div class="gap"></div><button class="btn brilho" id="rb-salvar">${R.conectado ? "Trocar conta" : "Conectar"}</button>
+    ${R.conectado ? `<div class="gap"></div><button class="btn fantasma" id="rb-sair">Desconectar</button>` : ""}
+    ${R.taxa_pct ? `<p class="dica" style="margin-top:12px">A taxa da plataforma (${R.taxa_pct}%) é separada pela própria Pushin Pay em cada venda.</p>` : ""}`);
+  const btn = $("#rb-salvar");
+  btn.onclick = async () => {
+    const token = $("#rb-token").value.trim();
+    if(!token){ toast("Cole o token primeiro"); $("#rb-token").focus(); return }
+    btn.disabled = true; btn.textContent = "Conferindo na Pushin Pay…";
+    const r = await api("/api/criadora/recebimento", {token});
+    btn.disabled = false; btn.textContent = R.conectado ? "Trocar conta" : "Conectar";
+    if(!r.ok){ toast(r.erro || "Não consegui conectar"); vibrar("error"); return }
+    CONFIG.recebimento = r; fecharFolha(true); vibrar("success"); toast(r.aviso || "Conta conectada. As vendas já caem nela!");
+    $("#conteudo").innerHTML = config();
+  };
+  const sair = $("#rb-sair");
+  if(sair) sair.onclick = () => confirmar("Desconectar a conta? As vendas voltam para o modo teste.", async () => {
+    const r = await api("/api/criadora/recebimento/desconectar", {});
+    if(!r.ok){ toast(r.erro || "Não consegui"); return }
+    CONFIG.recebimento = r; fecharFolha(true); toast("Conta desconectada"); $("#conteudo").innerHTML = config();
+  });
 };
 function filtrarAjustes(){
   const q = semAcento(AJ_BUSCA.trim());

@@ -144,11 +144,13 @@ class MockPixGateway(PixGateway):
 #  Endpoints/campos baseados na documentação pública da Pushin Pay.
 #  CONFIRA na documentação oficial antes de ir para produção (podem mudar).
 # ════════════════════════════════════════════════════════════════════════════
-def taxa_plataforma(cfg: Config, valor: int) -> int:
-    """Centavos do split da plataforma (0 se não houver conta configurada)."""
-    if not cfg.plataforma_account_id or cfg.plataforma_pct <= 0:
+def taxa_plataforma(cfg: Config, valor: int, conta: str | None = None, pct: int | None = None) -> int:
+    """Centavos do split da plataforma (0 se não houver conta configurada). Máximo 50% (limite da Pushin Pay)."""
+    conta = cfg.plataforma_account_id if conta is None else conta
+    pct = cfg.plataforma_pct if pct is None else pct
+    if not conta or pct <= 0:
         return 0
-    return valor * cfg.plataforma_pct // 100
+    return valor * min(50, pct) // 100
 
 
 class PushinPayGateway(PixGateway):
@@ -163,13 +165,15 @@ class PushinPayGateway(PixGateway):
                      "Accept": "application/json", "Content-Type": "application/json"},
         )
 
-    async def criar_cobranca(self, valor: int, descricao: str, referencia: str, validade_seg: int = 3600) -> Cobranca:
+    async def criar_cobranca(self, valor: int, descricao: str, referencia: str, validade_seg: int = 3600,
+                             split_conta: str | None = None, split_pct: int | None = None) -> Cobranca:
         # A validade é controlada pelo próprio bot (vendas.expira_em). Se o seu gateway aceitar um
         # campo de expiração na criação da cobrança, envie `validade_seg` aqui também.
         corpo = {"value": valor, "webhook_url": self.cfg.webhook_url}
-        taxa = taxa_plataforma(self.cfg, valor)
+        conta = self.cfg.plataforma_account_id if split_conta is None else split_conta
+        taxa = taxa_plataforma(self.cfg, valor, conta, split_pct)
         if taxa >= 1:
-            corpo["split_rules"] = [{"value": taxa, "account_id": self.cfg.plataforma_account_id}]
+            corpo["split_rules"] = [{"value": taxa, "account_id": conta}]
         r = await self.http.post("/pix/cashIn", json=corpo)
         r.raise_for_status()
         dados = r.json()
@@ -224,9 +228,18 @@ class GatewaySeletor(PixGateway):
             self._pushin[tok] = PushinPayGateway(self.cfg, tok)
         return self._pushin[tok]
 
+    async def split(self) -> tuple[str, int]:
+        """Conta e % do split do dono da plataforma: o que ele cadastrou com /split, ou as variáveis de ambiente."""
+        conta = (await self.db.get_ajuste("split_conta") if self.db else None)
+        pct = (await self.db.get_ajuste("split_pct") if self.db else None)
+        return (self.cfg.plataforma_account_id if conta is None else conta,
+                self.cfg.plataforma_pct if pct is None else min(50, max(0, int(pct))))
+
     async def criar_cobranca(self, valor: int, descricao: str, referencia: str, validade_seg: int = 3600) -> Cobranca:
-        gw = self.mock if await self.em_teste() else await self._real()
-        return await gw.criar_cobranca(valor, descricao, referencia, validade_seg)
+        if await self.em_teste():
+            return await self.mock.criar_cobranca(valor, descricao, referencia, validade_seg)
+        conta, pct = await self.split()
+        return await (await self._real()).criar_cobranca(valor, descricao, referencia, validade_seg, conta, pct)
 
     async def consultar_pago(self, pix_id: str) -> bool:
         if pix_id.startswith("mock_"):

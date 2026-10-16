@@ -33,6 +33,7 @@ import contas
 import extras
 import extras_rotas
 import recursos
+import recebimento
 import notificacoes
 import protecao
 import reset_banco
@@ -66,6 +67,7 @@ async def run(cfg: Config) -> None:
     dp.message.outer_middleware(protecao.Bloqueio(db, cfg))          # fã bloqueado não passa daqui
     dp.callback_query.outer_middleware(protecao.Bloqueio(db, cfg))
     dp.include_router(contas.get_router(cfg, contas_app))   # /convite (dono) e vínculo do Telegram
+    dp.include_router(recebimento.get_router(cfg, db, gateway))   # /split (dono)
     dp.include_router(reset_banco.get_router(cfg))      # /resetar_banco: só para RESET_IDS
     dp.include_router(admin_handlers.get_router(cfg))   # admin primeiro
     dp.include_router(admin_vendas.get_router(cfg))
@@ -101,6 +103,7 @@ async def run(cfg: Config) -> None:
         cmds = list(cmds_admin if chat_id in cfg.admin_ids else cmds_fa)
         if chat_id in cfg.dono_ids:
             cmds.append(BotCommand(command="convite", description="Convidar uma criadora (link de cadastro)"))
+            cmds.append(BotCommand(command="split", description="Sua conta e % do split das vendas"))
         if chat_id in cfg.reset_ids:
             cmds.append(BotCommand(command="resetar_banco", description="⚠️ Apagar todo o banco de dados"))
         try:
@@ -115,6 +118,7 @@ async def run(cfg: Config) -> None:
     criadora.registrar_rotas(app)
     recursos.registrar_rotas(app)
     extras_rotas.registrar_rotas(app)
+    recebimento.registrar_rotas(app)
     url = loja.url_loja(cfg)
     if url:   # botão fixo "🛍️ Loja" ao lado do campo de mensagem, no chat com o bot
         await bot.set_chat_menu_button(menu_button=MenuButtonWebApp(text="🛍️ Loja", web_app=WebAppInfo(url=url)))
