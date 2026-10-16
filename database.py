@@ -234,6 +234,7 @@ MIGRACOES = {
         "pix_copia_cola": "TEXT",                       # para reenviar no lembrete
         "remarketing_etapa": "INTEGER NOT NULL DEFAULT 0",  # 0 nada | 1 lembrete | 2 cupom enviado
         "expira_em": "TEXT",                            # validade do PIX
+        "metodo": "TEXT NOT NULL DEFAULT 'pix'",        # pix | saldo (pago com a carteira: não é dinheiro novo)
     },
     "posts": {
         "status": "TEXT NOT NULL DEFAULT 'publicado'",  # publicado | fila (aguardando revisão) | agendado
@@ -247,14 +248,25 @@ MIGRACOES = {
         "legenda": "TEXT",                              # texto da postagem no feed da loja
         "agendado_para": "TEXT",                        # tipo agendado: quando o pack vai ao ar
         "contagem": "INTEGER NOT NULL DEFAULT 0",       # 1 = fãs veem a contagem regressiva antes do lançamento
+        "promo_pct": "INTEGER NOT NULL DEFAULT 0",      # promoção relâmpago: % de desconto...
+        "promo_ate": "TEXT",                            # ...até esta data (UTC)
+        "colecao_id": "INTEGER",                        # coleção (pasta) na vitrine
     },
     "usuarios": {
         "maior_idade_em": "TEXT",                       # quando confirmou ter 18+ (NULL = não confirmou)
         "menor": "INTEGER NOT NULL DEFAULT 0",          # 1 = declarou ser menor: compra bloqueada
         "banido": "INTEGER NOT NULL DEFAULT 0",         # 1 = a criadora bloqueou este fã (sem loja, sem bot, sem VIP)
         "banido_em": "TEXT",
+        "origem": "TEXT",                               # link de divulgação que trouxe o fã (primeiro toque)
+        "origem_em": "TEXT",
+        "indicado_por": "INTEGER",                      # fã que indicou (programa de indicação)
+        "indicacao_paga": "INTEGER NOT NULL DEFAULT 0", # 1 = quem indicou já recebeu a recompensa
+        "silenciado": "INTEGER NOT NULL DEFAULT 0",     # 1 = não quer aviso de conteúdo novo
     },
 }
+
+# Itens comprados que vêm de outros módulos: {"prefixo_": async fn(db, item_id) -> item | None}
+ITENS_EXTRA: dict = {}
 
 STATUS_PENDENTE = "PENDENTE"
 STATUS_PAGO = "PAGO"
@@ -289,10 +301,22 @@ class Pack:
     criado_em: str = ""
     legenda: str = ""
     tipo: str = "pack"
+    promo_pct: int = 0
+    promo_ate: str | None = None
+    colecao_id: int | None = None
 
     @property
     def preco_fmt(self) -> str:
         return fmt_reais(self.preco)
+
+    @property
+    def em_promo(self) -> bool:
+        return bool(self.promo_pct and self.promo_ate and self.promo_ate > _agora())
+
+    @property
+    def preco_atual(self) -> int:
+        """Preço cobrado agora (com a promoção relâmpago, se estiver valendo)."""
+        return max(100, self.preco - self.preco * self.promo_pct // 100) if self.em_promo else self.preco
 
 
 @dataclass
@@ -434,6 +458,7 @@ class Venda:
     remarketing_etapa: int = 0
     criado_em: str = ""
     expira_em: str | None = None
+    metodo: str = "pix"     # pix | saldo (pago com a carteira)
 
 
 class Database:
@@ -511,6 +536,9 @@ class Database:
             criado_em=row["criado_em"],
             legenda=row["legenda"] or "",
             tipo=row["tipo"],
+            promo_pct=row["promo_pct"] or 0,
+            promo_ate=row["promo_ate"],
+            colecao_id=row["colecao_id"],
         )
 
     async def listar_packs(self, tipo: str | None = "pack") -> list[Pack]:
@@ -544,6 +572,9 @@ class Database:
         return [c for c in [await self.get_combo(r["id"]) for r in rows] if c]
 
     async def get_item(self, item_id: str) -> "Pack | Combo | Plano | Gorjeta | Carrinho | PedidoPersonalizado | None":
+        for prefixo, buscar in ITENS_EXTRA.items():          # recarga da carteira, pergunta paga... (extras.py)
+            if item_id.startswith(prefixo):
+                return await buscar(self, item_id)
         if item_id.startswith("carrinho_"):
             return await self.get_carrinho(int(item_id[9:])) if item_id[9:].isdigit() else None
         if item_id.startswith("pedido_"):
@@ -899,7 +930,7 @@ class Database:
         rows = await self._todos(
             "SELECT v.user_id, COUNT(*) AS compras, SUM(v.valor) AS total, MAX(v.pago_em) AS ultima, u.nome, u.username "
             "FROM vendas v LEFT JOIN usuarios u ON u.user_id = v.user_id "
-            f"WHERE v.status = ? {filtro} {fora} AND COALESCE(u.banido, 0) = 0 "
+            f"WHERE v.status = ? {filtro} {fora} AND COALESCE(u.banido, 0) = 0 AND COALESCE(v.metodo, 'pix') != 'saldo' "
             "GROUP BY v.user_id ORDER BY total DESC, compras DESC, ultima LIMIT ?",
             (STATUS_PAGO, *params, *ignorar, limite))
         return [dict(r) for r in rows]
@@ -1061,13 +1092,14 @@ class Database:
         """Faturamento por dia (data local AAAA-MM-DD -> centavos)."""
         rows = await self._todos(
             "SELECT date(pago_em, ? || ' hours') AS dia, SUM(valor) AS total FROM vendas "
-            "WHERE status = ? AND pago_em >= ? GROUP BY dia", (str(fuso_horas), STATUS_PAGO, iso(desde)))
+            "WHERE status = ? AND pago_em >= ? AND COALESCE(metodo, 'pix') != 'saldo' GROUP BY dia", (str(fuso_horas), STATUS_PAGO, iso(desde)))
         return {r["dia"]: r["total"] for r in rows}
 
     async def receita_por_tipo(self, desde: datetime) -> dict[str, int]:
         rows = await self._todos(
             "SELECT CASE WHEN pack_id LIKE 'plano_%' THEN 'vip' WHEN pack_id LIKE 'gorjeta_%' THEN 'mimos' "
-            "ELSE 'packs' END AS tipo, SUM(valor) AS total FROM vendas WHERE status = ? AND pago_em >= ? GROUP BY tipo",
+            "WHEN pack_id LIKE 'credito_%' THEN 'carteira' ELSE 'packs' END AS tipo, SUM(valor) AS total FROM vendas "
+            "WHERE status = ? AND pago_em >= ? AND COALESCE(metodo, 'pix') != 'saldo' GROUP BY tipo",
             (STATUS_PAGO, iso(desde)))
         return {r["tipo"]: r["total"] for r in rows}
 
@@ -1084,11 +1116,11 @@ class Database:
 
     # ── Vendas ─────────────────────────────────────────────────────────────
     async def criar_venda(self, user_id: int, item_id: str, valor: int,
-                          valor_original: int | None = None, cupom: str | None = None) -> int:
+                          valor_original: int | None = None, cupom: str | None = None, metodo: str = "pix") -> int:
         cur = await self.conn.execute(
-            "INSERT INTO vendas (user_id, pack_id, status, valor, valor_original, cupom, criado_em) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (user_id, item_id, STATUS_PENDENTE, valor, valor_original or valor, cupom, _agora()),
+            "INSERT INTO vendas (user_id, pack_id, status, valor, valor_original, cupom, criado_em, metodo) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (user_id, item_id, STATUS_PENDENTE, valor, valor_original or valor, cupom, _agora(), metodo),
         )
         await self.conn.commit()
         return cur.lastrowid
@@ -1202,6 +1234,7 @@ class Database:
             remarketing_etapa=row["remarketing_etapa"] if "remarketing_etapa" in chaves else 0,
             criado_em=row["criado_em"],
             expira_em=row["expira_em"] if "expira_em" in chaves else None,
+            metodo=(row["metodo"] if "metodo" in chaves else None) or "pix",
         )
 
     # ── Cupons ─────────────────────────────────────────────────────────────
@@ -1310,7 +1343,7 @@ class Database:
 
     async def total_gasto(self, user_id: int) -> dict:
         row = await self._um("SELECT COUNT(*) AS n, COALESCE(SUM(valor), 0) AS total FROM vendas "
-                             "WHERE user_id = ? AND status = ?", (user_id, STATUS_PAGO))
+                             "WHERE user_id = ? AND status = ? AND COALESCE(metodo, 'pix') != 'saldo'", (user_id, STATUS_PAGO))
         return {"compras": row["n"], "total": row["total"]}
 
     # ── Limite de reenvios no chat ─────────────────────────────────────────
@@ -1359,8 +1392,8 @@ class Database:
     async def stats_periodo(self, desde: datetime) -> dict:
         d = iso(desde)
         pagas = await self._um(
-            "SELECT COUNT(*) AS n, COALESCE(SUM(valor), 0) AS total FROM vendas WHERE status = ? AND pago_em >= ?",
-            (STATUS_PAGO, d))
+            "SELECT COUNT(*) AS n, COALESCE(SUM(valor), 0) AS total FROM vendas WHERE status = ? AND pago_em >= ? "
+            "AND COALESCE(metodo, 'pix') != 'saldo'", (STATUS_PAGO, d))
         geradas = await self._um("SELECT COUNT(*) AS n FROM vendas WHERE criado_em >= ?", (d,))
         cliques = await self._um(
             "SELECT COUNT(*) AS n FROM (SELECT DISTINCT user_id, item_id FROM cliques WHERE criado_em >= ?)", (d,))

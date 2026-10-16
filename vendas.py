@@ -43,7 +43,8 @@ def aplicar_pct(preco: int, pct: int) -> int:
 
 
 async def criar_pedido(db: Database, gateway: PixGateway, cfg: Config, user_id: int,
-                       item_id: str, codigo_cupom: str | None = None) -> Pedido:
+                       item_id: str, codigo_cupom: str | None = None, saldo: bool = False, bot=None) -> Pedido:
+    """saldo=True paga com a carteira (status 'pago_saldo' ou 'saldo_insuficiente'); precisa do bot para entregar."""
     if await db.esta_banido(user_id):
         return Pedido("inexistente")
     item = await db.get_item(item_id)
@@ -58,6 +59,11 @@ async def criar_pedido(db: Database, gateway: PixGateway, cfg: Config, user_id: 
         return Pedido("inexistente")
     if isinstance(item, PedidoPersonalizado) and item.status != "AGUARDANDO":
         return Pedido("inexistente")              # já pago, entregue ou recusado: não gera outro PIX
+    # itens das melhorias (recarga, pergunta paga): de um fã só e/ou pagáveis uma vez
+    if getattr(item, "dono_unico", False) and item.user_id != user_id:
+        return Pedido("inexistente")
+    if getattr(item, "pagavel", True) is False:
+        return Pedido("inexistente")
 
     # Quem já tem todo o conteúdo não paga de novo
     if conteudo and await db.tem_todos(user_id, [p.id for p in packs]):
@@ -65,17 +71,32 @@ async def criar_pedido(db: Database, gateway: PixGateway, cfg: Config, user_id: 
     if isinstance(item, Pack) and item.tipo in ("arquivado", "fila", "agendado", "pedido", "preparando"):       # apagado da vitrine: não vende mais
         return Pedido("inexistente")
 
-    pedido = Pedido("ok", item=item, packs=packs, preco=item.preco)
-    if codigo_cupom and not isinstance(item, (Gorjeta, PedidoPersonalizado)):
+    import extras
+    base = getattr(item, "preco_atual", item.preco)          # promoção relâmpago já vem no preço
+    pedido = Pedido("ok", item=item, packs=packs, preco=base)
+    if base != item.preco:
+        pedido.promo = f"Promoção relâmpago: {item.promo_pct}% OFF"
+    sem_cupom = isinstance(item, (Gorjeta, PedidoPersonalizado)) or getattr(item, "sem_cupom", False)
+    automatico = False
+    if not codigo_cupom and not sem_cupom:                   # quem veio por um link de divulgação com cupom
+        codigo_cupom, automatico = await extras.cupom_do_link(db, user_id), True
+    if codigo_cupom and not sem_cupom:
         cupom, motivo = await db.validar_cupom(codigo_cupom, item_id, user_id)
         if cupom:
-            pedido.cupom, pedido.preco = cupom, item.preco - cupom.desconto(item.preco)
-        else:
+            pedido.cupom, pedido.preco = cupom, max(100, base - cupom.desconto(base))
+        elif not automatico:
             pedido.cupom_invalido, pedido.motivo_cupom = codigo_cupom.upper(), motivo
     if isinstance(item, Plano) and not pedido.cupom:
         pct = await desconto_primeiro_mes(db, user_id, item)
         if pct:
             pedido.preco, pedido.promo = aplicar_pct(item.preco, pct), f"1º mês com {pct}% OFF"
+    if not pedido.cupom and not sem_cupom:                   # nível de fã, presente de indicação
+        auto = await extras.desconto_automatico(db, user_id, item)
+        if auto and aplicar_pct(base, auto[0]) < pedido.preco:
+            pedido.preco, pedido.promo = aplicar_pct(base, auto[0]), auto[1]
+
+    if saldo:
+        return await _pagar_com_saldo(db, cfg, bot, user_id, item_id, item, pedido)
 
     # 1) venda PENDENTE  2) cobrança no gateway  3) liga as duas pelo pix_id
     pedido.venda_id = await db.criar_venda(user_id, item_id, pedido.preco, valor_original=item.preco,
@@ -92,3 +113,31 @@ async def criar_pedido(db: Database, gateway: PixGateway, cfg: Config, user_id: 
     pedido.expira = agora() + validade
     await db.definir_pix(pedido.venda_id, pedido.cobranca.pix_id, pedido.cobranca.copia_e_cola, pedido.expira)
     return pedido
+
+
+async def _pagar_com_saldo(db: Database, cfg: Config, bot, user_id: int, item_id: str, item, pedido: Pedido) -> Pedido:
+    import secrets
+    import extras
+    from webhook import concluir_venda
+    if not await R_valor(db, "carteira_ativo") or item_id.startswith("credito_"):
+        return Pedido("inexistente")
+    pix_id = f"saldo_{secrets.token_hex(8)}"
+    if not await extras.debitar(db, user_id, pedido.preco, pix_id):
+        pedido.status = "saldo_insuficiente"
+        return pedido
+    pedido.venda_id = await db.criar_venda(user_id, item_id, pedido.preco, valor_original=item.preco,
+                                           cupom=pedido.cupom.codigo if pedido.cupom else None, metodo="saldo")
+    await db.definir_pix(pedido.venda_id, pix_id)
+    await db.marcar_pago(pix_id)
+    pedido.status = "pago_saldo"
+    venda = await db.get_venda(pedido.venda_id)
+    try:
+        await concluir_venda(bot, db, cfg, venda)
+    except Exception:
+        log.exception("Entrega da compra com saldo falhou (venda %s)", pedido.venda_id)
+    return pedido
+
+
+async def R_valor(db: Database, chave: str):
+    import recursos
+    return await recursos.valor(db, chave)

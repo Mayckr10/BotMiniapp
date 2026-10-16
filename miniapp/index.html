@@ -702,6 +702,67 @@ svg.i.laranja{color:#ff8a3d}
 .slide .grande .ico{color:#fff}
 .verif svg.i{width:.9em;height:.9em;vertical-align:-.1em;stroke-width:3}
 .check svg.i{stroke-width:2.6}
+
+/* ── Recursos (Ajustes) ───────────────────────────────────────────────── */
+.status-rec{font-size:11.5px;font-weight:800;padding:3px 8px;border-radius:999px;background:var(--line);color:var(--muted);flex:none}
+.status-rec.on{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.campo-rec{margin-top:12px}
+.campo-rec.oculto{display:none}
+.campo-rec .linha-bool{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+.campo-rec .linha-bool b{font-size:14.5px}
+.campo-rec .ajuda{display:block;color:var(--muted);font-size:12.5px;margin-top:5px}
+.campo-rec .com-sufixo{position:relative}
+.campo-rec .com-sufixo span{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:700;pointer-events:none}
+.grupo-filtro.rec .opcoes{display:flex;flex-wrap:wrap;gap:8px}
+.cores-tema{display:flex;gap:10px;flex-wrap:wrap}
+.cores-tema button{width:40px;height:40px;border-radius:50%;border:3px solid transparent;transition:.2s}
+.cores-tema button.on{border-color:var(--text);transform:scale(1.08)}
+
+/* ── Melhorias opcionais ─────────────────────────────────────────────── */
+:root[data-modo="escuro"]{--bg:#0b0d12;--bg2:#141821;--text:#f4f5f8;--muted:#8b93a3}
+:root[data-modo="claro"]{--bg:#ffffff;--bg2:#f3f4f8;--text:#16181f;--muted:#6b7280;--card:#f6f7fa;--sombra:0 8px 24px rgba(20,22,30,.08)}
+.cards-extra{display:grid;gap:10px;padding:0 16px 14px}
+.card-extra{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r);background:var(--card);border:1px solid var(--line)}
+.card-extra .ico{width:44px;height:44px;border-radius:14px;background:var(--grad);display:grid;place-items:center;color:#fff;font-size:20px;flex:none}
+.card-extra img{width:56px;height:56px;border-radius:14px;object-fit:cover;flex:none}
+.card-extra small{display:block;color:var(--muted);font-size:12px}
+.card-extra b{display:block}
+.card-extra span{font-size:13px;color:var(--muted)}
+.card-extra > div > span{display:block}
+.card-extra span b,.card-extra span s{display:inline}
+.card-extra .seta{font-size:20px;margin-left:auto}
+.card-extra.upsell{cursor:pointer;background:linear-gradient(120deg,color-mix(in srgb,var(--a1) 16%,var(--card)),var(--card))}
+.card-extra.carteira,.card-extra.nivel{margin:16px 16px 0}
+.card-extra .saldo{font-size:22px;letter-spacing:-.02em}
+.card-extra .col-bts{display:grid;gap:6px;flex:none}
+.card-extra .col-bts .btn{padding:8px 12px}
+.card-extra .barra-prog{margin:6px 0 4px}
+.chips.colecoes .chip.on{background:var(--grad);color:#fff}
+.tag-relampago{position:absolute;left:10px;top:10px;z-index:2;background:linear-gradient(135deg,#ffb800,#ff5a1f);color:#fff;font-size:12px;font-weight:800;padding:5px 10px;border-radius:999px;display:inline-flex;align-items:center;gap:4px;box-shadow:0 6px 18px rgba(255,90,31,.4)}
+.preco-tag.promo s{opacity:.65;font-weight:600;margin-right:2px}
+.nota-pack{display:inline-flex;align-items:center;gap:3px;color:#f5b301;font-weight:700;margin-left:6px}
+.nota-pack small{color:var(--muted);font-weight:500}
+.midia video.teaser{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none}
+.avaliar{display:flex;align-items:center;justify-content:space-between;padding:0 14px 6px;color:var(--muted);font-size:13px}
+.avaliar span{display:flex;gap:2px}
+.avaliar button{font-size:20px;color:var(--muted);padding:2px}
+.avaliar button.on{color:#f5b301}
+.comentarios{display:grid;gap:10px;max-height:52vh;overflow:auto;margin:6px 0 4px}
+.coment{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.coment.dela{border-color:color-mix(in srgb,var(--a1) 40%,transparent)}
+.coment p{margin:3px 0;white-space:pre-wrap;word-break:break-word}
+.coment small,.coment-mod small{color:var(--muted);font-size:12px}
+.coment small a{color:var(--err);cursor:pointer}
+.coment-mod{background:var(--card);border:1px solid var(--line);border-radius:var(--rs);padding:12px 14px;margin-top:10px}
+.coment-mod.apagado{opacity:.55}
+.coment-mod b{display:block}
+.coment-mod p{margin:4px 0;color:var(--text);font-size:14px;white-space:pre-wrap;word-break:break-word}
+.coment-mod .bts{display:flex;gap:8px;margin-top:8px}
+.coment-mod .bts .btn{width:auto;flex:1}
+.coment-mod .metricas{display:flex;flex-wrap:wrap;gap:6px 14px;color:var(--muted);font-size:13px}
+.coment-mod .metricas b{display:inline;color:var(--text)}
+.folha .campo{padding:10px 0 0}
+.teste-vip{background:linear-gradient(120deg,color-mix(in srgb,var(--a1) 14%,var(--card)),var(--card))}
 </style>
 </head>
 <body>
@@ -959,6 +1020,7 @@ async function carregar(){
   if(!r.ok){ $("#app").innerHTML = `<div class="vazio"><div class="ico">${ic("cadeado")}</div>Abra a loja pelo botão do bot no Telegram.${INIT ? "" : `<div class="gap"></div><a class="btn" style="max-width:260px;margin:0 auto" href="/painel">${ic("coroa")} Sou a criadora: entrar</a>`}</div>`; return }
   const primeira = !D;
   D = r;
+  aplicarTema(D.recursos?.tema);
   if(primeira && D.sou_criadora) return escolherModo();
   if(!PLANO_SEL) PLANO_SEL = D.assinatura?.plano || (D.planos.find(p => p.economia) || D.planos[0])?.id;
   render();
@@ -1052,8 +1114,8 @@ function aba(){
   if(ABA === "painel") return painel();
   if(ABA === "config") return config();
   if(ABA === "vip") return vip();
-  if(ABA === "minhas") return minhas();
-  return mimos();
+  if(ABA === "minhas") return cardCarteira() + cardNivel() + minhas() + cardIndicacao() + cardAvisos();
+  return mimos() + cardPerguntas();
 }
 
 function cabPost(menu){
@@ -1072,6 +1134,7 @@ function interacoes(alvo){
     ${criadora()
       ? `<span class="interacao info">${ic("mimo")} ${m ? `${pl(m.qtd, "mimo", "mimos")} · ${esc(m.total_fmt)}` : "nenhum mimo ainda"}</span>`
       : `<button class="interacao" data-mimo="${alvo}"><span class="coracao">${ic("mimo")}</span><span>Mimo</span></button>`}
+    ${botaoComentarios(alvo)}
   </div>`;
 }
 function postTexto(p){
@@ -1118,13 +1181,14 @@ function itensFeed(){
   if(FILTRO === "packs") itens = itens.filter(x => !x.combo);
   if(FILTRO === "combos") itens = itens.filter(x => x.combo);
   if(FILTRO === "posts") itens = [];
+  if(COLECAO) itens = itens.filter(x => x.colecao_id === COLECAO);
   if(FILTROS_FEED.midia === "video") itens = itens.filter(x => x.videos > 0 || /vídeo/.test(x.resumo || ""));
   if(FILTROS_FEED.midia === "fotos") itens = itens.filter(x => !(x.videos > 0) && !/vídeo/.test(x.resumo || ""));
   if(FILTROS_FEED.compra === "nao" && !criadora()) itens = itens.filter(x => !x.comprado);
   if(FILTROS_FEED.compra === "sim" && !criadora()) itens = itens.filter(x => x.comprado);
   // posts grátis só entram quando nenhum filtro de pack está ligado (eles não têm preço nem compra)
   const soPacks = FILTROS_FEED.midia !== "todas" || FILTROS_FEED.compra !== "todos" || ["menor", "maior"].includes(FILTROS_FEED.ordem);
-  const posts = (FILTRO === "todos" || FILTRO === "posts") && !soPacks ? D.posts.map(p => ({...p, texto_post:true})) : [];
+  const posts = (FILTRO === "todos" || FILTRO === "posts") && !soPacks && !COLECAO ? D.posts.map(p => ({...p, texto_post:true})) : [];
   let todos = [...posts, ...itens].filter(bateBusca);
   const curt = x => ((D.curtidas || {})[x.texto_post ? `post_${x.id}` : x.id] || {}).n || 0;
   if(FILTROS_FEED.ordem === "menor") todos.sort((a, b) => a.preco - b.preco);
@@ -1180,7 +1244,8 @@ function listaFeed(){
   const lanc = !filtrando && ["todos", "packs"].includes(FILTRO) ? (D.lancamentos || []) : [];
   const bloqueio = !filtrando && D.posts_bloqueados && ["todos", "posts"].includes(FILTRO) ? cardBloqueioVip() : "";
   const meta = !filtrando && D.meta && FILTRO === "todos" ? metaCard(true) : "";
-  return topo + `<div class="feed">${meta}${bloqueio}${lanc.map(cardLancamento).join("")}${todos.map(x => x.texto_post ? postTexto(x) : cardPack(x)).join("")}</div>`;
+  const extras = !filtrando && FILTRO === "todos" && !COLECAO ? cardsTopo() : "";
+  return topo + extras + `<div class="feed">${meta}${bloqueio}${lanc.map(cardLancamento).join("")}${todos.map(x => x.texto_post ? postTexto(x) : cardPack(x)).join("")}</div>`;
 }
 function atualizarFeed(){
   const el = $("#lista-feed"); if(!el) return;
@@ -1196,6 +1261,7 @@ function inicio(){
       <div class="alt-vista"><button data-vista="feed" class="${VISTA==="feed"?"on":""}" aria-label="Feed">${ic("menu")}</button><button data-vista="grade" class="${VISTA==="grade"?"on":""}" aria-label="Grade">${ic("grade")}</button></div></div>
     <div class="chips">${[["todos","Todos"],["posts",`${ic("nota")} Posts`],["packs",`${ic("caixa")} Packs`],["combos",`${ic("presente")} Combos`]]
       .map(([id,t]) => `<button class="chip ${FILTRO===id?"on":""}" data-filtro="${id}">${t}</button>`).join("")}</div>
+    ${chipsColecoes()}
     <div class="busca">
       <div class="campo-b"><span class="lupa">${ic("busca")}</span><input type="text" id="busca" placeholder="Buscar conteúdo" value="${esc(BUSCA)}" enterkeyhint="search" autocomplete="off">
         <button class="limpar ${BUSCA ? "" : "ocultar"}" id="busca-limpar" aria-label="Limpar busca">${ic("fechar")}</button></div>
@@ -1276,20 +1342,22 @@ function cardPack(x){
       ${cabPost({data: x.combo ? "Combo especial" : esc(relativo(x.criado_em)) || "Pack", acao: x.combo ? "" : `pack:${x.id}`})}
       ${x.legenda ? `<div class="legenda ${x.legenda.length > 220 ? "mais" : ""}" ${x.legenda.length > 220 ? "data-mais" : ""}>${esc(x.legenda)}</div>${x.legenda.length > 220 ? `<span class="ver-mais" data-mais>ver mais</span>` : ""}` : ""}
       <div class="midia" data-item="${x.id}" data-duplo="${x.id}">
-        <img src="/api/loja/previa/${x.id}" loading="lazy" alt="">
+        <img src="/api/loja/previa/${x.id}" loading="lazy" alt="">${teaserVideo(x)}
+        ${seloPromo(x)}
         ${criadora() ? `<span class="comprado-selo">${esc(x.preco_fmt)}</span>` : x.comprado ? `<span class="comprado-selo">${ic("check")} Comprado</span>` : ""}
         ${x.combo ? `<span class="tag-combo">${ic("presente")} ${x.packs.length} packs</span>` : ""}
         <div class="veu">
-          ${criadora() ? `<span class="desbloq">${ic("olho")} Ver conteúdo</span>` : x.comprado ? `<span class="desbloq">${ic("play")} Ver agora</span>` : `<span class="cadeado">${ic("cadeado")}</span><span class="desbloq brilho">Desbloquear por ${esc(x.preco_fmt)}</span>`}
+          ${criadora() ? `<span class="desbloq">${ic("olho")} Ver conteúdo</span>` : x.comprado ? `<span class="desbloq">${ic("play")} Ver agora</span>` : `<span class="cadeado">${ic("cadeado")}</span><span class="desbloq brilho">Desbloquear por ${esc(precoVitrine(x))}</span>`}
         </div>
         <div class="contagem">${midias(x).map(m => `<span class="pill">${m}</span>`).join("")}</div>
       </div>
       <div class="rodape">
-        <div><b>${esc(x.titulo)}</b><small>${x.combo ? `Separados ${esc(x.separados_fmt)}` : esc(x.resumo)}</small></div>
+        <div><b>${esc(x.titulo)}</b><small>${x.combo ? `Separados ${esc(x.separados_fmt)}` : esc(x.resumo)} ${notaPack(x)}</small></div>
         ${criadora() ? `<span class="preco-tag ok" data-menu="pack:${x.id}">Editar</span>` : x.comprado ? `<span class="preco-tag ok" data-ver="${x.id}">Abrir</span>`
           : x.combo ? `<span class="preco-tag" data-item="${x.id}">${esc(x.preco_fmt)}</span>`
-          : `<div class="acoes-r">${botaoCarrinho(x.id)}<span class="preco-tag" data-item="${x.id}">${esc(x.preco_fmt)}</span></div>`}
+          : `<div class="acoes-r">${botaoCarrinho(x.id)}<span class="preco-tag ${x.promo ? "promo" : ""}" data-item="${x.id}">${x.promo ? `<s>${esc(x.preco_fmt)}</s> ` : ""}${esc(precoVitrine(x))}</span></div>`}
       </div>
+      ${estrelasAvaliar(x)}
       ${interacoes(x.id)}
     </article>`;
 }
@@ -1378,6 +1446,7 @@ function vip(){
   return `
     <div class="hero-vip vivo"><h2>${a ? "Renovar VIP" : "Seja VIP"}</h2>
       <p>${a ? `Você é VIP até ${esc(a.ate)}. Renovando agora, os dias são somados.` : `Todo o conteúdo exclusivo de ${esc(D.criadora.nome)}, sem censura, em um canal só para assinantes.`}</p></div>
+    ${cardTesteVip()}
     ${a && a.plano ? `<div class="renovar">
       <div class="topo-r"><span>Seu plano: <b>${esc(a.plano_nome)}</b></span><span>${a.dias === 1 ? "1 dia restante" : `${a.dias} dias restantes`}</span></div>
       <div class="barra-prog"><i style="width:${Math.min(100, Math.round(a.dias / Math.max(1, a.plano_dias) * 100))}%"></i></div>
@@ -1682,17 +1751,19 @@ function detalhes(id){
   const plano = D.planos.find(x => x.id === id);
   if(p && (p.comprado || criadora())){ return abrirGaleria(id) }
   const titulo = p ? p.titulo : plano ? `VIP ${plano.nome}` : "Mimo";
-  const preco = p ? p.preco_fmt : plano ? (plano.promo ? plano.promo.preco_fmt : plano.preco_fmt) : "";
+  const preco = p ? precoVitrine(p) : plano ? (plano.promo ? plano.promo.preco_fmt : plano.preco_fmt) : "";
   abrirFolha(`
     ${p ? `<div class="previa-wrap"><img src="/api/loja/previa/${id}" alt=""><div class="veu"><span class="cadeado">${ic("cadeado")}</span></div></div>` : `<div class="ok-grande"><div class="emoji">${ic("estrela-cheia")}</div></div>`}
     <h2>${esc(titulo)}</h2>
     ${p ? `<div class="midia-chips">${midias(p).map(m => `<span>${m}</span>`).join("")}<span>${ic("cadeado-aberto")} sem desfoque após o pagamento</span><span>${ic("escudo")} conteúdo protegido</span></div>` : ""}
     ${plano ? `<p class="sub">${plano.dias} dias de acesso ao canal VIP.${plano.promo ? `<br>${ic("presente")} Primeiro mês com ${plano.promo.pct}% OFF: de <s>${esc(plano.preco_fmt)}</s> por <b>${esc(plano.promo.preco_fmt)}</b>.` : ""}</p>` : ""}
     ${p && p.packs ? `<p class="sub">Inclui: ${p.packs.map(esc).join(" · ")}<br>Separados: <s>${esc(p.separados_fmt)}</s></p>` : ""}
+    ${p && p.promo ? `<div class="aviso ok">${ic("raio")} Promoção relâmpago: de <s>${esc(p.preco_fmt)}</s> por ${esc(p.promo.preco_fmt)} · acaba em ${restante(p.promo.ate)}</div>` : ""}
+    ${RX().nivel?.pct && p ? `<div class="aviso ok">${ic("medalha")} Seu nível ${esc(RX().nivel.nome)} dá ${RX().nivel.pct}% OFF (aplicado no pagamento)</div>` : ""}
     <div class="linha-preco"><span class="muted">Total</span><span class="v">${esc(preco)}</span></div>
     <span class="cupom-toggle" id="cupom-toggle">Tenho um cupom</span>
     <div class="cupom-wrap" id="cupom-wrap"><input type="text" id="cupom" placeholder="Código do cupom" autocapitalize="characters"></div>
-    <button class="btn brilho" id="pagar" data-item="${id}">${ic("pix")} Pagar com PIX</button>
+    <button class="btn brilho" id="pagar" data-item="${id}">${ic("pix")} Pagar com PIX</button>${botaoSaldo(id)}
     ${p && !p.packs && !criadora() ? `<div class="gap"></div><button class="btn sec" data-cart-det="${id}">${CARRINHO.includes(id) ? `${ic("check")} No carrinho` : `${ic("carrinho")} Adicionar ao carrinho`}</button>` : ""}
     <p class="sub" style="text-align:center;margin:10px 0 0;font-size:12.5px">Aprovação na hora · entregue no seu chat com o bot</p>`);
   $("#cupom-toggle").onclick = () => { $("#cupom-wrap").classList.add("on"); $("#cupom-toggle").classList.add("ocultar"); $("#cupom").focus() };
@@ -2303,7 +2374,7 @@ function config(){
   const C = CONFIG;
   const linha = (attrs, ico, titulo, sub, dir = `<span class="seta">›</span>`) =>
     `<button class="linha-c" ${attrs}><span class="ico">${ico}</span><span class="txt"><b>${titulo}</b>${sub ? `<small>${sub}</small>` : ""}</span>${dir}</button>`;
-  return `${secaoConta()}
+  return `${secaoConta()}${secaoRecursos()}
     <div class="secao-titulo"><h2>Perfil</h2></div>
     <div class="grupo">
       ${linha('id="ed-perfil2"', `${ic("usuario")}`, "Foto, nome e bio", esc(D.criadora.nome))}
@@ -2603,6 +2674,10 @@ function novaPublicacao(pago){
     <div id="pub-pagos">
       <span class="rotulo">Título</span><input type="text" id="pub-titulo" maxlength="80" placeholder="Ex: Ensaio de verão">
       <span class="rotulo">Preço</span><input type="text" id="pub-preco" inputmode="decimal" placeholder="29,90">
+      ${RX().ppv ? `<div class="grupo-filtro rec"><span class="rotulo">Onde vai</span><div class="opcoes" id="pub-ppv" data-valor="">
+        <button type="button" data-v="" class="on">Vitrine da loja</button><button type="button" data-v="vip">${ic("envelope")} Privado dos VIPs</button>
+        <button type="button" data-v="compradores">Privado de quem já comprou</button><button type="button" data-v="todos">Privado de todos</button></div>
+        <small class="ajuda muted" id="pub-ppv-dica" style="display:block;font-size:12.5px;margin-top:5px"></small></div>` : ""}
       ${canal ? `<div class="troca" style="margin:14px 0 0"><div><b>Postar prévia no canal</b><br><small class="muted">Canal de amostras, com botão de compra</small></div><span class="chave ${CONFIG && !CONFIG.canal_padrao ? "" : "on"}" id="pub-canal"></span></div>` : ""}
     </div>
     <div class="troca" style="margin:14px 0 0"><div><b>${ic("calendario")} Agendar</b><br><small class="muted">Vai ao ar sozinho no dia e hora</small></div><span class="chave" id="pub-agendar"></span></div>
@@ -2638,6 +2713,11 @@ function novaPublicacao(pago){
     if(ed !== undefined){ const novo = await editarFoto(arqs[+ed]); if(novo){ arqs[+ed] = novo; miniaturas(arqs, "#pub-mini") } }
   };
   $("#pub-canal") && ($("#pub-canal").onclick = e => e.currentTarget.classList.toggle("on"));
+  const ppvBox = $("#pub-ppv");
+  if(ppvBox) ppvBox.onclick = e => { const b = e.target.closest("[data-v]"); if(!b) return; ppvBox.dataset.valor = b.dataset.v;
+    ppvBox.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); vibrar("leve");
+    $("#pub-ppv-dica").textContent = b.dataset.v ? "Mensagem paga: a prévia embaçada chega no chat de cada fã com o botão de desbloquear. Não aparece na vitrine." : "";
+    $("#pub-agendar").parentNode.classList.toggle("ocultar", !!b.dataset.v) };
   $("#pub-publicar").onclick = async () => {
     const texto = $("#pub-texto").value.trim(), b = $("#pub-publicar");
     if(agendar && !$("#pub-quando").value) return toast("Escolha o dia e a hora");
@@ -2668,7 +2748,7 @@ function novaPublicacao(pago){
     const comprimir = arqs.some(f => f.type.startsWith("video") && f.size > 49 * 1024 * 1024);
     b.disabled = true; b.textContent = "Publicando…"; $("#pub-prog").classList.remove("ocultar");
     const r = await enviarForm("/api/criadora/pack",
-      {titulo, preco, legenda: texto, canal: $("#pub-canal")?.classList.contains("on") ? "1" : "0",
+      {titulo, preco, legenda: texto, canal: $("#pub-canal")?.classList.contains("on") ? "1" : "0", ppv: ppvBox?.dataset.valor || "",
        agendar: quando(), contagem: $("#pub-contagem").classList.contains("on") ? "1" : "0"},
       arqs.map(f => ["arquivos", f]),
       p => { $("#pub-barra").style.width = `${Math.round(p * 100)}%`; $("#pub-etapa").textContent = p < 1 ? `Enviando ${Math.round(p * 100)}%…` : (comprimir ? "Quase lá…" : "Gerando as prévias com desfoque…") });
@@ -2677,6 +2757,7 @@ function novaPublicacao(pago){
     if(r.processando){ toast(`Enviado! Estou preparando os arquivos e te aviso no chat quando o pack estiver no ar ${ic("video")}`) }
     else if(r.agendado){ toast(`Lançamento agendado para ${r.agendado} ${ic("calendario")}`); ABA = "painel" }
     else if(r.fila){ toast(`Pack na fila de revisão ${ic("nota")}`); ABA = "painel" }
+    else if(r.ppv !== undefined){ toast(`Mensagem paga indo para ${r.ppv} fã(s) ${ic("envelope")}`); ABA = "painel" }
     else { toast(r.no_canal ? `Pack publicado e postado no canal ${ic("check")}` : `Pack publicado ${ic("check")}`); confete(); ABA = "inicio"; FILTRO = "todos" }
     carregar();
   };
@@ -2711,10 +2792,12 @@ function menuItem(alvo){
     <span class="rotulo">Preço</span><input type="text" id="ed-preco" inputmode="decimal" value="${esc(p.preco_fmt.replace("R$ ", ""))}">
     <span class="rotulo">Legenda</span><textarea id="ed-legenda" maxlength="2000">${esc(p.legenda || "")}</textarea>
     <div class="gap"></div><button class="btn" id="ed-salvar">Salvar</button><div class="gap"></div>
+    ${extrasMenuPack(p)}
     <button class="btn sec" id="ed-ver">${ic("olho")} Ver conteúdo</button><div class="gap"></div>
     <button class="btn fantasma perigo" id="ed-apagar">Tirar da vitrine</button>
     <p class="dica" style="text-align:center">Quem já comprou continua com acesso.</p>`);
   $("#ed-ver").onclick = () => abrirGaleria(id);
+  ligarMenuPack(id);
   $("#ed-salvar").onclick = async () => {
     const r = await api(`/api/criadora/pack/${id}`, {titulo: $("#ed-titulo").value.trim(), preco: $("#ed-preco").value.trim(), legenda: $("#ed-legenda").value.trim()});
     if(!r.ok) return toast(r.erro || "Não consegui salvar"); toast(`Salvo ${ic("check")}`); fecharFolha(); PAINEL = null; carregar();
@@ -2824,6 +2907,87 @@ document.addEventListener("click", e => {
 async function copiar(texto, msg){
   try{ await navigator.clipboard.writeText(texto); vibrar("leve"); toast(msg || `Copiado ${ic("check")}`) }
   catch(e){ prompt("Copie:", texto) }
+}
+
+/* ── Recursos: tela gerada a partir do esquema do servidor ─────────────── */
+let RECURSOS = null;
+const TEMAS = {rosa:["#ff2e7e","#ff7a3d"], roxo:["#7b5cff","#c45cff"], azul:["#2e8bff","#2ed3ff"], verde:["#16b364","#7ad32f"],
+               laranja:["#ff7a1a","#ffc23d"], vermelho:["#e8233a","#ff6a3d"], dourado:["#c9962b","#f1cf6b"]};
+async function carregarRecursos(){
+  const r = await api("/api/criadora/recursos");
+  if(r.ok){ RECURSOS = r.grupos; if(ABA === "config"){ const c = $("#conteudo"); c.innerHTML = config() } }
+}
+function secaoRecursos(){
+  if(!RECURSOS){ carregarRecursos(); return `<div class="secao-titulo"><h2>Recursos</h2></div><div class="pad"><div class="sk" style="height:140px"></div></div>` }
+  const secoes = [...new Set(RECURSOS.map(g => g.secao))];
+  return `<div class="secao-titulo"><h2>Recursos</h2><small class="muted">liga e ajusta cada um</small></div>` + secoes.map(sec => `
+    <p class="legenda-grupo" style="padding:4px 20px 8px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11.5px">${esc(sec)}</p>
+    <div class="grupo">${RECURSOS.filter(g => g.secao === sec).map(g => `<button class="linha-c" data-acao="recurso" data-id="${g.id}">
+      <span class="ico">${ic(g.icone)}</span><span class="txt"><b>${esc(g.titulo)}</b><small class="lim">${esc(g.descricao)}</small></span>
+      ${g.ligado === null ? "" : `<span class="status-rec ${g.ligado ? "on" : ""}">${g.ligado ? "Ligado" : "Desligado"}</span>`}<span class="seta">›</span></button>`).join("")}</div>
+    <div class="gap" style="height:10px"></div>`).join("");
+}
+function campoRec(c){
+  const dep = c.depende ? `data-dep="${c.depende}"` : "";
+  const ajuda = c.ajuda ? `<small class="ajuda">${esc(c.ajuda)}</small>` : "";
+  if(c.tipo === "bool") return `<div class="campo-rec" ${dep}><div class="linha-bool"><b>${esc(c.rotulo)}</b><span class="chave ${c.valor ? "on" : ""}" data-rec="${c.chave}" data-tipo="bool"></span></div>${ajuda}</div>`;
+  if(c.tipo === "escolha"){
+    if(c.chave === "tema_cor") return `<div class="campo-rec" ${dep}><span class="rotulo">${esc(c.rotulo)}</span><div class="cores-tema" data-rec="${c.chave}" data-tipo="escolha" data-valor="${esc(c.valor)}">
+      ${c.opcoes.map(([v, t]) => `<button type="button" data-v="${v}" title="${esc(t)}" class="${v === c.valor ? "on" : ""}" style="background:linear-gradient(135deg,${TEMAS[v][0]},${TEMAS[v][1]})"></button>`).join("")}</div></div>`;
+    return `<div class="campo-rec grupo-filtro rec" ${dep}><span class="rotulo">${esc(c.rotulo)}</span><div class="opcoes" data-rec="${c.chave}" data-tipo="escolha" data-valor="${esc(c.valor)}">
+      ${c.opcoes.map(([v, t]) => `<button type="button" data-v="${v}" class="${v === c.valor ? "on" : ""}">${esc(t)}</button>`).join("")}</div>${ajuda}</div>`;
+  }
+  if(c.tipo === "textarea") return `<div class="campo-rec" ${dep}><span class="rotulo">${esc(c.rotulo)}</span><textarea data-rec="${c.chave}" data-tipo="texto" maxlength="${c.max || 500}" style="min-height:84px">${esc(c.valor)}</textarea>${ajuda}</div>`;
+  const suf = c.tipo === "pct" ? "%" : c.tipo === "reais" ? "" : "";
+  const val = c.tipo === "reais" ? (c.fmt || "").replace("R$ ", "") : c.valor;
+  const tipoInput = c.tipo === "segredo" ? "password" : "text";
+  const modo = ["int","pct"].includes(c.tipo) ? 'inputmode="numeric"' : c.tipo === "reais" ? 'inputmode="decimal"' : "";
+  const ph = c.tipo === "segredo" && c.preenchido ? 'placeholder="•••••• (salvo, deixe em branco para manter)"' : c.tipo === "reais" ? 'placeholder="0,00"' : "";
+  return `<div class="campo-rec" ${dep}><span class="rotulo">${esc(c.rotulo)}${c.tipo === "reais" ? " (R$)" : ""}</span><div class="com-sufixo">
+    <input type="${tipoInput}" data-rec="${c.chave}" data-tipo="${c.tipo}" value="${esc(val)}" ${modo} ${ph} maxlength="${c.max && c.tipo.match(/texto|segredo/) ? c.max : 40}">${suf ? `<span>${suf}</span>` : ""}</div>${ajuda}</div>`;
+}
+function atualizarDeps(){
+  document.querySelectorAll(".folha .campo-rec[data-dep]").forEach(el => {
+    const ch = document.querySelector(`.folha [data-rec="${el.dataset.dep}"]`);
+    el.classList.toggle("oculto", !!ch && !ch.classList.contains("on"));
+  });
+}
+ACOES["recurso"] = el => {
+  const g = RECURSOS.find(x => x.id === el.dataset.id); if(!g) return;
+  abrirFolha(`<h2>${ic(g.icone)} ${esc(g.titulo)}</h2><p class="sub">${esc(g.descricao)}</p>
+    ${g.campos.map(campoRec).join("")}
+    ${g.acoes.length ? `<div class="gap"></div>${g.acoes.map(a => `<button class="btn sec" data-acao="${a.acao}" style="margin-top:8px">${esc(a.rotulo)} ›</button>`).join("")}` : ""}
+    <div class="gap"></div><button class="btn" id="rec-salvar">Salvar</button>`);
+  atualizarDeps();
+  const folha = $(".folha");
+  folha.querySelectorAll('[data-tipo="bool"]').forEach(ch => ch.onclick = () => { ch.classList.toggle("on"); vibrar("leve"); atualizarDeps() });
+  folha.querySelectorAll('[data-tipo="escolha"]').forEach(box => box.onclick = e => {
+    const b = e.target.closest("[data-v]"); if(!b) return; box.dataset.valor = b.dataset.v;
+    box.querySelectorAll("[data-v]").forEach(x => x.classList.toggle("on", x === b)); vibrar("leve");
+    if(box.dataset.rec === "tema_cor") aplicarTema({cor: b.dataset.v});
+  });
+  $("#rec-salvar").onclick = async () => {
+    const dados = {};
+    folha.querySelectorAll("[data-rec]").forEach(x => {
+      const t = x.dataset.tipo;
+      dados[x.dataset.rec] = t === "bool" ? x.classList.contains("on") : t === "escolha" ? x.dataset.valor : x.value;
+    });
+    const r = await api("/api/criadora/recursos", dados);
+    if(!r.ok) return toast(r.erro || "Não consegui salvar");
+    RECURSOS = r.grupos; vibrar("success"); toast(`Salvo ${ic("check")}`); fecharFolha(true);
+    const c = $("#conteudo"); if(ABA === "config") c.innerHTML = config();
+    carregar();
+  };
+};
+function aplicarTema(t){
+  if(!t) return;
+  const [a1, a2] = TEMAS[t.cor] || TEMAS.rosa, r = document.documentElement.style;
+  r.setProperty("--a1", a1); r.setProperty("--a2", a2);
+  if(t.modo){
+    document.documentElement.dataset.modo = t.modo;
+    const bg = t.modo === "claro" ? "#ffffff" : t.modo === "escuro" ? "#0b0d12" : null;
+    try{ if(bg){ tg?.setBackgroundColor?.(bg); tg?.setHeaderColor?.(bg) } }catch(e){}
+  }
 }
 
 /* ── Conta de acesso e equipe ──────────────────────────────────────────── */
@@ -3020,6 +3184,396 @@ document.addEventListener("click", e => {
     detalhes(id);
   }
 });
+
+/* ── Melhorias opcionais (ligadas em Ajustes › Recursos) ───────────────── */
+const RX = () => (D && D.recursos) || {};
+let COLECAO = null;                                   // filtro de coleção na vitrine
+const restante = iso => { const s = Math.max(0, (new Date(iso) - Date.now()) / 1000);
+  return s < 3600 ? `${Math.max(1, Math.ceil(s / 60))}min` : s < 86400 ? `${Math.floor(s / 3600)}h ${Math.floor(s % 3600 / 60)}min` : `${Math.floor(s / 86400)}d ${Math.floor(s % 86400 / 3600)}h` };
+
+// Preço que o fã paga agora (promoção relâmpago)
+const precoVitrine = x => x.promo ? x.promo.preco_fmt : x.preco_fmt;
+function seloPromo(x){
+  return x.promo && !x.comprado ? `<span class="tag-relampago">${ic("raio")} -${x.promo.pct}% · ${restante(x.promo.ate)}</span>` : "";
+}
+function notaPack(x){
+  if(x.nota) return `<span class="nota-pack">${ic("estrela-cheia")} ${String(x.nota.media).replace(".", ",")} <small>(${x.nota.n})</small></span>`;
+  return "";
+}
+function estrelasAvaliar(x){
+  if(!RX().avaliacoes || !x.comprado || criadora()) return "";
+  return `<div class="avaliar" data-pack="${x.id}">${x.minha_nota ? "Sua nota" : "Avalie"}<span>${[1,2,3,4,5].map(n =>
+    `<button data-acao="avaliar" data-pack="${x.id}" data-nota="${n}" class="${(x.minha_nota || 0) >= n ? "on" : ""}" aria-label="${n} estrelas">${ic((x.minha_nota || 0) >= n ? "estrela-cheia" : "estrela")}</button>`).join("")}</span></div>`;
+}
+function teaserVideo(x){
+  return x.teaser && !x.comprado && !criadora()
+    ? `<video class="teaser" src="/api/loja/teaser/${x.id}?${x.teaser}" muted autoplay loop playsinline preload="none" onerror="this.remove()" onstalled="" ></video>` : "";
+}
+function botaoComentarios(alvo){
+  const C = RX().comentarios; if(!C) return "";
+  const n = (C.contagem || {})[alvo] || 0;
+  return `<button class="interacao" data-acao="comentarios" data-alvo="${alvo}"><span class="coracao">${ic("chat")}</span><span>${n || ""}</span></button>`;
+}
+
+// Faixa de coleções no topo da vitrine
+function chipsColecoes(){
+  const R_ = RX(); if(!R_.colecoes_ativo || !(R_.colecoes || []).length || FILTRO === "posts") return "";
+  return `<div class="chips colecoes">${[[null, "Todas as coleções"], ...R_.colecoes.map(c => [c.id, c.nome])]
+    .map(([id, t]) => `<button class="chip ${COLECAO === id ? "on" : ""}" data-acao="colecao" data-id="${id ?? ""}">${esc(t)}</button>`).join("")}</div>`;
+}
+ACOES["colecao"] = el => { COLECAO = el.dataset.id ? +el.dataset.id : null; vibrar("leve"); ANIMAR = true; render() };
+
+// Cards extras no topo do Início: upsell, teste grátis e sorteios
+function cardsTopo(){
+  const R_ = RX(); let h = "";
+  if(R_.upsell && !criadora()){
+    const u = R_.upsell;
+    h += `<div class="card-extra upsell" data-acao="upsell"><img src="/api/loja/previa/${u.pack_id}" alt="">
+      <div><small>${ic("raio")} Só para você · acaba em ${restante(u.ate)}</small><b>${esc(u.titulo)}</b>
+      <span><s>${esc(u.de_fmt)}</s> <b>${esc(u.preco_fmt)}</b> · ${u.pct}% OFF</span></div><span class="seta">›</span></div>`;
+  }
+  for(const s of (R_.sorteios || [])){
+    h += `<div class="card-extra sorteio"><div class="ico">${ic("dado")}</div><div style="flex:1;min-width:0">
+      <small>Sorteio · termina em ${restante(s.fim)} · ${pl(s.participantes, "participante", "participantes")}</small><b>${esc(s.titulo)}</b><span>${ic("presente")} ${esc(s.premio)}</span></div>
+      ${criadora() ? "" : s.participo ? `<span class="st ok">${ic("check")} Participando</span>`
+        : s.posso ? `<button class="btn mini brilho" data-acao="participar" data-id="${s.id}">Participar</button>`
+        : `<span class="st rec">${s.publico === "vip" ? "Só VIP" : "Só compradores"}</span>`}</div>`;
+  }
+  return h ? `<div class="cards-extra">${h}</div>` : "";
+}
+ACOES["upsell"] = () => { const u = RX().upsell; if(u) pagar(u.pack_id, u.cupom) };
+ACOES["participar"] = async el => {
+  const r = await api(`/api/loja/sorteio/${el.dataset.id}/participar`, {});
+  if(!r.ok) return toast(r.erro || "Não consegui");
+  vibrar("success"); faiscas(el); toast(`Você está participando! Boa sorte ${ic("brilho")}`); carregar();
+};
+ACOES["avaliar"] = async el => {
+  const r = await api("/api/loja/avaliar", {pack_id: el.dataset.pack, nota: +el.dataset.nota});
+  if(!r.ok) return toast(r.erro || "Não consegui");
+  vibrar("success"); toast(`Obrigado pela avaliação ${ic("estrela-cheia")}`);
+  const p = D.packs.find(x => x.id === el.dataset.pack); if(p) p.minha_nota = +el.dataset.nota;
+  const box = el.closest(".avaliar"); if(box && p) box.outerHTML = estrelasAvaliar(p);
+};
+
+// Teste grátis do VIP
+function cardTesteVip(){
+  const d = RX().teste_vip; if(!d || D.assinatura || criadora()) return "";
+  return `<div class="card-pedido teste-vip"><h2>${ic("presente")} Experimente ${d} ${d === 1 ? "dia" : "dias"} grátis</h2>
+    <p>Entre no VIP sem pagar nada e veja tudo o que ${esc(D.criadora.nome)} publica. Não renova sozinho.</p><div class="gap"></div>
+    <button class="btn brilho" data-acao="teste-vip">Começar meu teste grátis</button></div>`;
+}
+ACOES["teste-vip"] = el => confirmar(`Começar ${RX().teste_vip} dias de VIP grátis agora?`, async () => {
+  el.disabled = true;
+  const r = await api("/api/loja/teste_vip", {});
+  if(!r.ok){ el.disabled = false; return toast(r.erro || "Não consegui") }
+  vibrar("success"); confete(); toast(`VIP liberado! O link do canal chegou no chat ${ic("carta")}`); ABA = "inicio"; carregar();
+});
+
+// Carteira
+function cardCarteira(){
+  const C = RX().carteira; if(!C || criadora()) return "";
+  return `<div class="card-extra carteira"><div class="ico">${ic("carteira")}</div><div style="flex:1;min-width:0">
+    <small>Minha carteira</small><b class="saldo">${esc(C.saldo_fmt)}</b>${C.bonus ? `<span>Recargas a partir de ${esc(C.bonus_min_fmt)} ganham +${C.bonus}%</span>` : ""}</div>
+    <div class="col-bts"><button class="btn mini brilho" data-acao="recarregar">Recarregar</button><button class="btn mini sec" data-acao="extrato">Extrato</button></div></div>`;
+}
+ACOES["recarregar"] = () => {
+  const C = RX().carteira; if(!C) return;
+  abrirFolha(`<h2>${ic("carteira")} Recarregar a carteira</h2><p class="sub">Coloque crédito uma vez e compre packs, VIP e perguntas com um toque, sem gerar PIX toda vez.${C.bonus ? ` A partir de ${esc(C.bonus_min_fmt)}, ganhe <b>+${C.bonus}%</b> de bônus.` : ""}</p>
+    <div class="mimos">${C.valores.map(v => `<button class="mimo" data-acao="recarga-valor" data-v="${v}"><span class="emoji">${ic("moeda")}</span><b>${reais(v)}</b><small>${C.bonus && v >= parseInt(C.bonus_min_fmt.replace(/\D/g, "")) ? `+ ${reais(Math.floor(v * C.bonus / 100))} de bônus` : "crédito"}</small></button>`).join("")}</div>`);
+};
+ACOES["recarga-valor"] = el => { fecharFolha(); pagar(`credito_${el.dataset.v}`) };
+ACOES["extrato"] = async () => {
+  abrirFolha(`<h2>Extrato da carteira</h2><div class="sk" style="height:140px"></div>`);
+  const r = await api("/api/loja/carteira"); if(!r.ok) return toast(r.erro || "Não consegui abrir");
+  abrirFolha(`<h2>Extrato da carteira</h2><p class="sub">Saldo: <b>${esc(r.saldo_fmt)}</b></p>
+    ${r.extrato.length ? `<div class="grupo" style="margin:0">${r.extrato.map(m => `<div class="linha-c"><span class="txt"><b>${esc(m.tipo)}</b><small>${esc(m.quando)}</small></span>
+      <b style="color:${m.positivo ? "var(--ok)" : "var(--text)"}">${esc(m.valor_fmt)}</b></div>`).join("")}</div>` : `<div class="vazio" style="padding:20px">Nenhuma movimentação ainda.</div>`}`);
+};
+async function pagarComSaldo(id){
+  const btn = $("#pagar-saldo"); if(btn){ btn.disabled = true; btn.textContent = "Pagando…" }
+  ULTIMO = id;
+  const r = await api("/api/loja/comprar", {item_id: id, saldo: true, cupom: $("#cupom")?.value.trim()});
+  if(r.status === "pago_saldo"){
+    vibrar("success");
+    if(CARRINHO.includes(id)){ CARRINHO = CARRINHO.filter(x => x !== id); salvarCarrinho() }
+    sucesso(id.startsWith("pergunta_") ? `Pergunta enviada! Pago com o saldo (sobrou ${r.saldo_fmt}).`
+      : `Pago com o saldo da carteira (sobrou ${r.saldo_fmt}). Já está no seu chat com o bot.`);
+    return carregar();
+  }
+  if(btn){ btn.disabled = false; btn.innerHTML = `${ic("carteira")} Pagar com saldo` }
+  if(r.status === "saldo_insuficiente") return toast(`Saldo insuficiente: você tem ${r.saldo_fmt} e precisa de ${r.valor_fmt}`);
+  if(r.status === "ja_comprou") return sucesso("Você já tem este conteúdo. Enviei de novo no seu chat com o bot.");
+  toast("Não consegui pagar com o saldo");
+}
+ACOES["pagar-saldo"] = el => pagarComSaldo(el.dataset.id);
+function botaoSaldo(id){
+  const C = RX().carteira; if(!C || criadora() || id.startsWith("credito_") || id.startsWith("gorjeta_")) return "";
+  return `<div class="gap"></div><button class="btn sec" id="pagar-saldo" data-acao="pagar-saldo" data-id="${id}">${ic("carteira")} Pagar com saldo · ${esc(C.saldo_fmt)}</button>`;
+}
+
+// Nível de fã, indicação e avisos (aba Minhas)
+function cardNivel(){
+  const n = RX().nivel; if(!n) return "";
+  const cor = {ouro: "#f5b301", prata: "#a7b1bc", bronze: "#cd7f32"}[n.nivel] || "var(--muted)";
+  return `<div class="card-extra nivel"><div class="ico" style="background:${cor}">${ic("medalha")}</div><div style="flex:1;min-width:0">
+    <small>Seu nível de fã</small><b>${esc(n.nome)}${n.pct ? ` · ${n.pct}% OFF em tudo` : ""}</b>
+    ${n.proximo ? `<div class="barra-prog"><i style="width:${Math.min(100, n.proximo.pct)}%"></i></div><span>Faltam ${esc(n.proximo.falta_fmt)} para ${esc(n.proximo.nome)}</span>` : `<span>Você chegou no nível máximo ${ic("coroa")}</span>`}</div></div>`;
+}
+function cardIndicacao(){
+  const I = RX().indicacao; if(!I) return "";
+  const premio = I.carteira ? `${esc(I.recompensa_fmt)} na carteira` : `um cupom de ${esc(I.recompensa_fmt)}`;
+  return `<div class="card-pedido"><h2>${ic("usuarios")} Indique e ganhe</h2>
+    <p>Mande seu link para um amigo. Quando ele ${I.quando === "vip" ? "assinar o VIP" : "fizer a primeira compra"}, você ganha ${premio}.${I.amigo_pct ? ` Ele ganha ${I.amigo_pct}% OFF na primeira compra.` : ""}</p>
+    <div class="codigo" style="margin-top:12px"><code>${esc(I.link)}</code><button class="btn mini" data-acao="copiar" data-texto="${esc(I.link)}">Copiar</button></div>
+    ${I.amigos ? `<p class="dica">${pl(I.amigos, "amigo entrou", "amigos entraram")} pelo seu link · ${pl(I.pagos, "recompensa ganha", "recompensas ganhas")}</p>` : ""}
+    <div class="gap"></div><button class="btn sec" data-acao="compartilhar" data-texto="${esc(I.link)}">${ic("enviar")} Enviar para um amigo</button></div>`;
+}
+ACOES["compartilhar"] = el => {
+  const url = el.dataset.texto, txt = `Olha o perfil de ${D.criadora.nome} 🔥`;
+  try{ if(tg?.openTelegramLink) return tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(txt)}`) }catch(e){}
+  if(navigator.share) return navigator.share({url, text: txt}).catch(() => {});
+  copiar(url, `Link copiado ${ic("check")}`);
+};
+function cardAvisos(){
+  const N = RX().novidades; if(!N || criadora()) return "";
+  return `<div class="troca" style="margin:16px 16px 0"><div><b>${ic("sino")} Avisos de conteúdo novo</b><br><small class="muted">Mensagem no chat quando sair novidade</small></div>
+    <span class="chave ${N.silenciado ? "" : "on"}" data-acao="silenciar"></span></div>`;
+}
+ACOES["silenciar"] = async el => {
+  const ligar = !el.classList.contains("on"); el.classList.toggle("on", ligar); vibrar("leve");
+  const r = await api("/api/loja/silenciar", {silenciar: !ligar});
+  if(!r.ok){ el.classList.toggle("on", !ligar); return toast("Não consegui salvar") }
+  RX().novidades.silenciado = !ligar; toast(ligar ? "Avisos ligados" : "Pronto, sem avisos");
+};
+
+// Caixinha de perguntas paga (aba Mimos)
+const ST_PERG = {NOVA: ["novo", "Aguardando resposta"], RESPONDIDA: ["ok", "Respondida"], RECUSADA: ["rec", "Não respondida"]};
+function cardPerguntas(){
+  const P = RX().perguntas; if(!P) return "";
+  return `<div class="card-pedido"><h2>${ic("pergunta")} Caixinha de perguntas</h2>
+    <p>Pergunte o que quiser para ${esc(D.criadora.nome)}. ${P.onde === "privado" ? "A resposta chega no seu chat." : P.onde === "feed" ? "A resposta sai no feed do VIP." : "Você escolhe se a resposta vem no privado ou no feed."}</p>
+    ${P.info ? `<p style="color:var(--text);margin-top:10px">${esc(P.info)}</p>` : ""}
+    <div class="detalhes-p"><span>${ic("moeda")} ${esc(P.preco_fmt)} por pergunta</span></div>
+    <button class="btn brilho" data-acao="perguntar">Fazer uma pergunta</button>
+    ${P.minhas.length ? `<div class="gap"></div><div class="grupo" style="margin:0">${P.minhas.map(q => { const [c, t] = ST_PERG[q.status] || ["novo", q.status];
+      return `<div class="linha-c" style="align-items:flex-start"><span class="txt"><b class="lim">${esc(q.texto)}</b>${q.resposta ? `<small style="white-space:normal">${ic("chat")} ${esc(q.resposta)}</small>` : ""}<span class="st ${c}" style="margin-top:4px">${t}</span></span></div>` }).join("")}</div>` : ""}</div>`;
+}
+ACOES["perguntar"] = () => {
+  const P = RX().perguntas; if(!P) return;
+  abrirFolha(`<h2>${ic("pergunta")} Sua pergunta</h2><p class="sub">${esc(P.preco_fmt)} · ${esc(D.criadora.nome)} responde ${P.onde === "privado" ? "no seu chat" : P.onde === "feed" ? "no feed do VIP" : "onde você escolher"}.</p>
+    <textarea id="perg-texto" maxlength="500" placeholder="Escreva sua pergunta…"></textarea>
+    ${P.onde === "fa_escolhe" ? `<div class="grupo-filtro rec" style="margin-top:12px"><span class="rotulo">Onde quer a resposta?</span><div class="opcoes" id="perg-onde" data-valor="privado">
+      <button type="button" data-v="privado" class="on">No meu chat</button><button type="button" data-v="feed">No feed do VIP</button></div></div>` : ""}
+    <div class="gap"></div><button class="btn brilho" id="perg-pix">${ic("pix")} Enviar e pagar com PIX</button>
+    ${RX().carteira ? `<div class="gap"></div><button class="btn sec" id="perg-saldo">${ic("carteira")} Enviar e pagar com saldo · ${esc(RX().carteira.saldo_fmt)}</button>` : ""}`);
+  const onde = $("#perg-onde");
+  if(onde) onde.onclick = e => { const b = e.target.closest("[data-v]"); if(!b) return; onde.dataset.valor = b.dataset.v; onde.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); vibrar("leve") };
+  const enviar = async saldo => {
+    const texto = $("#perg-texto").value.trim(); if(texto.length < 3) return toast("Escreva sua pergunta");
+    const r = await api("/api/loja/pergunta", {texto, onde: onde?.dataset.valor});
+    if(!r.ok) return toast(r.erro || "Não consegui enviar");
+    return saldo ? pagarComSaldo(r.item_id) : pagar(r.item_id);
+  };
+  $("#perg-pix").onclick = () => enviar(false);
+  $("#perg-saldo") && ($("#perg-saldo").onclick = () => enviar(true));
+};
+
+// Comentários (fã e criadora)
+ACOES["comentarios"] = async el => {
+  const alvo = el.dataset.alvo;
+  abrirFolha(`<h2>${ic("chat")} Comentários</h2><div class="sk" style="height:120px"></div>`);
+  const r = await api(`/api/loja/comentarios/${encodeURIComponent(alvo)}`); if(!r.ok) return toast(r.erro || "Não consegui abrir");
+  abrirFolha(`<h2>${ic("chat")} Comentários</h2>
+    <div class="comentarios">${r.itens.length ? r.itens.map(c => `<div class="coment ${c.criadora ? "dela" : ""}"><b>${esc(c.nome)}${c.criadora ? ` <span class="verif">${ic("check")}</span>` : ""}</b>
+      <p>${esc(c.texto)}</p><small>${esc(relativo(c.quando))}${c.pendente ? " · aguardando aprovação" : ""}${r.pode_apagar ? ` · <a data-acao="apagar-coment" data-id="${c.id}" data-alvo="${esc(alvo)}">apagar</a>` : ""}</small></div>`).join("")
+      : `<div class="vazio" style="padding:18px">Seja o primeiro a comentar ${ic("coracao")}</div>`}</div>
+    <div class="campo"><input type="text" id="coment-texto" maxlength="500" placeholder="Escreva um comentário…"><button class="btn mini" id="coment-ok" style="padding:0 18px">Enviar</button></div>`);
+  $("#coment-ok").onclick = async () => {
+    const texto = $("#coment-texto").value.trim(); if(!texto) return;
+    const x = await api("/api/loja/comentar", {alvo, texto});
+    if(!x.ok) return toast(x.erro || "Não consegui comentar");
+    vibrar("success"); toast(x.pendente ? "Enviado! Aparece depois que a criadora aprovar" : `Comentado ${ic("check")}`);
+    ACOES["comentarios"]({dataset: {alvo}}); carregar();
+  };
+};
+ACOES["apagar-coment"] = el => confirmar("Apagar este comentário?", async () => {
+  await api(`/api/criadora/x/comentario/${el.dataset.id}/apagar`, {}); toast("Apagado"); ACOES["comentarios"]({dataset: {alvo: el.dataset.alvo}}); carregar() });
+
+/* ── Telas da criadora para cada recurso ──────────────────────────────── */
+ACOES["perguntas-painel"] = async () => {
+  abrirFolha(`<h2>${ic("pergunta")} Perguntas</h2><div class="sk" style="height:160px"></div>`);
+  const r = await api("/api/criadora/x/perguntas"); if(!r.ok) return toast(r.erro || "Não consegui abrir");
+  abrirFolha(`<h2>${ic("pergunta")} Perguntas</h2><p class="sub">As novas aparecem primeiro. Responder no feed vira um post para os assinantes.</p>
+    ${r.itens.length ? `<div class="grupo" style="margin:0">${r.itens.map(q => { const [c, t] = ST_PERG[q.status] || ["novo", q.status];
+      return `<button class="linha-c" ${q.status === "NOVA" ? `data-acao="responder" data-id="${q.id}"` : ""} style="align-items:flex-start;text-align:left">
+        <span class="txt"><b style="white-space:normal">${esc(q.texto)}</b><small>${esc(q.fa)}${q.username ? ` · @${esc(q.username)}` : ""} · ${esc(q.valor_fmt)} · ${q.onde === "feed" ? "no feed" : "no privado"} · ${esc(q.quando)}</small>
+        ${q.resposta ? `<small style="white-space:normal">${ic("chat")} ${esc(q.resposta)}</small>` : ""}<span class="st ${c}" style="margin-top:4px">${t}</span></span>${q.status === "NOVA" ? `<span class="seta">›</span>` : ""}</button>` }).join("")}</div>`
+      : `<div class="vazio" style="padding:20px">Nenhuma pergunta ainda.</div>`}`);
+  ACOES._perguntas = r.itens;
+};
+ACOES["responder"] = el => {
+  const q = (ACOES._perguntas || []).find(x => x.id === +el.dataset.id); if(!q) return;
+  abrirFolha(`<h2>Responder</h2><p class="sub">${esc(q.fa)} pagou ${esc(q.valor_fmt)} · resposta ${q.onde === "feed" ? "no feed do VIP" : "no privado do fã"}</p>
+    <div class="texto-pedido">${esc(q.texto)}</div>
+    <textarea id="resp-texto" maxlength="3000" placeholder="Sua resposta…"></textarea>
+    <div class="gap"></div><button class="btn" id="resp-ok">Enviar resposta</button><div class="gap"></div>
+    <button class="btn fantasma perigo" id="resp-rec">Não responder${RX().carteira ? " (devolve na carteira do fã)" : ""}</button>`);
+  $("#resp-ok").onclick = async () => {
+    const x = await api(`/api/criadora/x/pergunta/${q.id}/responder`, {resposta: $("#resp-texto").value.trim()});
+    if(!x.ok) return toast(x.erro || "Não consegui"); vibrar("success"); toast(`Respondida ${ic("check")}`); ACOES["perguntas-painel"](); if(x.post_id) carregar();
+  };
+  $("#resp-rec").onclick = () => confirmar("Recusar esta pergunta?", async () => {
+    const x = await api(`/api/criadora/x/pergunta/${q.id}/recusar`, {});
+    if(!x.ok) return toast(x.erro || "Não consegui");
+    toast(x.devolvido ? `Recusada. ${x.valor_fmt} voltou para a carteira do fã.` : `Recusada. Devolva ${x.valor_fmt} ao fã (ID ${x.user_id}).`); ACOES["perguntas-painel"]();
+  });
+};
+ACOES["comentarios-painel"] = async () => {
+  abrirFolha(`<h2>${ic("chat")} Comentários para aprovar</h2><div class="sk" style="height:140px"></div>`);
+  const r = await api("/api/criadora/x/comentarios"); if(!r.ok) return toast(r.erro || "Não consegui abrir");
+  abrirFolha(`<h2>${ic("chat")} Comentários para aprovar</h2>
+    ${r.itens.length ? r.itens.map(c => `<div class="coment-mod"><small>${esc(c.onde)}</small><b>${esc(c.fa)}${c.username ? ` · @${esc(c.username)}` : ""}</b><p>${esc(c.texto)}</p>
+      <div class="bts"><button class="btn mini" data-acao="moderar" data-id="${c.id}" data-a="aprovar">${ic("check")} Aprovar</button><button class="btn mini sec" data-acao="moderar" data-id="${c.id}" data-a="recusar">Recusar</button></div></div>`).join("")
+      : `<div class="vazio" style="padding:20px">Nada para aprovar ${ic("check")}</div>`}`);
+};
+ACOES["moderar"] = async el => {
+  await api(`/api/criadora/x/comentario/${el.dataset.id}/${el.dataset.a}`, {}); vibrar("leve");
+  el.closest(".coment-mod").remove(); if(!document.querySelector(".coment-mod")) ACOES["comentarios-painel"](); carregar();
+};
+ACOES["sorteios-painel"] = async () => {
+  abrirFolha(`<h2>${ic("dado")} Sorteios</h2><div class="sk" style="height:140px"></div>`);
+  const r = await api("/api/criadora/x/sorteios"); if(!r.ok) return toast(r.erro || "Não consegui abrir");
+  const PUB = {vip: "Assinantes VIP", compradores: "Quem já comprou", todos: "Todos os fãs"};
+  abrirFolha(`<h2>${ic("dado")} Sorteios</h2><p class="sub">Os fãs entram com um toque pela loja. No horário, o bot sorteia e avisa você e quem ganhou.</p>
+    <button class="btn brilho" data-acao="novo-sorteio">${ic("mais")} Novo sorteio</button><div class="gap"></div>
+    ${r.itens.map(s => `<div class="coment-mod"><small>${esc(PUB[s.publico])} · ${s.status === "ATIVO" ? `termina ${esc(s.fim)}` : s.status === "SORTEADO" ? "sorteado" : "cancelado"} · ${pl(s.participantes, "participante", "participantes")}</small>
+      <b>${esc(s.titulo)}</b><p>${ic("presente")} ${esc(s.premio)}</p>
+      ${s.ganhador ? `<p>${ic("trofeu")} Ganhador(a): <b>${esc(s.ganhador.nome)}</b>${s.ganhador.username ? ` · @${esc(s.ganhador.username)}` : ""} · ID ${s.ganhador.id}</p>` : ""}
+      ${s.status === "ATIVO" ? `<div class="bts"><button class="btn mini" data-acao="sorteio-acao" data-id="${s.id}" data-a="sortear">Sortear agora</button><button class="btn mini sec" data-acao="sorteio-acao" data-id="${s.id}" data-a="cancelar">Cancelar</button></div>` : ""}</div>`).join("")}`);
+};
+ACOES["novo-sorteio"] = () => {
+  const amanha = new Date(Date.now() + 3 * 86400000); amanha.setHours(20, 0, 0, 0);
+  abrirFolha(`<h2>Novo sorteio</h2>
+    <span class="rotulo">Nome</span><input type="text" id="so-titulo" maxlength="80" placeholder="Ex: Sorteio de aniversário">
+    <span class="rotulo">Prêmio</span><input type="text" id="so-premio" maxlength="200" placeholder="Ex: Um pack à escolha + vídeo personalizado">
+    <div class="grupo-filtro rec" style="margin-top:12px"><span class="rotulo">Quem pode participar</span><div class="opcoes" id="so-pub" data-valor="vip">
+      <button type="button" data-v="vip" class="on">VIP</button><button type="button" data-v="compradores">Compradores</button><button type="button" data-v="todos">Todos</button></div></div>
+    <span class="rotulo">Termina em</span>${inputQuando("so-fim", amanha.toISOString())}
+    <div class="gap"></div><button class="btn" id="so-ok">Criar sorteio</button>`);
+  const pub = $("#so-pub");
+  pub.onclick = e => { const b = e.target.closest("[data-v]"); if(!b) return; pub.dataset.valor = b.dataset.v; pub.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)) };
+  $("#so-ok").onclick = async () => {
+    const r = await api("/api/criadora/x/sorteio", {titulo: $("#so-titulo").value, premio: $("#so-premio").value, publico: pub.dataset.valor, agendar: isoDe($("#so-fim").value)});
+    if(!r.ok) return toast(r.erro || "Não consegui criar"); vibrar("success"); toast(`Sorteio no ar ${ic("dado")}`); ACOES["sorteios-painel"](); carregar();
+  };
+};
+ACOES["sorteio-acao"] = el => confirmar(el.dataset.a === "sortear" ? "Sortear agora e encerrar?" : "Cancelar este sorteio?", async () => {
+  const r = await api(`/api/criadora/x/sorteio/${el.dataset.id}/${el.dataset.a}`, {});
+  if(!r.ok) return toast(r.erro || "Não consegui");
+  if(el.dataset.a === "sortear"){ confete(); toast(r.ganhador ? `Ganhador(a): ${r.ganhador.nome}` : "Ninguém participou") }
+  ACOES["sorteios-painel"](); carregar();
+});
+ACOES["links-painel"] = async () => {
+  abrirFolha(`<h2>${ic("link")} Links de divulgação</h2><div class="sk" style="height:140px"></div>`);
+  const r = await api("/api/criadora/x/links"); if(!r.ok) return toast(r.erro || "Não consegui abrir");
+  abrirFolha(`<h2>${ic("link")} Links de divulgação</h2><p class="sub">Um link para cada lugar onde você divulga. Veja quantos fãs vieram e quanto cada um vendeu.</p>
+    <div class="campo"><input type="text" id="lk-nome" maxlength="60" placeholder="Nome (ex: Instagram)"></div>
+    <div class="campo"><input type="text" id="lk-cupom" maxlength="30" placeholder="Cupom automático (opcional)" autocapitalize="characters"><button class="btn mini" id="lk-ok" style="padding:0 18px">Criar</button></div>
+    ${r.itens.map(l => `<div class="coment-mod ${l.ativo ? "" : "apagado"}"><b>${esc(l.nome)}${l.cupom ? ` <span class="st ok">${esc(l.cupom)}</span>` : ""}</b>
+      <p class="metricas"><span><b>${l.entradas}</b> entraram</span><span><b>${l.compradores}</b> compraram</span><span><b>${esc(l.total_fmt)}</b></span><span><b>${l.conversao}%</b> conversão</span></p>
+      <div class="bts"><button class="btn mini" data-acao="copiar" data-texto="${esc(l.link)}">${ic("copiar")} Copiar link</button>
+      <button class="btn mini sec" data-acao="link-acao" data-codigo="${esc(l.codigo)}" data-a="${l.ativo ? "desativar" : "ativar"}">${l.ativo ? "Desativar" : "Reativar"}</button></div></div>`).join("")}`);
+  $("#lk-ok").onclick = async () => {
+    const x = await api("/api/criadora/x/link", {nome: $("#lk-nome").value, cupom: $("#lk-cupom").value});
+    if(!x.ok) return toast(x.erro || "Não consegui criar"); vibrar("success"); ACOES["links-painel"]();
+  };
+};
+ACOES["link-acao"] = async el => { await api(`/api/criadora/x/link/${el.dataset.codigo}/${el.dataset.a}`, {}); ACOES["links-painel"]() };
+ACOES["relatorio"] = () => {
+  const meses = [...Array(6)].map((_, i) => { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i);
+    return [`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, d.toLocaleString("pt-BR", {month: "long", year: "numeric"})] });
+  abrirFolha(`<h2>${ic("planilha")} Relatório</h2><p class="sub">A planilha (CSV) chega no seu chat com o bot. Abre no Excel e no Google Planilhas.</p>
+    <div class="grupo" style="margin:0">${meses.map(([v, t]) => `<button class="linha-c" data-acao="relatorio-mes" data-mes="${v}"><span class="txt"><b style="text-transform:capitalize">${esc(t)}</b></span><span class="seta">›</span></button>`).join("")}</div>`);
+};
+ACOES["relatorio-mes"] = async el => {
+  const r = await api("/api/criadora/x/relatorio", {mes: el.dataset.mes});
+  if(!r.ok) return toast(r.erro || "Não consegui gerar");
+  vibrar("success"); toast(`Enviado no chat: ${r.total_fmt} em ${r.vendas} pagamento(s)`); fecharFolha(true);
+};
+ACOES["vazamento"] = () => {
+  abrirFolha(`<h2>${ic("lupa-id")} Caçar vazamento</h2><p class="sub">Achou seu conteúdo vazado? Digite o ID que aparece na marca d'água (os números depois do @).</p>
+    <div class="campo"><input type="text" id="vz-id" inputmode="numeric" placeholder="Ex: 123456789"><button class="btn mini" id="vz-ok" style="padding:0 18px">Buscar</button></div><div id="vz-res"></div>`);
+  $("#vz-ok").onclick = async () => {
+    const id = $("#vz-id").value.replace(/\D/g, ""); if(!id) return toast("Digite o ID");
+    const r = await api(`/api/criadora/x/vazamento/${id}`);
+    if(!r.ok){ $("#vz-res").innerHTML = `<div class="vazio" style="padding:18px">${esc(r.erro || "Não encontrei")}</div>`; return }
+    $("#vz-res").innerHTML = `<div class="coment-mod"><b>${esc(r.nome || "Sem nome")}${r.username ? ` · @${esc(r.username)}` : ""}</b>
+      <p>ID ${r.id} · fã desde ${esc(r.desde)} · gastou ${esc(r.total)}${r.vip ? ` · VIP até ${esc(r.vip)}` : ""}</p>
+      ${r.compras.length ? `<p>Comprou: ${r.compras.map(esc).join(", ")}</p>` : ""}
+      ${r.bloqueado ? `<span class="st rec">Já bloqueado</span>` : `<div class="gap"></div><button class="btn perigo" data-acao="vz-bloquear" data-id="${r.id}">${ic("bloqueio")} Bloquear${r.revogar ? " e cortar os acessos" : ""}</button>`}</div>`;
+  };
+};
+ACOES["vz-bloquear"] = el => confirmar("Bloquear este fã? Ele perde o acesso à loja e ao VIP.", async () => {
+  const r = await api(`/api/criadora/x/vazamento/${el.dataset.id}/bloquear`, {});
+  if(!r.ok) return toast(r.erro || "Não consegui"); vibrar("success"); toast(`Bloqueado${r.cortou ? ` · ${r.cortou} compra(s) cortada(s)` : ""}`); $("#vz-ok").click();
+});
+ACOES["backup-agora"] = async () => {
+  const r = await api("/api/criadora/x/backup", {});
+  toast(r.ok ? `Backup começou. Te aviso no chat quando terminar ${ic("nuvem")}` : (r.erro || "Não consegui"));
+};
+ACOES["colecoes-painel"] = async () => {
+  abrirFolha(`<h2>${ic("pasta")} Coleções</h2><div class="sk" style="height:120px"></div>`);
+  const r = await api("/api/criadora/x/colecoes"); if(!r.ok) return toast(r.erro || "Não consegui abrir");
+  folhaColecoes(r.itens);
+};
+function folhaColecoes(itens){
+  abrirFolha(`<h2>${ic("pasta")} Coleções</h2><p class="sub">Crie as pastas aqui. Para colocar um pack numa coleção, toque em Editar no pack.</p>
+    <div class="campo"><input type="text" id="cl-nome" maxlength="40" placeholder="Nova coleção (ex: Praia)"><button class="btn mini" id="cl-ok" style="padding:0 18px">Criar</button></div>
+    ${itens.length ? `<div class="grupo" style="margin:0">${itens.map(c => `<div class="linha-c"><span class="txt"><b>${esc(c.nome)}</b><small>${pl(c.n, "pack", "packs")}</small></span>
+      <button class="btn mini fantasma perigo" data-acao="apagar-colecao" data-id="${c.id}" style="width:auto">${ic("lixo")}</button></div>`).join("")}</div>` : ""}`);
+  $("#cl-ok").onclick = async () => {
+    const x = await api("/api/criadora/x/colecao", {nome: $("#cl-nome").value});
+    if(!x.ok) return toast(x.erro || "Não consegui"); vibrar("success"); folhaColecoes(x.itens); carregar();
+  };
+}
+ACOES["apagar-colecao"] = el => confirmar("Apagar esta coleção? Os packs continuam na vitrine.", async () => {
+  const x = await api("/api/criadora/x/colecao", {id: +el.dataset.id, apagar: true}); if(x.ok){ folhaColecoes(x.itens); carregar() } });
+
+// No menu do pack (criadora): promoção relâmpago e coleção
+function extrasMenuPack(p){
+  const R_ = RX(); let h = "";
+  if(R_.relampago && pode("financeiro")) h += p.promo
+    ? `<button class="btn sec" data-acao="relampago-parar" data-id="${p.id}">${ic("raio")} Parar promoção (-${p.promo.pct}%, acaba em ${restante(p.promo.ate)})</button><div class="gap"></div>`
+    : `<button class="btn sec" data-acao="relampago" data-id="${p.id}">${ic("raio")} Promoção relâmpago</button><div class="gap"></div>`;
+  if((R_.colecoes || []).length) h += `<span class="rotulo">Coleção</span><div class="opcoes" id="ed-colecao" data-valor="${p.colecao_id || ""}" style="flex-wrap:wrap">
+    ${[["", "Nenhuma"], ...R_.colecoes.map(c => [String(c.id), c.nome])].map(([v, t]) => `<button type="button" data-v="${v}" class="${String(p.colecao_id || "") === v ? "on" : ""}">${esc(t)}</button>`).join("")}</div><div class="gap"></div>`;
+  return h;
+}
+function ligarMenuPack(id){
+  const box = $("#ed-colecao"); if(!box) return;
+  box.onclick = async e => {
+    const b = e.target.closest("[data-v]"); if(!b) return;
+    box.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); vibrar("leve");
+    const r = await api(`/api/criadora/x/pack/${id}/colecao`, {colecao_id: b.dataset.v || null});
+    if(r.ok){ toast("Coleção salva"); carregar() }
+  };
+}
+ACOES["relampago"] = async el => {
+  const r0 = RECURSOS ? null : await api("/api/criadora/recursos"); if(r0?.ok) RECURSOS = r0.grupos;
+  const g = (RECURSOS || []).find(x => x.id === "relampago"), val = k => g?.campos.find(c => c.chave === k)?.valor;
+  abrirFolha(`<h2>${ic("raio")} Promoção relâmpago</h2><p class="sub">Desconto por poucas horas, com contagem regressiva no card.${val("relampago_avisar") ? " Os fãs recebem aviso no chat." : ""}</p>
+    <span class="rotulo">Desconto (%)</span><input type="text" id="rl-pct" inputmode="numeric" value="${val("relampago_pct") ?? 30}">
+    <span class="rotulo">Duração (horas)</span><input type="text" id="rl-h" inputmode="numeric" value="${val("relampago_horas") ?? 6}">
+    <div class="gap"></div><button class="btn brilho" id="rl-ok">Começar agora</button>`);
+  $("#rl-ok").onclick = async () => {
+    const x = await api(`/api/criadora/x/pack/${el.dataset.id}/relampago/iniciar`, {pct: +$("#rl-pct").value, horas: +$("#rl-h").value});
+    if(!x.ok) return toast(x.erro || "Não consegui"); vibrar("success"); confete(40); toast(`Promoção no ar ${ic("raio")}`); fecharFolha(true); carregar();
+  };
+};
+ACOES["relampago-parar"] = async el => { await api(`/api/criadora/x/pack/${el.dataset.id}/relampago/parar`, {}); toast("Promoção encerrada"); fecharFolha(true); carregar() };
+
+// Cronômetros das promoções e dos sorteios: atualiza o texto a cada minuto
+setInterval(() => { if(D && !$("#fundo") && ABA === "inicio" && (RX().upsell || (RX().sorteios || []).length || D.packs.some(p => p.promo))) atualizarFeed() }, 60000);
 
 carregar();
 </script>

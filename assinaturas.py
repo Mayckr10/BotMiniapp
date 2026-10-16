@@ -119,12 +119,16 @@ async def remover_do_canal(bot: Bot, cfg: Config, user_id: int) -> None:
 
 async def rodar_assinaturas(bot: Bot, db: Database, cfg: Config) -> tuple[int, int]:
     """Avisos de vencimento e remoção de quem venceu."""
+    import extras
+    import recursos
     planos = await db.listar_planos()
     avisos = removidos = 0
+    renov_pix = await recursos.valor(db, "renov_pix")
+    aviso_dias = await recursos.valor(db, "renov_dias") or cfg.assinatura_aviso_dias
     # 1º aviso ASSINATURA_AVISO_DIAS antes (padrão 3), 2º aviso 1 dia antes; os dois com renovação em 1 toque
     etapas = [(2, 1.0, "⏰ <b>Sua assinatura VIP vence amanhã</b> ({data}).\nToque abaixo e renove em 1 toque, "
                        "os dias são somados:"),
-              (1, cfg.assinatura_aviso_dias, "⏰ Sua assinatura VIP vence em {data}.\n"
+              (1, aviso_dias, "⏰ Sua assinatura VIP vence em {data}.\n"
                                              "Renove agora para não perder o acesso (os dias são somados):")]
     for etapa, dias, modelo in etapas:
         for a in await db.assinaturas_a_avisar(agora() + timedelta(days=dias), etapa):
@@ -134,7 +138,15 @@ async def rodar_assinaturas(bot: Bot, db: Database, cfg: Config) -> tuple[int, i
                                        reply_markup=teclado_renovar(planos, a.plano_id))
                 avisos += 1
             except Exception:
-                pass
+                continue
+            # Renovação com PIX pronto: no 1º aviso já manda o QR do plano atual
+            atual = next((p for p in planos if p.id == a.plano_id), None)
+            if renov_pix and etapa == 1 and atual:
+                try:
+                    await extras.enviar_pix(bot, db, cfg, a.user_id, atual.item_id,
+                                            cabecalho="💳 Seu PIX de renovação já está pronto:\n\n")
+                except Exception:
+                    log.exception("PIX de renovação falhou para %s", a.user_id)
     for a in await db.assinaturas_vencidas():
         await db.encerrar_assinatura(a.user_id)
         await remover_do_canal(bot, cfg, a.user_id)

@@ -52,6 +52,8 @@ async def publicar_pack(bot: Bot, db: Database, cfg: Config, pack_id: str) -> tu
                 await bot.send_message(user_id, texto, reply_markup=teclado)
 
         asyncio.create_task(enviar_em_massa(db, cfg, destinos, enviar))
+    import extras
+    await extras.novo_conteudo(bot, db, cfg, pack=pack)
     log.info("Agenda: pack %s publicado (%d aviso(s))", pack_id, len(destinos))
     return True, no_canal
 
@@ -59,8 +61,11 @@ async def publicar_pack(bot: Bot, db: Database, cfg: Config, pack_id: str) -> tu
 async def rodar_uma_vez(bot: Bot, db: Database, cfg: Config) -> int:
     vencidos = await db.agendados(so_vencidos=True)
     feitos = 0
+    import extras
     for p in vencidos["posts"]:
-        feitos += await db.publicar_post_agendado(p["id"])
+        if await db.publicar_post_agendado(p["id"]):
+            feitos += 1
+            await extras.novo_conteudo(bot, db, cfg, post=await db.get_post(p["id"]) or {})
     for p in vencidos["packs"]:
         if p["pack"]:
             feitos += (await publicar_pack(bot, db, cfg, p["pack"].id))[0]

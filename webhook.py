@@ -79,8 +79,26 @@ async def processar_pagamento(bot: Bot, db: Database, gateway: PixGateway, pix_i
         return "nao_pago"
     if not await db.marcar_pago(pix_id):                    # já estava PAGO
         return "ja_processado"
+    return await concluir_venda(bot, db, cfg, venda)
 
-    log.info("Venda %s paga (pix %s): %s para %s", venda.id, pix_id, venda.pack_id, venda.user_id)
+
+async def concluir_venda(bot: Bot, db: Database, cfg: Config, venda) -> str:
+    """Entrega uma venda já marcada como PAGA (PIX confirmado ou paga com o saldo da carteira)."""
+    import extras
+    r = await _entregar(bot, db, cfg, venda)
+    try:
+        await extras.pos_pagamento(bot, db, cfg, venda)       # indicação, upsell...
+    except Exception:
+        log.exception("Pós-pagamento da venda %s falhou", venda.id)
+    return r
+
+
+async def _entregar(bot: Bot, db: Database, cfg: Config, venda) -> str:
+    import extras
+    log.info("Venda %s paga (%s): %s para %s", venda.id, venda.pix_id, venda.pack_id, venda.user_id)
+    if await extras.entregar_extra(bot, db, cfg, venda):     # recarga da carteira, pergunta paga
+        await avisar_venda(bot, db, cfg, venda)
+        return "entregue"
 
     # Assinatura VIP
     if venda.pack_id.startswith("plano_"):

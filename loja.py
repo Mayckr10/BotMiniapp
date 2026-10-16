@@ -223,7 +223,10 @@ async def dados(request: web.Request) -> web.Response:
         pct = await desconto_primeiro_mes(db, user["id"], p)
         if pct:
             promo[p.item_id] = {"pct": pct, "preco_fmt": fmt_reais(aplicar_pct(p.preco, pct))}
+    import extras_rotas
+    recursos_fa = await extras_rotas.dados_loja(request, user, criadora, ve_posts, packs)
     return web.json_response({
+        "recursos": recursos_fa,
         "criadora": {"nome": cfg.criadora_nome,
                      "bio": await db.get_ajuste("bio", "Conteúdo exclusivo todos os dias 🔥"),
                      "tem_foto": bool(await db.get_ajuste("foto_perfil")),
@@ -365,7 +368,15 @@ async def comprar(request: web.Request) -> web.Response:
         return web.json_response({"status": "idade", "idade": status_idade}, status=403)
 
     pedido = await criar_pedido(db, request.app["gateway"], cfg, user["id"], str(corpo.get("item_id", "")),
-                                (corpo.get("cupom") or "").strip() or None)
+                                (corpo.get("cupom") or "").strip() or None, saldo=bool(corpo.get("saldo")), bot=bot)
+    if pedido.status == "pago_saldo":
+        import extras
+        return web.json_response({"status": "pago_saldo", "titulo": pedido.item.titulo, "valor_fmt": fmt_reais(pedido.preco),
+                                  "saldo_fmt": fmt_reais(await extras.saldo(db, user["id"]))})
+    if pedido.status == "saldo_insuficiente":
+        import extras
+        return web.json_response({"status": "saldo_insuficiente", "valor_fmt": fmt_reais(pedido.preco),
+                                  "saldo_fmt": fmt_reais(await extras.saldo(db, user["id"]))}, status=402)
     if pedido.status == "inexistente":
         return web.json_response({"status": "inexistente"}, status=404)
     if pedido.status == "ja_comprou":

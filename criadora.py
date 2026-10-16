@@ -48,7 +48,9 @@ from aiogram.types import BufferedInputFile
 from aiohttp import web
 from PIL import Image, ImageOps
 
+import extras
 import mensagens
+import recursos as R
 import protecao
 from admin_handlers import parse_preco, postar_no_canal
 from blur_service import _capa_video_generica, _frame_ffmpeg, aplicar_blur, comprimir_video
@@ -304,8 +306,8 @@ async def painel(request: web.Request) -> web.Response:
             "periodos": stats,
             "grafico": grafico,
             "top": top,
-            "receita_tipos": {k: fmt_reais(tipos.get(k, 0)) for k in ("packs", "vip", "mimos")},
-            "receita_tipos_v": {k: tipos.get(k, 0) for k in ("packs", "vip", "mimos")},
+            "receita_tipos": {k: fmt_reais(tipos.get(k, 0)) for k in ("packs", "vip", "mimos", "carteira")},
+            "receita_tipos_v": {k: tipos.get(k, 0) for k in ("packs", "vip", "mimos", "carteira")},
             "vip_receita": fmt_reais(vip["receita_30d"]),
             "pendentes": await db.pendentes_abertos(),
             "curtidas_total": sum(c["n"] for c in curtidas.values()),
@@ -459,6 +461,7 @@ async def _novo_post(request: web.Request, user: dict, db: Database, campos: dic
     if await _revisao(db):
         await db.mandar_post_para_fila(post_id)
         return _ok(id=post_id, fila=True)
+    await extras.novo_conteudo(request.app["bot"], db, request.app["cfg"], post={"texto": texto})
     return _ok(id=post_id)
 
 
@@ -524,6 +527,12 @@ async def _novo_pack(request, user, db: Database, cfg: Config, bot: Bot, campos:
         return r
     originais, blur = r
     legenda = campos.get("legenda", "")[:2000]
+    ppv = campos.get("ppv", "")
+    if ppv and await R.valor(db, "ppv_ativo") and (ppv in ("vip", "todos", "compradores") or
+                                                    (ppv.startswith("fa:") and ppv[3:].isdigit())):
+        pack_id = await db.criar_pack(titulo, preco, originais, blur, tipo="ppv", legenda=legenda)
+        n = await extras.enviar_ppv(bot, db, cfg, await db.get_pack(pack_id), ppv, user["id"])
+        return _ok(id=pack_id, ppv=n)
     revisao = not quando and await _revisao(db)
     # agendado ou em revisão nasce "preparando" (fora da vitrine) e muda de estado num UPDATE só
     pack_id = await db.criar_pack(titulo, preco, originais, blur,
@@ -541,6 +550,7 @@ async def _novo_pack(request, user, db: Database, cfg: Config, bot: Bot, campos:
             no_canal = True
         except Exception:
             log.exception("Painel: não consegui postar no canal")
+    await extras.novo_conteudo(bot, db, cfg, pack=await db.get_pack(pack_id))
     return _ok(id=pack_id, no_canal=no_canal)
 
 
@@ -1055,7 +1065,10 @@ async def aprovar(request: web.Request) -> web.Response:
         if acao == "descartar":
             await db.apagar_post(int(item_id))
             return _ok()
-        return _ok() if await db.aprovar_post(int(item_id)) else _erro("Essa publicação não está na fila.", 404)
+        if not await db.aprovar_post(int(item_id)):
+            return _erro("Essa publicação não está na fila.", 404)
+        await extras.novo_conteudo(request.app["bot"], db, cfg, post=await db.get_post(int(item_id)) or {})
+        return _ok()
     if acao == "descartar":
         await db.descartar_pack(item_id)
         return _ok()
@@ -1070,6 +1083,7 @@ async def aprovar(request: web.Request) -> web.Response:
             no_canal = True
         except Exception:
             log.exception("Fila: não consegui postar no canal")
+    await extras.novo_conteudo(request.app["bot"], db, cfg, pack=await db.get_pack(item_id))
     return _ok(no_canal=no_canal)
 
 
@@ -1095,7 +1109,10 @@ async def agendado(request: web.Request) -> web.Response:
             await db.cancelar_pack_agendado(ref)
         return _ok()
     if tipo == "post":
-        return _ok() if await db.publicar_post_agendado(ref) else _erro("Esse post não está mais agendado.", 404)
+        if not await db.publicar_post_agendado(ref):
+            return _erro("Esse post não está mais agendado.", 404)
+        await extras.novo_conteudo(request.app["bot"], db, cfg, post=await db.get_post(ref) or {})
+        return _ok()
     from agenda import publicar_pack
     publicou, no_canal = await publicar_pack(request.app["bot"], db, cfg, ref)
     return _ok(no_canal=no_canal) if publicou else _erro("Esse pack não está mais agendado.", 404)

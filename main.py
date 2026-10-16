@@ -30,6 +30,9 @@ import loja
 import mensagens
 import agenda
 import contas
+import extras
+import extras_rotas
+import recursos
 import notificacoes
 import protecao
 import reset_banco
@@ -54,6 +57,8 @@ async def run(cfg: Config) -> None:
     contas_app = contas.Contas(db, cfg)
     await contas_app.iniciar()                    # soma as criadoras cadastradas ao ADMIN_IDS
     gateway = criar_gateway(cfg, db)
+    await extras.iniciar(db)                      # tabelas das melhorias opcionais (Ajustes › Recursos)
+    extras.GATEWAY = gateway
     bot = criar_bot(cfg)
 
     # Tudo que for passado aqui é injetado nos handlers pelo nome do parâmetro
@@ -66,6 +71,7 @@ async def run(cfg: Config) -> None:
     dp.include_router(admin_vendas.get_router(cfg))
     dp.include_router(protecao.get_router(cfg))
     dp.include_router(assinaturas.get_router(cfg))
+    dp.include_router(extras.get_router(cfg))           # links de divulgação, indicação, "não avisar mais"
     dp.include_router(client_handlers.router)
     dp.include_router(client_handlers.fallback_router)   # por último: mensagens livres mostram o menu
 
@@ -107,6 +113,8 @@ async def run(cfg: Config) -> None:
     contas.registrar_rotas(app)
     loja.registrar_rotas(app)
     criadora.registrar_rotas(app)
+    recursos.registrar_rotas(app)
+    extras_rotas.registrar_rotas(app)
     url = loja.url_loja(cfg)
     if url:   # botão fixo "🛍️ Loja" ao lado do campo de mensagem, no chat com o bot
         await bot.set_chat_menu_button(menu_button=MenuButtonWebApp(text="🛍️ Loja", web_app=WebAppInfo(url=url)))
@@ -119,7 +127,8 @@ async def run(cfg: Config) -> None:
     jobs = [asyncio.create_task(loop_remarketing(bot, db, cfg)),
             asyncio.create_task(notificacoes.loop_resumo(bot, db, cfg)),
             asyncio.create_task(agenda.loop_agenda(bot, db, cfg)),
-            asyncio.create_task(galeria.autoteste_marca())]
+            asyncio.create_task(galeria.autoteste_marca()),
+            asyncio.create_task(extras.loop_extras(bot, db, cfg))]
     if cfg.backup_ativo:
         jobs.append(asyncio.create_task(loop_backup(bot, db, cfg)))
     try:
