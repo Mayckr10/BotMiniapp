@@ -20,6 +20,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from aiogram import Bot
+from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError
 from aiogram.types import BufferedInputFile
 
 from config import Config
@@ -44,14 +45,27 @@ async def enviar_backup(bot: Bot, db: Database, cfg: Config, destinos: list[int]
     legenda = (f"🗄️ <b>Backup do banco</b> · {len(dados) / 1024:.0f} KB\n"
                f"Últimas 24h: {stats['vendas']} venda(s).\n"
                "Guarde este arquivo. Para restaurar, veja o README.")
-    enviados = 0
-    for admin_id in destinos or sorted(cfg.admin_ids):
+    enviados, sem_chat = 0, []
+    # o dono da plataforma sempre recebe também: é quem consegue agir se a criadora não tiver conversa com o bot
+    for admin_id in destinos or sorted(cfg.admin_ids | cfg.dono_ids):
         try:
             await bot.send_document(admin_id, BufferedInputFile(dados, filename=nome), caption=legenda,
                                     disable_notification=True)
             enviados += 1
+        except (TelegramBadRequest, TelegramForbiddenError) as e:
+            # "chat not found": a pessoa nunca abriu o bot (ou bloqueou). Não é erro de código, então sem traceback.
+            sem_chat.append(admin_id)
+            log.warning("Backup não entregue a %s: %s", admin_id, e)
         except Exception:
             log.exception("Não consegui enviar o backup para %s", admin_id)
+    if sem_chat and not destinos:
+        for dono in cfg.dono_ids - set(sem_chat):
+            try:
+                await bot.send_message(dono, "⚠️ O backup diário não chegou para "
+                                       + ", ".join(f"<code>{i}</code>" for i in sem_chat) +
+                                       ". Essas contas precisam abrir o bot e mandar /start.")
+            except Exception:
+                pass
     return enviados
 
 
