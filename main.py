@@ -16,6 +16,7 @@ from aiogram.types import BotCommand, BotCommandScopeChat, MenuButtonWebApp, Web
 from aiohttp import web
 
 import admin_handlers
+import admin_menu
 import admin_vendas
 import assinaturas
 import client_handlers
@@ -69,6 +70,8 @@ async def run(cfg: Config) -> None:
     dp.include_router(contas.get_router(cfg, contas_app))   # /convite (dono) e vínculo do Telegram
     dp.include_router(recebimento.get_router(cfg, db, gateway))   # /split (dono)
     dp.include_router(reset_banco.get_router(cfg))      # /resetar_banco: só para RESET_IDS
+    admin_menu.DP = dp
+    dp.include_router(admin_menu.get_router(cfg))       # /admin com botões (reaproveita os comandos abaixo)
     dp.include_router(admin_handlers.get_router(cfg))   # admin primeiro
     dp.include_router(admin_vendas.get_router(cfg))
     dp.include_router(protecao.get_router(cfg))

@@ -112,7 +112,7 @@ def get_router(cfg: Config) -> Router:
     router.callback_query.filter(F.from_user.id.in_(cfg.admin_ids))
 
     # ── Ajuda / cancelar ───────────────────────────────────────────────────
-    @router.message(Command("admin", "ajuda"))
+    @router.message(Command("ajuda"))
     async def ajuda(msg: Message):
         await msg.answer(
             "👑 <b>Painel da criadora</b>\n\n"
