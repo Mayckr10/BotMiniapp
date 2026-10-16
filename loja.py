@@ -161,6 +161,13 @@ async def vendor(request: web.Request) -> web.Response:
     """Bibliotecas usadas no celular da criadora (ex.: mediabunny, que comprime vídeo antes do envio).
     O nome tem a versão, então o cache pode ser de 1 ano."""
     nome = request.match_info["nome"]
+    if nome.startswith("fonts/") and nome.count("/") == 1 and nome.endswith(".woff2"):
+        arq = VENDOR / nome
+        if not arq.is_file() or ".." in nome:
+            raise web.HTTPNotFound()
+        # woff2 já vem comprimido: vai direto, com cache longo (o nome muda se a fonte mudar)
+        return web.FileResponse(arq, headers={"Cache-Control": "public, max-age=31536000, immutable",
+                                              "Content-Type": "font/woff2", "Access-Control-Allow-Origin": "*"})
     arq = VENDOR / nome
     if "/" in nome or not nome.endswith(".mjs") or not arq.is_file():
         raise web.HTTPNotFound()
@@ -585,7 +592,7 @@ async def barrar_bloqueados(request: web.Request, handler):
 def registrar_rotas(app: web.Application) -> None:
     app.middlewares.append(barrar_bloqueados)
     app.router.add_get("/loja", pagina)
-    app.router.add_get("/static/vendor/{nome}", vendor)
+    app.router.add_get("/static/vendor/{nome:[A-Za-z0-9._-]+(?:/[A-Za-z0-9._-]+)?}", vendor)
     app.router.add_get("/favicon.ico", favicon)
     app.router.add_get("/api/loja/dados", dados)
     app.router.add_get("/api/loja/previa/{item_id}", previa)

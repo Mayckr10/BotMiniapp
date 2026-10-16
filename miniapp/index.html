@@ -7,31 +7,88 @@
 <!-- Script oficial do Telegram: entrega o initData, o tema e os eventos do Mini App -->
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-/* ── Tema ─────────────────────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════════
+   DESIGN SYSTEM "CAMARIM"
+   O camarim da criadora à noite: paredes de veludo vinho, batom como cor de ação e a luz dourada
+   das lâmpadas do espelho como acento (só para VIP, estrelas e conquistas). Títulos em Bodoni Moda
+   itálico, com voz de revista; todo o resto (botões, números, preços pequenos) em Onest.
+   Os fundos são tingidos pela cor que a criadora escolhe (--a1), então cada loja tem o seu "quarto".
+   ════════════════════════════════════════════════════════════════════════ */
+@font-face{font-family:'Bodoni Moda';font-style:italic;font-weight:400 900;font-display:swap;src:url(/static/vendor/fonts/bodonimoda-italic-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Bodoni Moda';font-style:italic;font-weight:400 900;font-display:swap;src:url(/static/vendor/fonts/bodonimoda-italic-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Bodoni Moda';font-style:normal;font-weight:400 900;font-display:swap;src:url(/static/vendor/fonts/bodonimoda-normal-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Bodoni Moda';font-style:normal;font-weight:400 900;font-display:swap;src:url(/static/vendor/fonts/bodonimoda-normal-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Onest';font-style:normal;font-weight:400 800;font-display:swap;src:url(/static/vendor/fonts/onest-normal-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Onest';font-style:normal;font-weight:400 800;font-display:swap;src:url(/static/vendor/fonts/onest-normal-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 :root{
-  --bg: var(--tg-theme-bg-color, #0b0d12);
-  --bg2: var(--tg-theme-secondary-bg-color, #141821);
-  --card: color-mix(in srgb, var(--bg2) 85%, white 4%);
-  --text: var(--tg-theme-text-color, #f4f5f8);
-  --muted: var(--tg-theme-hint-color, #8b93a3);
-  --line: color-mix(in srgb, var(--text) 9%, transparent);
-  --a1: #ff2e7e; --a2: #ff7a3d;                 /* gradiente da marca */
+  /* cor — a criadora troca --a1/--a2 em Recursos › Cores da loja */
+  --a1:#D92D5A;                         /* batom: comprar, curtir, ações principais */
+  --a2:#F07A8E;                         /* batom claro (compatibilidade com gradientes antigos) */
+  --a1-claro: color-mix(in oklab, var(--a1), #fff 34%);   /* batom legível como texto pequeno no escuro */
+  --ouro:#E6BE7E;                       /* luz de camarim: VIP, estrelas, ranking, conquistas */
+  --ouro-tinta:#2A1408;                 /* texto sobre o dourado */
+  --bg:    color-mix(in oklab, var(--a1) 9%,  #0E070A);
+  --bg2:   color-mix(in oklab, var(--a1) 12%, #150B10);
+  --card:  color-mix(in oklab, var(--a1) 14%, #1B0E14);
+  --card2: color-mix(in oklab, var(--a1) 18%, #24131B);
+  --text:#F7ECEE;
+  --muted: color-mix(in oklab, var(--a1) 14%, #B09AA2);
+  --line: color-mix(in oklab, var(--text) 9%, transparent);
+  --line-forte: color-mix(in oklab, var(--text) 17%, transparent);
   --accent: var(--a1);
-  --grad: linear-gradient(135deg, var(--a1), var(--a2));
-  --ok: #2fd27a; --warn: #ffb648; --err: #ff5d5d;
-  --r: 20px; --rs: 14px;
-  --sombra: 0 10px 30px rgba(0,0,0,.25);
-  --nav-h: 64px;
+  --grad: linear-gradient(170deg, color-mix(in oklab, var(--a1), #fff 16%) 0%, var(--a1) 46%, color-mix(in oklab, var(--a1), #000 24%) 100%);
+  --grad-ouro: linear-gradient(170deg, #F6DDB0 0%, var(--ouro) 45%, #B98A48 100%);
+  --ok:#3DD68C; --warn:#F2B35B; --err:#FF5A62;
+  --ouro-txt: var(--ouro);
+  /* raio por hierarquia: mídia grande > cartão > controle > etiqueta */
+  --r-xl:26px; --r:20px; --rs:14px; --r-xs:10px;
+  /* elevação: luz de topo + sombra tingida (nada de cinza genérico) */
+  --luz: inset 0 1px 0 color-mix(in oklab, #fff 7%, transparent);
+  --sombra: 0 1px 0 rgba(0,0,0,.28), 0 14px 34px -14px color-mix(in oklab, var(--a1) 30%, rgba(0,0,0,.7));
+  --sombra-alta: 0 30px 70px -20px rgba(0,0,0,.75), 0 0 0 1px var(--line);
+  /* tipografia: escala 12 · 13.5 · 15 · 17 · 20 · 24 · 30 · 44 */
+  --f-titulo: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+  --f-corpo: "Onest", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  /* movimento */
+  --e-sai: cubic-bezier(.2,.8,.2,1);
+  --e-mola: cubic-bezier(.34,1.5,.55,1);
+  --t-rapido:.14s; --t-medio:.26s; --t-lento:.46s;
+  --nav-h:64px;
+  color-scheme: dark;
+}
+:root[data-tema-modo="claro"]{
+  --bg:    color-mix(in oklab, var(--a1) 5%,  #FBF4F1);
+  --bg2:   color-mix(in oklab, var(--a1) 7%,  #F6EBE8);
+  --card:  color-mix(in oklab, var(--a1) 4%,  #FFFAF8);
+  --card2: color-mix(in oklab, var(--a1) 8%,  #F3E4E1);
+  --text:#2B1219;
+  --muted: color-mix(in oklab, var(--a1) 12%, #7F636B);
+  --a1-claro: color-mix(in oklab, var(--a1), #000 8%);
+  --ouro:#B98538; --ouro-tinta:#2A1606; --ouro-txt:#8A5D1A; --ok:#14834F; --warn:#A8620E;
+  --luz: inset 0 1px 0 rgba(255,255,255,.7);
+  --sombra: 0 1px 0 rgba(60,20,30,.06), 0 14px 30px -16px color-mix(in oklab, var(--a1) 35%, rgba(60,20,30,.35));
+  --sombra-alta: 0 30px 60px -24px rgba(60,20,30,.4), 0 0 0 1px var(--line);
+  color-scheme: light;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;overscroll-behavior-y:none}
+html{background:var(--bg)}
+html,body{margin:0;color:var(--text);font:400 15px/1.45 var(--f-corpo);overscroll-behavior-y:none;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+body{position:relative;isolation:isolate;min-height:100vh}
+/* veludo: um foco de luz quente no alto e grão bem leve por cima de tudo que é fundo */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:
+    radial-gradient(120% 60% at 85% -10%, color-mix(in oklab, var(--ouro) 10%, transparent), transparent 60%),
+    radial-gradient(90% 50% at 0% 0%, color-mix(in oklab, var(--a1) 16%, transparent), transparent 65%),
+    url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    var(--bg)}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
 img{display:block}
 main{max-width:560px;margin:0 auto;padding:0 0 calc(var(--nav-h) + 24px + env(safe-area-inset-bottom))}
 .pad{padding:0 16px}
-h2{margin:0;font-size:19px;letter-spacing:-.01em}
+h2{margin:0;font:italic 600 22px/1.15 var(--f-titulo);letter-spacing:-.01em;font-optical-sizing:auto}
 .muted{color:var(--muted)}
 .ocultar{display:none !important}
+:focus-visible{outline:2px solid var(--a1-claro);outline-offset:2px;border-radius:6px}
 
 /* ── Topo / perfil ─────────────────────────────────────────────────────── */
 .capa{position:relative;height:150px;overflow:hidden;background:var(--grad)}
@@ -81,7 +138,7 @@ h2{margin:0;font-size:19px;letter-spacing:-.01em}
 .post .cab .mini-av{width:34px;height:34px;border-radius:50%;background:var(--grad);display:grid;place-items:center;color:#fff;font-size:15px;object-fit:cover}
 .post .cab b{display:block;font-size:14px}
 .post .cab small{color:var(--muted);font-size:12px}
-.midia{position:relative;aspect-ratio:4/5;background:#1a1f2a;overflow:hidden;cursor:pointer}
+.midia{position:relative;aspect-ratio:4/5;background:var(--card2);overflow:hidden;cursor:pointer}
 .midia img{width:100%;height:100%;object-fit:cover;transition:transform .6s}
 .post:active .midia img{transform:scale(1.03)}
 .midia .veu{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.45));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#fff}
@@ -323,7 +380,7 @@ textarea:focus{border-color:var(--a1)}
 .balao img{width:100%;max-height:220px;object-fit:cover}
 .balao p{margin:0;padding:10px 12px;white-space:pre-wrap;font-size:14px}
 .perigo{color:var(--err) !important}
-.lista-msg .acao .ico{background:color-mix(in srgb,#7b5cff 16%,transparent)}
+.lista-msg .acao .ico{background:color-mix(in srgb,var(--ouro) 16%,transparent);color:var(--ouro-txt)}
 .foto-perfil-ed{width:110px;height:110px;border-radius:50%;object-fit:cover;margin:4px auto 8px;display:grid;place-items:center;background:var(--grad);font-size:44px;color:#fff;cursor:pointer}
 
 /* ── Galeria (carrossel do conteúdo comprado) ─────────────────────────── */
@@ -372,7 +429,7 @@ img.fade{opacity:0;transition:opacity .55s ease,transform .6s}
 img.fade.ok{opacity:1}
 /* avatar com anel de stories girando */
 @property --ang{syntax:"<angle>";inherits:false;initial-value:0deg}
-.anel{position:relative;padding:3px;border-radius:50%;background:conic-gradient(from var(--ang),#ff2e7e,#ff7a3d,#ffd23d,#7b5cff,#ff2e7e);animation:anel 5s linear infinite;box-shadow:0 12px 36px color-mix(in srgb,var(--a1) 30%,transparent)}
+.anel{position:relative;padding:3px;border-radius:50%;background:conic-gradient(from var(--ang),var(--ouro),var(--a1) 35%,var(--a1-claro) 60%,var(--ouro));box-shadow:0 18px 40px -12px color-mix(in srgb,var(--a1) 55%,transparent)}
 @keyframes anel{to{--ang:360deg}}
 .anel .avatar{box-shadow:none}
 .avatar-wrap .lapis{z-index:2;transition:transform .2s}
@@ -406,7 +463,7 @@ img.fade.ok{opacity:1}
 .topo-fixo .btn{margin-left:auto;flex:none}
 /* curtida: coração gigante no toque duplo + faíscas */
 .foto-wrap{position:relative}
-.coracao-grande{position:absolute;left:50%;top:50%;line-height:0;transform:translate(-50%,-50%) scale(0);z-index:3;pointer-events:none;filter:drop-shadow(0 10px 30px rgba(255,46,126,.55));animation:coracao 1s cubic-bezier(.2,1.3,.4,1) forwards}
+.coracao-grande{position:absolute;left:50%;top:50%;line-height:0;transform:translate(-50%,-50%) scale(0);z-index:3;pointer-events:none;filter:drop-shadow(0 10px 30px color-mix(in srgb,var(--a1) 60%,transparent));animation:coracao 1s cubic-bezier(.2,1.3,.4,1) forwards}
 @keyframes coracao{15%{transform:translate(-50%,-50%) scale(1.25)}30%{transform:translate(-50%,-50%) scale(.92)}45%,70%{transform:translate(-50%,-50%) scale(1);opacity:1}100%{transform:translate(-50%,-110%) scale(.55);opacity:0}}
 .faisca{position:absolute;left:24px;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;pointer-events:none;animation:faisca .65s cubic-bezier(.2,.8,.3,1) forwards}
 @keyframes faisca{to{transform:translate(var(--x),var(--y)) scale(.2);opacity:0}}
@@ -561,20 +618,20 @@ img.fade.ok{opacity:1}
 .relogio{display:flex;gap:8px;font-variant-numeric:tabular-nums}
 .relogio div{min-width:58px;padding:8px 6px;border-radius:14px;background:rgba(255,255,255,.14);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.25);text-align:center}
 .relogio b{display:block;font-size:24px;font-weight:900;letter-spacing:-.02em;line-height:1.1}
-.relogio small{font-size:10.5px;opacity:.85;text-transform:uppercase;letter-spacing:.06em}
+.relogio small{font-size:11.5px;opacity:.85}
 .lancamento .quando{font-size:13px;opacity:.9;font-weight:600}
 .btn-aviso{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:999px;font-weight:800;font-size:13.5px;background:var(--grad);color:#fff;white-space:nowrap}
 .btn-aviso.on{background:var(--card);color:var(--ok);border:1px solid var(--line)}
 .btn-aviso .sino{display:inline-block}
 .btn-aviso:not(.on) .sino{animation:sino 2.4s ease-in-out infinite;transform-origin:50% 0}
 @keyframes sino{0%,60%,100%{transform:rotate(0)}10%{transform:rotate(16deg)}20%{transform:rotate(-14deg)}30%{transform:rotate(9deg)}40%{transform:rotate(-6deg)}}
-.ag-item::before{background:#7b5cff !important}
-.ag-item .quando-ag{color:#7b5cff;font-weight:800}
+.ag-item::before{background:var(--ouro) !important}
+.ag-item .quando-ag{color:var(--ouro-txt);font-weight:700}
 input[type=datetime-local]{width:100%;background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:12px 14px;color:var(--text);font:15px inherit;font-family:inherit;outline:none;color-scheme:dark light;min-height:48px}
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}}
 
 /* ── Stories ───────────────────────────────────────────────────────────── */
-.anel.story{cursor:pointer;animation-duration:2.6s}
+.anel.story{cursor:pointer;animation:anel 3.2s linear infinite}
 .anel.story::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid color-mix(in srgb,var(--a1) 60%,transparent);animation:story-pulso 2.2s ease-out infinite;pointer-events:none}
 @keyframes story-pulso{from{transform:scale(.93);opacity:1}to{transform:scale(1.13);opacity:0}}
 .anel.story.visto{background:color-mix(in srgb,var(--muted) 60%,transparent);animation:none;box-shadow:none}
@@ -684,7 +741,7 @@ body.tem-carrinho .toast{bottom:calc(var(--nav-h) + 92px)}
 /* ── Ranking de fãs ────────────────────────────────────────────────────── */
 .ranking .av-r{width:42px;height:42px;border-radius:50%;background:var(--grad);display:grid;place-items:center;color:#fff;font-weight:800;font-size:16px;flex:none}
 .ranking .pos.medalha{font-size:19px}
-.selo-rank{margin:16px 16px 0;padding:14px 16px;border-radius:var(--r);display:flex;align-items:center;gap:12px;background:linear-gradient(120deg,color-mix(in srgb,#ffd23d 22%,var(--card)),var(--card));border:1px solid color-mix(in srgb,#ffd23d 40%,transparent)}
+.selo-rank{margin:16px 16px 0;padding:14px 16px;border-radius:var(--r);display:flex;align-items:center;gap:12px;background:linear-gradient(120deg,color-mix(in srgb,var(--ouro) 20%,var(--card)),var(--card));border:1px solid color-mix(in srgb,var(--ouro) 40%,transparent)}
 .selo-rank .ico{font-size:28px}
 .selo-rank b{display:block}
 .selo-rank small{color:var(--muted)}
@@ -692,7 +749,7 @@ body.tem-carrinho .toast{bottom:calc(var(--nav-h) + 92px)}
 /* ── Ícones SVG ──────────────────────────────────────────────────────── */
 :root{--estrela:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M12 2.6l2.9 5.88 6.5.94-4.7 4.58 1.11 6.47L12 17.42l-5.81 3.05 1.11-6.47-4.7-4.58 6.5-.94z'/%3E%3C/svg%3E")}
 svg.i{width:1.15em;height:1.15em;display:inline-block;vertical-align:-.22em;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none;overflow:visible}
-svg.i.ouro{color:#f5b301}
+svg.i.ouro{color:var(--ouro-txt)}
 svg.i.rosa{color:var(--a1)}
 svg.i.verde{color:#2fbf71}
 svg.i.laranja{color:#ff8a3d}
@@ -722,8 +779,6 @@ svg.i.laranja{color:#ff8a3d}
 .cores-tema button.on{border-color:var(--text);transform:scale(1.08)}
 
 /* ── Melhorias opcionais ─────────────────────────────────────────────── */
-:root[data-tema-modo="escuro"]{--bg:#0b0d12;--bg2:#141821;--text:#f4f5f8;--muted:#8b93a3}
-:root[data-tema-modo="claro"]{--bg:#ffffff;--bg2:#f3f4f8;--text:#16181f;--muted:#6b7280;--card:#f6f7fa;--sombra:0 8px 24px rgba(20,22,30,.08)}
 .cards-extra{display:grid;gap:10px;padding:0 16px 14px}
 .card-extra{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--r);background:var(--card);border:1px solid var(--line)}
 .card-extra .ico{width:44px;height:44px;border-radius:14px;background:var(--grad);display:grid;place-items:center;color:#fff;font-size:20px;flex:none}
@@ -743,13 +798,13 @@ svg.i.laranja{color:#ff8a3d}
 .chips.colecoes .chip.on{background:var(--grad);color:#fff}
 .tag-relampago{position:absolute;left:10px;top:10px;z-index:2;background:linear-gradient(135deg,#ffb800,#ff5a1f);color:#fff;font-size:12px;font-weight:800;padding:5px 10px;border-radius:999px;display:inline-flex;align-items:center;gap:4px;box-shadow:0 6px 18px rgba(255,90,31,.4)}
 .preco-tag.promo s{opacity:.65;font-weight:600;margin-right:2px}
-.nota-pack{display:inline-flex;align-items:center;gap:3px;color:#f5b301;font-weight:700;margin-left:6px}
+.nota-pack{display:inline-flex;align-items:center;gap:3px;color:var(--ouro-txt);font-weight:700;margin-left:6px}
 .nota-pack small{color:var(--muted);font-weight:500}
 .midia video.teaser{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;pointer-events:none}
 .avaliar{display:flex;align-items:center;justify-content:space-between;padding:0 14px 6px;color:var(--muted);font-size:13px}
 .avaliar span{display:flex;gap:2px}
 .avaliar button{font-size:20px;color:var(--muted);padding:2px}
-.avaliar button.on{color:#f5b301}
+.avaliar button.on{color:var(--ouro-txt)}
 .comentarios{display:grid;gap:10px;max-height:52vh;overflow:auto;margin:6px 0 4px}
 .coment{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
 .coment.dela{border-color:color-mix(in srgb,var(--a1) 40%,transparent)}
@@ -778,6 +833,227 @@ svg.i.laranja{color:#ff8a3d}
 .rec-sec.aberta .linha-c:not(.rec-cab){display:flex}
 .rec-sec .linha-c.ocultar{display:none !important}
 .rec-cab .seta{font-size:13px;color:var(--muted)}
+
+/* ════════════════════════════════════════════════════════════════════════
+   CAMARIM · componentes
+   Tudo abaixo usa só os tokens do topo. Ordem: superfícies, capa, tipografia, controles,
+   conteúdo, VIP (dourado), painel, folhas e retornos, movimento.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* superfícies: tom + luz de topo, sem borda cinza genérica */
+.post,.kpi,.grupo,.acao,.item,.beneficio,.troca,.renovar,.meta,.ranking,.grafico,.card-extra,.fila-item,.coment,.coment-mod,.card-pedido,.texto-pedido,.campo-rec .linha-bool,.vip-ativo,.mimo,.plano,.seg,.opcoes,.codigo,.bloqueio-vip{
+  background:var(--card);border-color:var(--line);box-shadow:var(--luz)}
+
+/* ── Capa e masthead: o nome da criadora como capa de revista ─────────── */
+.capa{height:240px;background:
+  radial-gradient(80% 90% at 85% 0%, color-mix(in oklab,var(--ouro) 38%,transparent), transparent 62%),
+  radial-gradient(90% 100% at 0% 20%, color-mix(in oklab,var(--a1) 75%,transparent), transparent 70%),
+  var(--bg2)}
+.capa img{filter:blur(22px) saturate(1.1) brightness(.62);transform:scale(1.35)}
+.capa::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;mix-blend-mode:soft-light;
+  background:linear-gradient(155deg,color-mix(in oklab,var(--a1) 80%,transparent),transparent 60%),radial-gradient(60% 80% at 90% 0%,color-mix(in oklab,var(--ouro) 60%,transparent),transparent 70%)}
+.capa::after{z-index:1;background:linear-gradient(180deg,transparent 25%,color-mix(in oklab,var(--bg) 55%,transparent) 62%,var(--bg) 100%)}
+.capa .bolha{display:none}
+.perfil{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;column-gap:14px;text-align:left;margin-top:-104px;padding:0 18px;z-index:2}
+.perfil>.avatar-wrap{grid-column:2;grid-row:1}
+.perfil>.nome{grid-column:1;grid-row:1;display:block;margin:0 0 4px;font:italic 600 clamp(36px,11vw,48px)/.95 var(--f-titulo);letter-spacing:-.03em;text-wrap:balance;overflow-wrap:anywhere;text-shadow:0 2px 30px rgba(0,0,0,.5)}
+.perfil>.nome .verif{width:22px;height:22px;vertical-align:.32em;margin-left:2px;font-size:12px}
+.perfil>.bio,.perfil>.selo-criadora,.perfil>.stats{grid-column:1/-1;justify-self:start}
+.perfil>.sk{grid-column:1/-1}
+.avatar{width:86px;height:86px;border:3px solid var(--bg);box-shadow:none}
+.verif{background:var(--a1);box-shadow:0 0 0 2px var(--bg)}
+.bio{margin:14px 0 0;font-size:14.5px;line-height:1.5;color:color-mix(in oklab,var(--text) 80%,transparent);max-width:46ch}
+.stats{gap:0;margin:16px 0 0}
+.stats div{text-align:left;padding-right:18px;margin-right:18px;border-right:1px solid var(--line-forte)}
+.stats div:last-child{border:0;margin:0;padding:0}
+.stats b{font-size:19px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stats small{font-size:12.5px}
+:root[data-tema-modo="claro"] .perfil>.nome{text-shadow:none}
+:root[data-tema-modo="claro"] .capa img{brightness:1;filter:blur(22px) saturate(1.1) brightness(.95)}
+
+/* ── Tipografia de seção ─────────────────────────────────────────────── */
+.secao-titulo{padding:28px 18px 12px;align-items:baseline;gap:12px}
+.secao-titulo h2{font-size:24px}
+.secao-titulo small{font-size:12.5px}
+.aj-painel .secao-titulo h2{font-size:19px}
+.folha h2{font-size:28px;line-height:1.08;padding-right:46px;margin-bottom:2px}
+.sub{font-size:14.5px;line-height:1.5}
+.rotulo{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.005em}
+.legenda-grupo,.dica{line-height:1.5}
+
+/* ── Controles ───────────────────────────────────────────────────────── */
+.btn{border-radius:16px;padding:15px 18px;background:var(--grad);color:#fff;font-weight:700;letter-spacing:.005em;
+  box-shadow:var(--luz),inset 0 -2px 0 rgba(0,0,0,.2),0 14px 28px -14px color-mix(in oklab,var(--a1) 85%,transparent);
+  transition:transform var(--t-rapido) var(--e-sai),box-shadow var(--t-medio) var(--e-sai),filter var(--t-medio)}
+.btn:active{transform:translateY(1px) scale(.982);box-shadow:var(--luz),inset 0 -1px 0 rgba(0,0,0,.2),0 6px 14px -10px color-mix(in oklab,var(--a1) 85%,transparent)}
+.btn:disabled{opacity:.62;filter:saturate(.7);box-shadow:var(--luz)}
+.btn.sec{background:var(--card2);color:var(--text);border:1px solid var(--line);box-shadow:var(--luz)}
+.btn.fantasma{background:transparent;color:var(--muted);box-shadow:none;border:0}
+.btn.mini{padding:9px 14px;border-radius:12px;font-size:13.5px}
+.btn.perigo{background:color-mix(in oklab,var(--err) 16%,var(--card2));color:var(--err) !important;box-shadow:var(--luz)}
+.chip{padding:8px 15px;background:transparent;border:1px solid var(--line-forte);color:var(--muted);font-weight:600}
+.chip.on{background:color-mix(in oklab,var(--a1) 24%,var(--card));border-color:color-mix(in oklab,var(--a1) 60%,transparent);color:var(--text)}
+.seg,.opcoes{border-radius:14px;padding:4px}
+.seg button.on,.opcoes button.on,.grupo-filtro .opcoes button.on,.alt-vista button.on{background:var(--text);color:var(--bg)}
+.grupo-filtro .opcoes button{background:transparent;border-color:var(--line-forte)}
+input[type=text],input[type=password],textarea,input[type=datetime-local]{background:var(--card);border:1.5px solid var(--line-forte);border-radius:14px;box-shadow:inset 0 1px 3px rgba(0,0,0,.2);transition:border-color var(--t-medio),box-shadow var(--t-medio)}
+:root[data-tema-modo="claro"] input[type=text],:root[data-tema-modo="claro"] input[type=password],:root[data-tema-modo="claro"] textarea{box-shadow:inset 0 1px 2px rgba(60,20,30,.06)}
+input:focus,textarea:focus,input[type=datetime-local]:focus{border-color:var(--a1);box-shadow:0 0 0 4px color-mix(in oklab,var(--a1) 22%,transparent)}
+.chave{background:var(--line-forte)}
+.chave.on{background:var(--a1)}
+.chave::after{box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.escolher{border-color:var(--line-forte);border-radius:var(--r);color:var(--text);background:color-mix(in oklab,var(--card) 60%,transparent)}
+.escolher:active{border-color:var(--a1)}
+
+/* toque: anel que se espalha a partir do dedo (o script cria o .ripple) */
+.btn,.chip,.acao,.linha-c,.mimo,.desbloq,.preco-tag,.seg button,.opcoes button,.beneficio,.item,.btn-aviso,.card-extra{position:relative;overflow:hidden}
+.ripple{position:absolute;border-radius:50%;pointer-events:none;background:currentColor;opacity:.2;transform:scale(0);animation:ripple .6s var(--e-sai) forwards}
+@keyframes ripple{to{transform:scale(1);opacity:0}}
+
+/* ── Conteúdo: posts e vitrine ───────────────────────────────────────── */
+.feed{gap:18px}
+.post{border:0;border-radius:var(--r-xl);box-shadow:var(--luz),var(--sombra)}
+.post .cab{padding:12px 16px 10px}
+.post .cab b{font-weight:650}
+.post .midia,.post .foto-wrap{margin:0 8px;border-radius:18px;overflow:hidden}
+.post .foto-wrap .midia{margin:0}
+.post-texto img.foto-post{border-radius:18px;width:calc(100% - 16px);margin:0 8px}
+.post .rodape{padding:14px 16px 16px}
+.post .rodape b{font-size:15.5px;font-weight:650}
+.legenda{padding:2px 16px 12px}
+.post-texto .corpo{padding:0 16px 14px;font-size:15.5px}
+.preco-tag{background:var(--grad);box-shadow:var(--luz),0 10px 22px -10px color-mix(in oklab,var(--a1) 85%,transparent);font-weight:700;padding:9px 15px}
+.preco-tag.ok{background:color-mix(in oklab,var(--ok) 12%,var(--card2));box-shadow:var(--luz);border:0}
+.midia .veu{background:linear-gradient(180deg,rgba(14,6,9,.05),rgba(14,6,9,.55))}
+.cadeado{animation:none;background:rgba(20,8,12,.32);border-color:rgba(255,255,255,.24);width:60px;height:60px}
+.desbloq{background:var(--a1);color:#fff;font-weight:700;padding:11px 18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 12px 28px -8px rgba(0,0,0,.55)}
+.comprado-selo{background:color-mix(in oklab,var(--ok) 88%,#000);color:#04170D;font-weight:700}
+.pill,.tag-combo{background:rgba(14,6,9,.55)}
+.grade{gap:8px}
+.grade .card{border-radius:16px;box-shadow:var(--luz),var(--sombra)}
+.grade .card .veu{background:linear-gradient(180deg,transparent 40%,rgba(14,6,9,.78))}
+.interacao.on{color:var(--a1-claro)}
+.enquete .opc{border-color:var(--line-forte)}
+.enquete .opc.meu{border-color:var(--a1)}
+.btn-cart{background:var(--card2);border-color:var(--line)}
+.carrinho-bar{background:color-mix(in oklab,var(--card2) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--line-forte);box-shadow:var(--sombra-alta);color:var(--text)}
+.item img,.item .thumb{border-radius:12px}
+.item b,.acao b,.grupo .linha-c b{font-weight:600}
+.acao .ico,.grupo .linha-c .ico,.beneficio .ico,.card-extra .ico{background:color-mix(in oklab,var(--a1) 17%,transparent);color:var(--a1-claro)}
+.card-extra .ico{background:var(--grad);color:#fff}
+.vazio{padding:56px 28px}
+.vazio .ico{color:var(--a1-claro);opacity:.9}
+
+/* ── VIP é dourado: a luz do camarim ─────────────────────────────────── */
+.cta-vip{margin:20px 16px 0;padding:16px 16px 16px 18px;border-radius:var(--r);background:var(--grad-ouro) !important;color:var(--ouro-tinta);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 0 rgba(90,50,10,.25),0 18px 40px -18px color-mix(in oklab,var(--ouro) 75%,transparent)}
+.cta-vip b{font:italic 700 21px/1.1 var(--f-titulo);letter-spacing:-.01em}
+.cta-vip small{opacity:.78;font-size:13px;font-weight:500}
+.cta-vip .seta{background:rgba(42,20,8,.12);color:var(--ouro-tinta)}
+.cta-vip::before{display:none}
+.hero-vip{background:var(--grad-ouro) !important;color:var(--ouro-tinta);border-radius:var(--r-xl);padding:26px 20px;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 22px 44px -22px color-mix(in oklab,var(--ouro) 80%,transparent)}
+.hero-vip h2{color:var(--ouro-tinta);font-size:32px}
+.hero-vip p{opacity:.8}
+.hero-vip::after{background:var(--ouro-tinta);opacity:.1}
+.hero-vip.mimos-hero{background:var(--grad) !important;color:#fff}
+.hero-vip.mimos-hero h2{color:#fff}
+.hero-vip.mimos-hero::after{background:#fff;opacity:.14}
+.plano{border:1.5px solid var(--line)}
+.plano.on{border-color:var(--ouro);background:color-mix(in oklab,var(--ouro) 9%,var(--card));box-shadow:var(--luz),0 0 0 4px color-mix(in oklab,var(--ouro) 16%,transparent)}
+.plano.on .radio{border-color:var(--ouro);background:var(--ouro)}
+.plano.on .radio::after{background:var(--ouro-tinta)}
+.plano .valor b{font-variant-numeric:tabular-nums}
+.popular{background:var(--grad-ouro);color:var(--ouro-tinta);font-weight:700;letter-spacing:0}
+.beneficio .ico,.bloq-lista .li-ico{background:color-mix(in oklab,var(--ouro) 16%,transparent);color:var(--ouro-txt)}
+.vip-ativo .ico,.bloqueio-vip.tela .ico{background:var(--grad-ouro);color:var(--ouro-tinta)}
+.vip-ativo .barra-prog i{background:var(--grad-ouro)}
+.bloqueio-vip{border:1.5px dashed color-mix(in oklab,var(--ouro) 45%,transparent)}
+.selo-criadora{background:color-mix(in oklab,var(--ouro) 16%,transparent);color:var(--ouro-txt);font-weight:700}
+.selo-story{background:var(--a1)}
+.ranking .pos.medalha{color:var(--ouro-txt)}
+
+/* ── Painel da criadora ──────────────────────────────────────────────── */
+.ola{background:var(--grad) !important;border-radius:var(--r-xl);padding:20px 20px 18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 22px 44px -22px color-mix(in oklab,var(--a1) 85%,transparent)}
+.ola small{font-weight:600}
+.ola b{font-size:36px;font-weight:700;letter-spacing:-.035em;margin:4px 0}
+.ola .deco{animation:none;opacity:.22}
+.kpi{border-radius:18px}
+.kpi b{font-weight:650;font-size:22px}
+.kpi.destaque{background:var(--grad);box-shadow:var(--luz)}
+.grafico .col{background:color-mix(in oklab,var(--a1) 28%,transparent)}
+.grafico .col.hoje{background:var(--grad)}
+.grupo{border-radius:20px}
+.grupo .linha-c{border-color:var(--line)}
+.grupo .linha-c .v{font-weight:700;font-variant-numeric:tabular-nums}
+.grupo .linha-c.add{color:var(--a1-claro)}
+.fab{background:var(--grad);border-radius:20px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 18px 36px -12px color-mix(in oklab,var(--a1) 90%,transparent)}
+.contador-fila{background:var(--a1)}
+.aj-topo{background:color-mix(in oklab,var(--bg) 88%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+
+/* ── Barra inferior: dock de veludo ──────────────────────────────────── */
+.barra nav{background:color-mix(in oklab,var(--bg2) 74%,transparent);border:1px solid var(--line);box-shadow:var(--luz),0 20px 44px -12px rgba(0,0,0,.65)}
+:root[data-tema-modo="claro"] .barra nav{box-shadow:var(--luz),0 18px 36px -16px rgba(60,20,30,.3)}
+.barra nav .pilula{background:color-mix(in oklab,var(--a1) 20%,transparent);box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--a1) 42%,transparent)}
+.barra nav button{font-weight:600}
+.barra nav button.on{color:var(--text)}
+.barra nav button.on .ico{color:var(--a1-claro)}
+.barra nav .bolinha{background:var(--a1)}
+.topo-fixo{background:color-mix(in oklab,var(--bg) 82%,transparent);border-bottom:1px solid var(--line)}
+.topo-fixo b{font:italic 600 18px/1.1 var(--f-titulo)}
+
+/* ── Folhas, toasts e retornos ───────────────────────────────────────── */
+.fundo{background:color-mix(in oklab,var(--bg) 40%,rgba(0,0,0,.6));backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.folha{background:var(--bg2);border-radius:28px 28px 0 0;padding:10px 20px calc(20px + env(safe-area-inset-bottom));box-shadow:var(--luz),0 -24px 60px -24px rgba(0,0,0,.6);animation:sobe .42s cubic-bezier(.2,.9,.25,1)}
+@keyframes sobe{from{transform:translateY(100%)}}
+.alca{background:var(--line-forte)}
+.fechar{background:var(--card2);box-shadow:var(--luz);color:var(--text)}
+.linha-preco .v{font:italic 700 34px/1 var(--f-titulo);letter-spacing:-.02em;background:none;-webkit-background-clip:initial;background-clip:initial;color:var(--text)}
+.valor-pix .v{font:italic 700 42px/1.05 var(--f-titulo);letter-spacing:-.025em}
+.qr-card{border-radius:22px;box-shadow:0 22px 44px -18px rgba(0,0,0,.6)}
+.check{background:var(--grad);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 18px 44px -12px color-mix(in oklab,var(--a1) 75%,transparent)}
+.toast{background:var(--card2);color:var(--text);border:1px solid var(--line-forte);border-radius:16px;padding:11px 16px;box-shadow:var(--sombra-alta);max-width:calc(100% - 32px);width:max-content;text-align:center;animation:toast-in .42s var(--e-mola)}
+.toast svg.i{color:var(--a1-claro)}
+@keyframes toast-in{from{opacity:0;transform:translate(-50%,22px) scale(.92)}}
+.sk{background:linear-gradient(100deg,var(--card) 30%,var(--card2) 50%,var(--card) 70%);background-size:220% 100%;animation:sk 1.5s ease-in-out infinite}
+.aviso{color:var(--warn)}
+.st.ok,.status-rec.on{background:color-mix(in oklab,var(--ok) 15%,transparent)}
+
+/* ── Movimento: rápido, por transform/opacity, e só onde explica algo ── */
+.vivo{animation:none}
+.brilho:not(.cta-vip)::after{display:none}
+.cta-vip.brilho::after{background:linear-gradient(110deg,transparent 38%,rgba(255,255,255,.45) 50%,transparent 62%);animation-duration:5.5s}
+.anel:not(.story){animation:none}
+.anima .entra,.anima.entra-raiz .entra{animation:entra .46s var(--e-sai) backwards;animation-delay:calc(var(--i,0) * 40ms)}
+@keyframes entra{from{opacity:0;transform:translateY(14px)}}
+.perfil>.nome{animation:masthead .7s var(--e-sai) backwards}
+@keyframes masthead{from{opacity:0;transform:translateY(10px);letter-spacing:.01em}}
+.acao:active,.kpi:active,.plano:active,.item:active,.card:active,.vip-ativo:active,.ranking .linha:active,.beneficio:active,.card-extra:active{transform:scale(.975)}
+.chip:active,.preco-tag:active,.desbloq:active,.btn-cart:active{transform:scale(.94)}
+@media (prefers-reduced-motion: reduce){.perfil>.nome{animation:none}.ripple{display:none}}
+/* ── Ajustes de leitura e camadas ────────────────────────────────────── */
+/* preços e valores: Onest em peso alto, com algarismos de mesma largura (a Didone fica para nomes) */
+.linha-preco .v{font:750 30px/1 var(--f-corpo);letter-spacing:-.03em}
+.valor-pix .v{font:750 40px/1.05 var(--f-corpo);letter-spacing:-.035em}
+/* prévia na folha: o selo queimado na imagem fica livre, o cadeado vai para o canto */
+.previa-wrap .veu{display:flex;align-items:flex-end;justify-content:flex-end;padding:14px}
+.previa-wrap .cadeado{width:46px;height:46px;position:static;transform:none;margin:0}
+/* a dock e o botão fixo precisam de fundo próprio: nada vaza por baixo */
+.barra nav{background:color-mix(in oklab,var(--bg2) 92%,transparent);backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4)}
+.fixo-cta{padding:22px 16px 10px;margin-bottom:-10px;background:linear-gradient(180deg,transparent,var(--bg) 42%)}
+/* capa no claro: o veludo continua com cor, só mais luminoso */
+:root[data-tema-modo="claro"] .capa{background:
+  radial-gradient(80% 90% at 85% 0%, color-mix(in oklab,var(--ouro) 45%,transparent), transparent 62%),
+  radial-gradient(100% 110% at 0% 10%, color-mix(in oklab,var(--a1) 70%,transparent), transparent 72%),
+  color-mix(in oklab,var(--a1) 22%,var(--bg2))}
+:root[data-tema-modo="claro"] .capa::before{opacity:.6}
+/* barra do topo ao rolar: sólida o bastante para não brigar com os filtros */
+.topo-fixo{background:color-mix(in oklab,var(--bg) 94%,transparent);box-shadow:0 10px 24px -18px rgba(0,0,0,.5)}
+/* capa termina em degradê de máscara: funde com o veludo do fundo, sem emenda */
+.capa{-webkit-mask-image:linear-gradient(180deg,#000 50%,transparent 100%);mask-image:linear-gradient(180deg,#000 50%,transparent 100%)}
+.capa::after{background:none}
+/* no post, o cadeado e o botão descem para perto do polegar e deixam o selo da prévia livre */
+.post .midia .veu{justify-content:flex-end;padding-bottom:64px}
+.barra nav{background:color-mix(in oklab,var(--bg2) 97%,transparent)}
 </style>
 </head>
 <body>
@@ -787,8 +1063,8 @@ svg.i.laranja{color:#ff8a3d}
 </defs></svg>
 <main id="app">
   <div class="capa"><span class="bolha b1"></span><span class="bolha b2"></span><span class="bolha b3"></span></div>
-  <div class="perfil"><div class="sk" style="width:96px;height:96px;border-radius:50%;border:4px solid var(--bg)"></div>
-    <div class="sk" style="width:160px;height:22px;margin-top:12px"></div><div class="sk" style="width:220px;height:14px;margin-top:8px"></div></div>
+  <div class="perfil"><div class="sk" style="grid-column:1;grid-row:1;width:72%;height:40px;align-self:end"></div><div class="sk" style="grid-column:2;grid-row:1;width:86px;height:86px;border-radius:50%"></div>
+    <div class="sk" style="width:240px;height:14px;margin-top:14px"></div><div class="sk" style="width:180px;height:14px;margin-top:8px"></div></div>
   <div class="feed" style="margin-top:22px"><div class="sk" style="height:380px"></div><div class="sk" style="height:380px"></div></div>
 </main>
 <div class="barra" id="barra"></div>
@@ -797,7 +1073,22 @@ svg.i.laranja{color:#ff8a3d}
 const tg = window.Telegram?.WebApp;
 // initData assinado pelo Telegram (o simulador passa no #tgWebAppData, igual ao Telegram de verdade)
 const INIT = tg?.initData || new URLSearchParams(location.hash.slice(1)).get("tgWebAppData") || "";
-try{ tg?.ready(); tg?.expand(); tg?.setHeaderColor?.("bg_color"); tg?.setBackgroundColor?.("bg_color") }catch(e){}
+// O Camarim tem paleta própria: no modo "igual ao Telegram" só segue se o Telegram está claro ou escuro
+function modoAuto(){ return tg?.colorScheme === "light" ? "claro" : "escuro" }
+// Pinta o topo e o fundo do Telegram com a cor real do fundo (resolvida pelo navegador, já tingida pela cor da loja)
+function pintarMoldura(){
+  try{
+    const bg = getComputedStyle(document.documentElement).backgroundColor;
+    const c = document.createElement("canvas"); c.width = c.height = 1;
+    const x = c.getContext("2d"); x.fillStyle = bg; x.fillRect(0, 0, 1, 1);
+    const [r, g, b] = x.getImageData(0, 0, 1, 1).data;
+    const hex = "#" + [r, g, b].map(v => v.toString(16).padStart(2, "0")).join("");
+    tg?.setHeaderColor?.(hex); tg?.setBackgroundColor?.(hex); tg?.setBottomBarColor?.(hex);
+  }catch(e){}
+}
+document.documentElement.dataset.temaModo = modoAuto();
+try{ tg?.ready(); tg?.expand(); pintarMoldura() }catch(e){}
+try{ tg?.onEvent?.("themeChanged", () => { if(!TEMA_ATUAL || !TEMA_ATUAL.modo || TEMA_ATUAL.modo === "auto"){ document.documentElement.dataset.temaModo = modoAuto(); pintarMoldura() } }) }catch(e){}
 
 // ── Ícones (desenhados à mão em SVG, grade 24x24, cor = currentColor) ──────────
 const ICONES = {
@@ -958,6 +1249,16 @@ function toast(t){
   setTimeout(() => { d.classList.add("sai"); setTimeout(() => d.remove(), 300) }, 2400);
 }
 const SEM_MOVIMENTO = matchMedia("(prefers-reduced-motion: reduce)").matches;
+// Toque: um anel se espalha a partir do dedo nos elementos tocáveis (o CSS está em .ripple)
+const RIPPLE = ".btn,.chip,.acao,.linha-c,.mimo,.desbloq,.preco-tag,.seg button,.opcoes button,.beneficio,.item,.btn-aviso,.card-extra";
+document.addEventListener("pointerdown", e => {
+  if(SEM_MOVIMENTO) return;
+  const el = e.target.closest?.(RIPPLE); if(!el || el.disabled) return;
+  const r = el.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2.2;
+  const o = document.createElement("span"); o.className = "ripple"; o.setAttribute("aria-hidden", "true");
+  o.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX - r.left - d / 2}px;top:${e.clientY - r.top - d / 2}px`;
+  el.appendChild(o); setTimeout(() => o.remove(), 650);
+}, {passive: true});
 // Entrada em cascata dos blocos da tela
 function animarEntrada(raiz){
   if(!raiz || SEM_MOVIMENTO) return;
@@ -988,7 +1289,7 @@ function suavizarImagens(raiz){
     img.addEventListener("load", ok, {once:true}); img.addEventListener("error", ok, {once:true});
   });
 }
-const CORES = ["#ff2e7e","#ff7a3d","#ffd23d","#7b5cff","#2fd27a","#4fc3ff"];
+const CORES = ["var(--a1)","var(--a1-claro)","var(--ouro)","#F6DDB0","#ffffff","var(--a2)"];
 function confete(qtd = 70){
   if(SEM_MOVIMENTO) return;
   for(let i = 0; i < qtd; i++){
@@ -1516,7 +1817,7 @@ function verMeuPedido(id){
 function mimos(){
   const P = D.pedidos_cfg;
   return `
-    <div class="hero-vip vivo" style="--a1:#7b5cff;--a2:#ff2e7e"><h2>Mande um mimo ${ic("mimo")}</h2>
+    <div class="hero-vip mimos-hero"><h2>Mande um mimo ${ic("mimo")}</h2>
       <p>Um agrado para ${esc(D.criadora.nome)}. Ela recebe na hora e vê que foi você.</p></div>
     ${D.meta ? metaCard(false) : ""}
     <div class="mimos">${D.gorjetas.map((v,i) => `<button class="mimo" data-item="gorjeta_${v}" data-icone="${ICONE_MIMO[i % ICONE_MIMO.length]}"><span class="emoji">${ic(ICONE_MIMO[i % ICONE_MIMO.length])}</span><b>${reais(v)}</b><small>toque para enviar</small></button>`).join("")}</div>
@@ -1949,7 +2250,7 @@ function estatisticas(){
   const max = Math.max(1, ...S.grafico.map(g => g.v));
   const total14 = S.grafico.reduce((a, g) => a + g.v, 0);
   const tv = S.receita_tipos_v, soma = tv.packs + tv.vip + tv.mimos;
-  const cores = {packs:"var(--a1)", vip:"#7b5cff", mimos:"var(--a2)"};
+  const cores = {packs:"var(--a1)", vip:"var(--ouro)", mimos:"var(--a1-claro)"};
   return `
     <div class="secao-titulo"><h2>Estatísticas</h2></div>
     <div class="seg">${[["hoje","Hoje"],["7d","7 dias"],["30d","30 dias"]].map(([k,t]) => `<button class="${PERIODO===k?"on":""}" data-periodo="${k}">${t}</button>`).join("")}</div>
@@ -2326,7 +2627,7 @@ async function acaoFila(ref, acao){
 function agendadosPainel(){
   const A = D.agendados; if(!A || !(A.posts.length + A.packs.length)) return "";
   const itens = [...A.packs.map(p => ({...p, pack: true})), ...A.posts.map(p => ({...p, quando: p.agendado_para}))].sort((a, b) => String(a.quando).localeCompare(String(b.quando)));
-  return `<div class="secao-titulo"><h2>Agendados<span class="contador-fila" style="background:#7b5cff">${itens.length}</span></h2><small class="muted">vão ao ar sozinhos</small></div>
+  return `<div class="secao-titulo"><h2>Agendados<span class="contador-fila" style="background:var(--ouro);color:var(--ouro-tinta)">${itens.length}</span></h2><small class="muted">vão ao ar sozinhos</small></div>
     <div class="fila">${itens.map(x => {
       const ref = `${x.pack ? "pack" : "post"}:${x.id}`;
       return `<div class="fila-item ag-item">
@@ -3005,8 +3306,9 @@ async function copiar(texto, msg){
 
 /* ── Recursos: tela gerada a partir do esquema do servidor ─────────────── */
 let RECURSOS = null;
-const TEMAS = {rosa:["#ff2e7e","#ff7a3d"], roxo:["#7b5cff","#c45cff"], azul:["#2e8bff","#2ed3ff"], verde:["#16b364","#7ad32f"],
-               laranja:["#ff7a1a","#ffc23d"], vermelho:["#e8233a","#ff6a3d"], dourado:["#c9962b","#f1cf6b"]};
+// Cada cor vira o "batom" da loja; os fundos do Camarim se tingem dela (ver --bg no CSS)
+const TEMAS = {rosa:["#D92D5A","#F07A8E"], roxo:["#8A4FE0","#B58CF5"], azul:["#2C6FD6","#6FA3F0"], verde:["#178F5A","#4FC08A"],
+               laranja:["#D9601C","#F2955A"], vermelho:["#C81E32","#E85C68"], dourado:["#A8782A","#D9AE62"]};
 async function carregarRecursos(){
   const r = await api("/api/criadora/recursos");
   if(r.ok){ RECURSOS = r.grupos; if(ABA === "config"){ const c = $("#conteudo"); c.innerHTML = config() } }
@@ -3201,15 +3503,14 @@ ACOES["recurso"] = el => {
     carregar();
   };
 };
+let TEMA_ATUAL = null;
 function aplicarTema(t){
   if(!t) return;
+  TEMA_ATUAL = t;
   const [a1, a2] = TEMAS[t.cor] || TEMAS.rosa, r = document.documentElement.style;
   r.setProperty("--a1", a1); r.setProperty("--a2", a2);
-  if(t.modo){
-    document.documentElement.dataset.temaModo = t.modo;
-    const bg = t.modo === "claro" ? "#ffffff" : t.modo === "escuro" ? "#0b0d12" : null;
-    try{ if(bg){ tg?.setBackgroundColor?.(bg); tg?.setHeaderColor?.(bg) } }catch(e){}
-  }
+  document.documentElement.dataset.temaModo = !t.modo || t.modo === "auto" ? modoAuto() : t.modo;
+  pintarMoldura();
 }
 
 /* ── Conta de acesso e equipe ──────────────────────────────────────────── */
