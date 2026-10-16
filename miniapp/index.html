@@ -8,66 +8,75 @@
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 /* ════════════════════════════════════════════════════════════════════════
-   DESIGN SYSTEM "CAMARIM"
-   O camarim da criadora à noite: paredes de veludo vinho, batom como cor de ação e a luz dourada
-   das lâmpadas do espelho como acento (só para VIP, estrelas e conquistas). Títulos em Bodoni Moda
-   itálico, com voz de revista; todo o resto (botões, números, preços pequenos) em Onest.
-   Os fundos são tingidos pela cor que a criadora escolhe (--a1), então cada loja tem o seu "quarto".
+   DESIGN SYSTEM "BACKSTAGE"
+   A loja é o bastidor de um show: o nome da criadora é o cartaz, cada conteúdo é um ingresso
+   com canhoto de preço, o VIP é a pulseira holográfica de acesso e o PIX é o comprovante.
+   Fundo de grafite com retícula (pontos de impressão), papel tingido pela cor da loja (--a1)
+   para os ingressos, carimbo (a própria --a1) para ações. Anybody condensada nos títulos e
+   preços; Hanken Grotesk no resto. Sombras duras e deslocadas: botão é coisa que se aperta.
    ════════════════════════════════════════════════════════════════════════ */
-@font-face{font-family:'Bodoni Moda';font-style:italic;font-weight:400 900;font-display:swap;src:url(/static/vendor/fonts/bodonimoda-italic-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
-@font-face{font-family:'Bodoni Moda';font-style:italic;font-weight:400 900;font-display:swap;src:url(/static/vendor/fonts/bodonimoda-italic-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
-@font-face{font-family:'Bodoni Moda';font-style:normal;font-weight:400 900;font-display:swap;src:url(/static/vendor/fonts/bodonimoda-normal-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
-@font-face{font-family:'Bodoni Moda';font-style:normal;font-weight:400 900;font-display:swap;src:url(/static/vendor/fonts/bodonimoda-normal-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
-@font-face{font-family:'Onest';font-style:normal;font-weight:400 800;font-display:swap;src:url(/static/vendor/fonts/onest-normal-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
-@font-face{font-family:'Onest';font-style:normal;font-weight:400 800;font-display:swap;src:url(/static/vendor/fonts/onest-normal-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Anybody';font-style:normal;font-weight:400 900;font-stretch:50% 150%;font-display:swap;src:url(/static/vendor/fonts/anybody-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Anybody';font-style:normal;font-weight:400 900;font-stretch:50% 150%;font-display:swap;src:url(/static/vendor/fonts/anybody-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
+@font-face{font-family:'Hanken Grotesk';font-style:normal;font-weight:400 800;font-display:swap;src:url(/static/vendor/fonts/hanken-latin-ext.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF}
+@font-face{font-family:'Hanken Grotesk';font-style:normal;font-weight:400 800;font-display:swap;src:url(/static/vendor/fonts/hanken-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 :root{
   /* cor — a criadora troca --a1/--a2 em Recursos › Cores da loja */
-  --a1:#D92D5A;                         /* batom: comprar, curtir, ações principais */
-  --a2:#F07A8E;                         /* batom claro (compatibilidade com gradientes antigos) */
-  --a1-claro: color-mix(in oklab, var(--a1), #fff 34%);   /* batom legível como texto pequeno no escuro */
-  --ouro:#E6BE7E;                       /* luz de camarim: VIP, estrelas, ranking, conquistas */
-  --ouro-tinta:#2A1408;                 /* texto sobre o dourado */
-  --bg:    color-mix(in oklab, var(--a1) 9%,  #0E070A);
-  --bg2:   color-mix(in oklab, var(--a1) 12%, #150B10);
-  --card:  color-mix(in oklab, var(--a1) 14%, #1B0E14);
-  --card2: color-mix(in oklab, var(--a1) 18%, #24131B);
-  --text:#F7ECEE;
-  --muted: color-mix(in oklab, var(--a1) 14%, #B09AA2);
-  --line: color-mix(in oklab, var(--text) 9%, transparent);
-  --line-forte: color-mix(in oklab, var(--text) 17%, transparent);
+  --a1:#E3263E;                         /* carimbo: comprar, desbloquear, o que está ativo */
+  --a2:#FF6B7E;
+  --a1-claro: color-mix(in oklab, var(--a1), #fff 30%);   /* carimbo legível como texto no escuro */
+  --a1-fundo: color-mix(in oklab, var(--a1), #000 42%);   /* sombra dura dos botões de carimbo */
+  /* papel dos ingressos: a cor da loja bem clara, com tinta escura por cima */
+  --papel:  color-mix(in oklab, var(--a1) 26%, #FFF6F8);
+  --papel2: color-mix(in oklab, var(--a1) 14%, #FFFAFB);
+  --tinta:  color-mix(in oklab, var(--a1) 22%, #150A10);
+  /* VIP é holográfico: só a pulseira, o plano escolhido e o que é exclusivo */
+  --holo: linear-gradient(100deg,#C9F2FF 0%,#FFD1F4 28%,#FFF4C2 52%,#C8FFE0 76%,#D6D0FF 100%);
+  --ouro:#CDBBFF; --ouro-tinta:var(--tinta); --ouro-txt:#D9CCFF;
+  --grad-ouro: var(--holo);
+  /* grafite tingido */
+  --bg:    color-mix(in oklab, var(--a1) 6%,  #141015);
+  --bg2:   color-mix(in oklab, var(--a1) 7%,  #1B161D);
+  --card:  color-mix(in oklab, var(--a1) 7%,  #211B24);
+  --card2: color-mix(in oklab, var(--a1) 9%,  #2A232E);
+  --text:#F5ECF0;
+  --muted: color-mix(in oklab, var(--a1) 10%, #A99BA8);
+  --line: #FFFFFF17;
+  --line-forte: #FFFFFF2E;
+  --pontos: rgba(255,255,255,.055);
   --accent: var(--a1);
-  --grad: linear-gradient(170deg, color-mix(in oklab, var(--a1), #fff 16%) 0%, var(--a1) 46%, color-mix(in oklab, var(--a1), #000 24%) 100%);
-  --grad-ouro: linear-gradient(170deg, #F6DDB0 0%, var(--ouro) 45%, #B98A48 100%);
-  --ok:#3DD68C; --warn:#F2B35B; --err:#FF5A62;
-  --ouro-txt: var(--ouro);
-  /* raio por hierarquia: mídia grande > cartão > controle > etiqueta */
-  --r-xl:26px; --r:20px; --rs:14px; --r-xs:10px;
-  /* elevação: luz de topo + sombra tingida (nada de cinza genérico) */
-  --luz: inset 0 1px 0 color-mix(in oklab, #fff 7%, transparent);
-  --sombra: 0 1px 0 rgba(0,0,0,.28), 0 14px 34px -14px color-mix(in oklab, var(--a1) 30%, rgba(0,0,0,.7));
-  --sombra-alta: 0 30px 70px -20px rgba(0,0,0,.75), 0 0 0 1px var(--line);
-  /* tipografia: escala 12 · 13.5 · 15 · 17 · 20 · 24 · 30 · 44 */
-  --f-titulo: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
-  --f-corpo: "Onest", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --grad: linear-gradient(var(--a1), var(--a1));
+  --ok:#3DDC84; --warn:#FFB547; --err:#FF5C6A;
+  /* raio por função: papel quase reto, controles levemente arredondados, avatar redondo */
+  --r-xl:10px; --r:8px; --rs:6px; --r-xs:4px;
+  /* elevação dura: deslocada, sem desfoque genérico */
+  --luz: none;
+  --sombra: 0 0 0 1px var(--line);
+  --sombra-alta: 0 18px 40px -12px rgba(0,0,0,.7), 0 0 0 1px var(--line-forte);
+  --duro: 0 4px 0 var(--a1-fundo);
+  /* tipografia: escala 12 · 13.5 · 15 · 17 · 21 · 26 · 32 · cartaz */
+  --f-titulo: "Anybody", "Arial Narrow", Impact, sans-serif;
+  --f-corpo: "Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   /* movimento */
   --e-sai: cubic-bezier(.2,.8,.2,1);
-  --e-mola: cubic-bezier(.34,1.5,.55,1);
-  --t-rapido:.14s; --t-medio:.26s; --t-lento:.46s;
-  --nav-h:64px;
+  --e-mola: cubic-bezier(.34,1.56,.64,1);
+  --t-rapido:.12s; --t-medio:.22s; --t-lento:.4s;
+  --nav-h:66px;
   color-scheme: dark;
 }
 :root[data-tema-modo="claro"]{
-  --bg:    color-mix(in oklab, var(--a1) 5%,  #FBF4F1);
-  --bg2:   color-mix(in oklab, var(--a1) 7%,  #F6EBE8);
-  --card:  color-mix(in oklab, var(--a1) 4%,  #FFFAF8);
-  --card2: color-mix(in oklab, var(--a1) 8%,  #F3E4E1);
-  --text:#2B1219;
-  --muted: color-mix(in oklab, var(--a1) 12%, #7F636B);
-  --a1-claro: color-mix(in oklab, var(--a1), #000 8%);
-  --ouro:#B98538; --ouro-tinta:#2A1606; --ouro-txt:#8A5D1A; --ok:#14834F; --warn:#A8620E;
-  --luz: inset 0 1px 0 rgba(255,255,255,.7);
-  --sombra: 0 1px 0 rgba(60,20,30,.06), 0 14px 30px -16px color-mix(in oklab, var(--a1) 35%, rgba(60,20,30,.35));
-  --sombra-alta: 0 30px 60px -24px rgba(60,20,30,.4), 0 0 0 1px var(--line);
+  --bg:    color-mix(in oklab, var(--a1) 5%,  #EEE8EB);
+  --bg2:   color-mix(in oklab, var(--a1) 4%,  #F6F2F4);
+  --card:  #FFFFFF;
+  --card2: color-mix(in oklab, var(--a1) 6%,  #F4EEF1);
+  --text: var(--tinta);
+  --muted: color-mix(in oklab, var(--a1) 14%, #6E5B66);
+  --line: #1A0A1218;
+  --line-forte: #1A0A1230;
+  --pontos: rgba(40,10,25,.08);
+  --a1-claro: color-mix(in oklab, var(--a1), #000 12%);
+  --ouro:#7B5CE0; --ouro-txt:#5B3FC4;
+  --ok:#11804A; --warn:#A35F00;
+  --sombra-alta: 0 18px 40px -16px rgba(40,10,25,.35), 0 0 0 1px var(--line-forte);
   color-scheme: light;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -835,225 +844,262 @@ svg.i.laranja{color:#ff8a3d}
 .rec-cab .seta{font-size:13px;color:var(--muted)}
 
 /* ════════════════════════════════════════════════════════════════════════
-   CAMARIM · componentes
-   Tudo abaixo usa só os tokens do topo. Ordem: superfícies, capa, tipografia, controles,
-   conteúdo, VIP (dourado), painel, folhas e retornos, movimento.
+   BACKSTAGE · componentes
+   Tudo abaixo usa só os tokens do topo. Ordem: base, cartaz (topo), tipografia, controles,
+   ingressos (conteúdo), pulseira (VIP), painel, dock, folhas e comprovante, movimento.
    ════════════════════════════════════════════════════════════════════════ */
 
-/* superfícies: tom + luz de topo, sem borda cinza genérica */
-.post,.kpi,.grupo,.acao,.item,.beneficio,.troca,.renovar,.meta,.ranking,.grafico,.card-extra,.fila-item,.coment,.coment-mod,.card-pedido,.texto-pedido,.campo-rec .linha-bool,.vip-ativo,.mimo,.plano,.seg,.opcoes,.codigo,.bloqueio-vip{
-  background:var(--card);border-color:var(--line);box-shadow:var(--luz)}
+/* base: grafite com retícula de impressão */
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(var(--pontos) 1px,transparent 1.3px) 0 0/5px 5px,
+    radial-gradient(90% 40% at 100% 0%,color-mix(in oklab,var(--a1) 14%,transparent),transparent 70%),var(--bg)}
+h2{font:900 26px/.95 var(--f-titulo);font-stretch:62%;text-transform:uppercase;letter-spacing:0}
+:focus-visible{outline:2px solid var(--a1-claro);outline-offset:2px;border-radius:4px}
 
-/* ── Capa e masthead: o nome da criadora como capa de revista ─────────── */
-.capa{height:240px;background:
-  radial-gradient(80% 90% at 85% 0%, color-mix(in oklab,var(--ouro) 38%,transparent), transparent 62%),
-  radial-gradient(90% 100% at 0% 20%, color-mix(in oklab,var(--a1) 75%,transparent), transparent 70%),
-  var(--bg2)}
-.capa img{filter:blur(22px) saturate(1.1) brightness(.62);transform:scale(1.35)}
-.capa::before{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;mix-blend-mode:soft-light;
-  background:linear-gradient(155deg,color-mix(in oklab,var(--a1) 80%,transparent),transparent 60%),radial-gradient(60% 80% at 90% 0%,color-mix(in oklab,var(--ouro) 60%,transparent),transparent 70%)}
-.capa::after{z-index:1;background:linear-gradient(180deg,transparent 25%,color-mix(in oklab,var(--bg) 55%,transparent) 62%,var(--bg) 100%)}
-.capa .bolha{display:none}
-.perfil{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;column-gap:14px;text-align:left;margin-top:-104px;padding:0 18px;z-index:2}
-.perfil>.avatar-wrap{grid-column:2;grid-row:1}
-.perfil>.nome{grid-column:1;grid-row:1;display:block;margin:0 0 4px;font:italic 600 clamp(36px,11vw,48px)/.95 var(--f-titulo);letter-spacing:-.03em;text-wrap:balance;overflow-wrap:anywhere;text-shadow:0 2px 30px rgba(0,0,0,.5)}
-.perfil>.nome .verif{width:22px;height:22px;vertical-align:.32em;margin-left:2px;font-size:12px}
-.perfil>.bio,.perfil>.selo-criadora,.perfil>.stats{grid-column:1/-1;justify-self:start}
-.perfil>.sk{grid-column:1/-1}
-.avatar{width:86px;height:86px;border:3px solid var(--bg);box-shadow:none}
-.verif{background:var(--a1);box-shadow:0 0 0 2px var(--bg)}
-.bio{margin:14px 0 0;font-size:14.5px;line-height:1.5;color:color-mix(in oklab,var(--text) 80%,transparent);max-width:46ch}
-.stats{gap:0;margin:16px 0 0}
-.stats div{text-align:left;padding-right:18px;margin-right:18px;border-right:1px solid var(--line-forte)}
-.stats div:last-child{border:0;margin:0;padding:0}
-.stats b{font-size:19px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-.stats small{font-size:12.5px}
-:root[data-tema-modo="claro"] .perfil>.nome{text-shadow:none}
-:root[data-tema-modo="claro"] .capa img{brightness:1;filter:blur(22px) saturate(1.1) brightness(.95)}
+/* superfícies: placas planas com fio, sem sombra difusa */
+.kpi,.grupo,.acao,.item,.beneficio,.troca,.renovar,.meta,.ranking,.grafico,.card-extra,.fila-item,.coment,.coment-mod,.card-pedido,.texto-pedido,.campo-rec .linha-bool,.vip-ativo,.mimo,.plano,.seg,.opcoes,.codigo,.bloqueio-vip{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:none}
+
+/* ── Cartaz: o nome da criadora como cartaz de show ──────────────────── */
+.capa{height:0;overflow:visible;background:none}
+.capa>*{display:none}
+.capa::after,.capa::before{display:none}
+.perfil{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:14px;row-gap:0;align-items:center;text-align:left;margin:0;padding:calc(18px + env(safe-area-inset-top)) 16px 0}
+.perfil>.nome{grid-column:1/-1;grid-row:1;display:block;margin:2px 0 14px -2px;
+  font:900 clamp(48px,calc((min(100vw,560px) - 32px) / (var(--n,8) * .5)),118px)/.8 var(--f-titulo);font-stretch:50%;
+  text-transform:uppercase;letter-spacing:-.005em;color:var(--papel);overflow-wrap:anywhere;text-wrap:balance}
+.perfil>.nome .verif{width:24px;height:24px;font-size:13px;vertical-align:top;margin-left:4px;background:var(--a1);color:#fff;border-radius:50%;box-shadow:none;position:relative;top:.06em}
+.perfil>.avatar-wrap{grid-column:1;grid-row:2;align-self:start}
+.perfil>.anel{grid-column:1;grid-row:2}
+.perfil>.bio{grid-column:2;grid-row:2;margin:0;font-size:15px;line-height:1.4;color:var(--text);max-width:40ch}
+.perfil>.selo-criadora,.perfil>.stats,.perfil>.sk{grid-column:1/-1}
+.avatar{width:64px;height:64px;border:2px solid var(--papel);font-size:26px;background:var(--a1)}
+.anel{padding:0;background:none;box-shadow:none}
+.anel.story{padding:3px;background:conic-gradient(from var(--ang),#C9F2FF,#FFD1F4,#FFF4C2,#C8FFE0,#D6D0FF,#C9F2FF)}
+.anel.story .avatar{border-color:var(--bg)}
+.lapis{background:var(--papel);color:var(--tinta)}
+.stats{display:flex;gap:0;margin:16px 0 0;padding:10px 0 0;border-top:1px solid var(--line-forte);justify-self:stretch}
+.stats div{flex:1;text-align:left;padding:0;margin:0;border:0}
+.stats b{display:inline;font:900 24px/1 var(--f-titulo);font-stretch:70%;font-variant-numeric:tabular-nums;margin-right:4px}
+.stats small{font-size:13px;color:var(--muted)}
+.selo-criadora{justify-self:start;margin-top:14px;background:transparent;border:1.5px solid var(--ouro);color:var(--ouro-txt);border-radius:var(--r-xs);font-weight:700;padding:5px 10px}
 
 /* ── Tipografia de seção ─────────────────────────────────────────────── */
-.secao-titulo{padding:28px 18px 12px;align-items:baseline;gap:12px}
-.secao-titulo h2{font-size:24px}
-.secao-titulo small{font-size:12.5px}
-.aj-painel .secao-titulo h2{font-size:19px}
-.folha h2{font-size:28px;line-height:1.08;padding-right:46px;margin-bottom:2px}
+.secao-titulo{padding:28px 16px 12px;align-items:baseline;gap:12px}
+.secao-titulo h2{font-size:30px}
+.secao-titulo small{font-size:13px}
+.aj-painel .secao-titulo h2{font-size:24px}
+.folha h2{font-size:32px;line-height:.95;padding-right:46px;margin-bottom:6px}
 .sub{font-size:14.5px;line-height:1.5}
-.rotulo{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.005em}
+.rotulo{font-size:13px;font-weight:700;color:var(--muted)}
 .legenda-grupo,.dica{line-height:1.5}
 
-/* ── Controles ───────────────────────────────────────────────────────── */
-.btn{border-radius:16px;padding:15px 18px;background:var(--grad);color:#fff;font-weight:700;letter-spacing:.005em;
-  box-shadow:var(--luz),inset 0 -2px 0 rgba(0,0,0,.2),0 14px 28px -14px color-mix(in oklab,var(--a1) 85%,transparent);
-  transition:transform var(--t-rapido) var(--e-sai),box-shadow var(--t-medio) var(--e-sai),filter var(--t-medio)}
-.btn:active{transform:translateY(1px) scale(.982);box-shadow:var(--luz),inset 0 -1px 0 rgba(0,0,0,.2),0 6px 14px -10px color-mix(in oklab,var(--a1) 85%,transparent)}
-.btn:disabled{opacity:.62;filter:saturate(.7);box-shadow:var(--luz)}
-.btn.sec{background:var(--card2);color:var(--text);border:1px solid var(--line);box-shadow:var(--luz)}
-.btn.fantasma{background:transparent;color:var(--muted);box-shadow:none;border:0}
-.btn.mini{padding:9px 14px;border-radius:12px;font-size:13.5px}
-.btn.perigo{background:color-mix(in oklab,var(--err) 16%,var(--card2));color:var(--err) !important;box-shadow:var(--luz)}
-.chip{padding:8px 15px;background:transparent;border:1px solid var(--line-forte);color:var(--muted);font-weight:600}
-.chip.on{background:color-mix(in oklab,var(--a1) 24%,var(--card));border-color:color-mix(in oklab,var(--a1) 60%,transparent);color:var(--text)}
-.seg,.opcoes{border-radius:14px;padding:4px}
-.seg button.on,.opcoes button.on,.grupo-filtro .opcoes button.on,.alt-vista button.on{background:var(--text);color:var(--bg)}
+/* ── Controles: carimbo que se aperta ────────────────────────────────── */
+.btn{border-radius:var(--rs);padding:15px 18px;background:var(--a1);color:#fff;font:900 19px/1 var(--f-titulo);font-stretch:72%;text-transform:uppercase;letter-spacing:.01em;
+  box-shadow:var(--duro);transition:transform var(--t-rapido) var(--e-sai),box-shadow var(--t-rapido) var(--e-sai),filter var(--t-medio)}
+.btn svg.i{width:1.05em;height:1.05em}
+.btn:active{transform:translateY(4px);box-shadow:0 0 0 var(--a1-fundo)}
+.btn:disabled{opacity:.6;filter:saturate(.6);box-shadow:none}
+.btn.sec{background:var(--card2);color:var(--text);border:1px solid var(--line-forte);box-shadow:0 4px 0 rgba(0,0,0,.35)}
+:root[data-tema-modo="claro"] .btn.sec{box-shadow:0 4px 0 var(--line-forte)}
+.btn.sec:active{box-shadow:none}
+.btn.fantasma{background:transparent;color:var(--muted);box-shadow:none;border:0;font:700 15px/1.2 var(--f-corpo);text-transform:none}
+.btn.mini{padding:10px 14px;border-radius:var(--r-xs);font-size:15px;box-shadow:0 3px 0 var(--a1-fundo)}
+.btn.mini.sec{box-shadow:0 3px 0 rgba(0,0,0,.35)}
+.btn.mini:active{transform:translateY(3px);box-shadow:none}
+.btn.perigo{background:color-mix(in oklab,var(--err) 14%,var(--card2));color:var(--err) !important;box-shadow:none;border:1px solid color-mix(in oklab,var(--err) 40%,transparent)}
+.chip{padding:8px 14px;border-radius:var(--r-xs);background:transparent;border:1.5px solid var(--line-forte);color:var(--muted);font-weight:700}
+.chip.on{background:var(--papel);border-color:var(--papel);color:var(--tinta)}
+.seg,.opcoes{border-radius:var(--r);padding:4px}
+.seg button,.opcoes button{border-radius:var(--r-xs)}
+.seg button.on,.opcoes button.on,.grupo-filtro .opcoes button.on,.alt-vista button.on{background:var(--papel);color:var(--tinta)}
 .grupo-filtro .opcoes button{background:transparent;border-color:var(--line-forte)}
-input[type=text],input[type=password],textarea,input[type=datetime-local]{background:var(--card);border:1.5px solid var(--line-forte);border-radius:14px;box-shadow:inset 0 1px 3px rgba(0,0,0,.2);transition:border-color var(--t-medio),box-shadow var(--t-medio)}
-:root[data-tema-modo="claro"] input[type=text],:root[data-tema-modo="claro"] input[type=password],:root[data-tema-modo="claro"] textarea{box-shadow:inset 0 1px 2px rgba(60,20,30,.06)}
-input:focus,textarea:focus,input[type=datetime-local]:focus{border-color:var(--a1);box-shadow:0 0 0 4px color-mix(in oklab,var(--a1) 22%,transparent)}
-.chave{background:var(--line-forte)}
+input[type=text],input[type=password],textarea,input[type=datetime-local]{background:var(--card);border:1.5px solid var(--line-forte);border-radius:var(--rs);box-shadow:none;transition:border-color var(--t-medio),box-shadow var(--t-medio)}
+input:focus,textarea:focus,input[type=datetime-local]:focus{border-color:var(--a1);box-shadow:0 0 0 3px color-mix(in oklab,var(--a1) 25%,transparent)}
+.chave{background:var(--line-forte);border-radius:999px}
 .chave.on{background:var(--a1)}
-.chave::after{box-shadow:0 2px 6px rgba(0,0,0,.35)}
-.escolher{border-color:var(--line-forte);border-radius:var(--r);color:var(--text);background:color-mix(in oklab,var(--card) 60%,transparent)}
+.escolher{border:1.5px dashed var(--line-forte);border-radius:var(--r);color:var(--text);background:transparent}
 .escolher:active{border-color:var(--a1)}
-
-/* toque: anel que se espalha a partir do dedo (o script cria o .ripple) */
-.btn,.chip,.acao,.linha-c,.mimo,.desbloq,.preco-tag,.seg button,.opcoes button,.beneficio,.item,.btn-aviso,.card-extra{position:relative;overflow:hidden}
-.ripple{position:absolute;border-radius:50%;pointer-events:none;background:currentColor;opacity:.2;transform:scale(0);animation:ripple .6s var(--e-sai) forwards}
-@keyframes ripple{to{transform:scale(1);opacity:0}}
-
-/* ── Conteúdo: posts e vitrine ───────────────────────────────────────── */
-.feed{gap:18px}
-.post{border:0;border-radius:var(--r-xl);box-shadow:var(--luz),var(--sombra)}
-.post .cab{padding:12px 16px 10px}
-.post .cab b{font-weight:650}
-.post .midia,.post .foto-wrap{margin:0 8px;border-radius:18px;overflow:hidden}
-.post .foto-wrap .midia{margin:0}
-.post-texto img.foto-post{border-radius:18px;width:calc(100% - 16px);margin:0 8px}
-.post .rodape{padding:14px 16px 16px}
-.post .rodape b{font-size:15.5px;font-weight:650}
-.legenda{padding:2px 16px 12px}
-.post-texto .corpo{padding:0 16px 14px;font-size:15.5px}
-.preco-tag{background:var(--grad);box-shadow:var(--luz),0 10px 22px -10px color-mix(in oklab,var(--a1) 85%,transparent);font-weight:700;padding:9px 15px}
-.preco-tag.ok{background:color-mix(in oklab,var(--ok) 12%,var(--card2));box-shadow:var(--luz);border:0}
-.midia .veu{background:linear-gradient(180deg,rgba(14,6,9,.05),rgba(14,6,9,.55))}
-.cadeado{animation:none;background:rgba(20,8,12,.32);border-color:rgba(255,255,255,.24);width:60px;height:60px}
-.desbloq{background:var(--a1);color:#fff;font-weight:700;padding:11px 18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 12px 28px -8px rgba(0,0,0,.55)}
-.comprado-selo{background:color-mix(in oklab,var(--ok) 88%,#000);color:#04170D;font-weight:700}
-.pill,.tag-combo{background:rgba(14,6,9,.55)}
-.grade{gap:8px}
-.grade .card{border-radius:16px;box-shadow:var(--luz),var(--sombra)}
-.grade .card .veu{background:linear-gradient(180deg,transparent 40%,rgba(14,6,9,.78))}
-.interacao.on{color:var(--a1-claro)}
-.enquete .opc{border-color:var(--line-forte)}
-.enquete .opc.meu{border-color:var(--a1)}
-.btn-cart{background:var(--card2);border-color:var(--line)}
-.carrinho-bar{background:color-mix(in oklab,var(--card2) 88%,transparent);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid var(--line-forte);box-shadow:var(--sombra-alta);color:var(--text)}
-.item img,.item .thumb{border-radius:12px}
-.item b,.acao b,.grupo .linha-c b{font-weight:600}
-.acao .ico,.grupo .linha-c .ico,.beneficio .ico,.card-extra .ico{background:color-mix(in oklab,var(--a1) 17%,transparent);color:var(--a1-claro)}
-.card-extra .ico{background:var(--grad);color:#fff}
-.vazio{padding:56px 28px}
-.vazio .ico{color:var(--a1-claro);opacity:.9}
-
-/* ── VIP é dourado: a luz do camarim ─────────────────────────────────── */
-.cta-vip{margin:20px 16px 0;padding:16px 16px 16px 18px;border-radius:var(--r);background:var(--grad-ouro) !important;color:var(--ouro-tinta);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.45),inset 0 -2px 0 rgba(90,50,10,.25),0 18px 40px -18px color-mix(in oklab,var(--ouro) 75%,transparent)}
-.cta-vip b{font:italic 700 21px/1.1 var(--f-titulo);letter-spacing:-.01em}
-.cta-vip small{opacity:.78;font-size:13px;font-weight:500}
-.cta-vip .seta{background:rgba(42,20,8,.12);color:var(--ouro-tinta)}
-.cta-vip::before{display:none}
-.hero-vip{background:var(--grad-ouro) !important;color:var(--ouro-tinta);border-radius:var(--r-xl);padding:26px 20px;box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 22px 44px -22px color-mix(in oklab,var(--ouro) 80%,transparent)}
-.hero-vip h2{color:var(--ouro-tinta);font-size:32px}
-.hero-vip p{opacity:.8}
-.hero-vip::after{background:var(--ouro-tinta);opacity:.1}
-.hero-vip.mimos-hero{background:var(--grad) !important;color:#fff}
-.hero-vip.mimos-hero h2{color:#fff}
-.hero-vip.mimos-hero::after{background:#fff;opacity:.14}
-.plano{border:1.5px solid var(--line)}
-.plano.on{border-color:var(--ouro);background:color-mix(in oklab,var(--ouro) 9%,var(--card));box-shadow:var(--luz),0 0 0 4px color-mix(in oklab,var(--ouro) 16%,transparent)}
-.plano.on .radio{border-color:var(--ouro);background:var(--ouro)}
-.plano.on .radio::after{background:var(--ouro-tinta)}
-.plano .valor b{font-variant-numeric:tabular-nums}
-.popular{background:var(--grad-ouro);color:var(--ouro-tinta);font-weight:700;letter-spacing:0}
-.beneficio .ico,.bloq-lista .li-ico{background:color-mix(in oklab,var(--ouro) 16%,transparent);color:var(--ouro-txt)}
-.vip-ativo .ico,.bloqueio-vip.tela .ico{background:var(--grad-ouro);color:var(--ouro-tinta)}
-.vip-ativo .barra-prog i{background:var(--grad-ouro)}
-.bloqueio-vip{border:1.5px dashed color-mix(in oklab,var(--ouro) 45%,transparent)}
-.selo-criadora{background:color-mix(in oklab,var(--ouro) 16%,transparent);color:var(--ouro-txt);font-weight:700}
-.selo-story{background:var(--a1)}
-.ranking .pos.medalha{color:var(--ouro-txt)}
-
-/* ── Painel da criadora ──────────────────────────────────────────────── */
-.ola{background:var(--grad) !important;border-radius:var(--r-xl);padding:20px 20px 18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),0 22px 44px -22px color-mix(in oklab,var(--a1) 85%,transparent)}
-.ola small{font-weight:600}
-.ola b{font-size:36px;font-weight:700;letter-spacing:-.035em;margin:4px 0}
-.ola .deco{animation:none;opacity:.22}
-.kpi{border-radius:18px}
-.kpi b{font-weight:650;font-size:22px}
-.kpi.destaque{background:var(--grad);box-shadow:var(--luz)}
-.grafico .col{background:color-mix(in oklab,var(--a1) 28%,transparent)}
-.grafico .col.hoje{background:var(--grad)}
-.grupo{border-radius:20px}
+.acao .ico,.grupo .linha-c .ico,.beneficio .ico,.card-extra .ico{background:var(--card2);color:var(--a1-claro);border-radius:var(--r-xs)}
+.card-extra .ico{background:var(--a1);color:#fff}
+.item img,.item .thumb{border-radius:var(--r-xs)}
+.item b,.acao b,.grupo .linha-c b{font-weight:700}
 .grupo .linha-c{border-color:var(--line)}
 .grupo .linha-c .v{font-weight:700;font-variant-numeric:tabular-nums}
 .grupo .linha-c.add{color:var(--a1-claro)}
-.fab{background:var(--grad);border-radius:20px;box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 18px 36px -12px color-mix(in oklab,var(--a1) 90%,transparent)}
-.contador-fila{background:var(--a1)}
-.aj-topo{background:color-mix(in oklab,var(--bg) 88%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.vazio{padding:56px 28px}
+.vazio .ico{color:var(--a1-claro)}
 
-/* ── Barra inferior: dock de veludo ──────────────────────────────────── */
-.barra nav{background:color-mix(in oklab,var(--bg2) 74%,transparent);border:1px solid var(--line);box-shadow:var(--luz),0 20px 44px -12px rgba(0,0,0,.65)}
-:root[data-tema-modo="claro"] .barra nav{box-shadow:var(--luz),0 18px 36px -16px rgba(60,20,30,.3)}
-.barra nav .pilula{background:color-mix(in oklab,var(--a1) 20%,transparent);box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--a1) 42%,transparent)}
-.barra nav button{font-weight:600}
-.barra nav button.on{color:var(--text)}
-.barra nav button.on .ico{color:var(--a1-claro)}
-.barra nav .bolinha{background:var(--a1)}
-.topo-fixo{background:color-mix(in oklab,var(--bg) 82%,transparent);border-bottom:1px solid var(--line)}
-.topo-fixo b{font:italic 600 18px/1.1 var(--f-titulo)}
+/* toque: carimbo de tinta que se espalha a partir do dedo (o script cria o .ripple) */
+.btn,.chip,.acao,.linha-c,.mimo,.desbloq,.preco-tag,.seg button,.opcoes button,.beneficio,.item,.btn-aviso,.card-extra{position:relative;overflow:hidden}
+.ripple{position:absolute;border-radius:50%;pointer-events:none;background:currentColor;opacity:.22;transform:scale(0);animation:ripple .5s var(--e-sai) forwards}
+@keyframes ripple{to{transform:scale(1);opacity:0}}
 
-/* ── Folhas, toasts e retornos ───────────────────────────────────────── */
-.fundo{background:color-mix(in oklab,var(--bg) 40%,rgba(0,0,0,.6));backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-.folha{background:var(--bg2);border-radius:28px 28px 0 0;padding:10px 20px calc(20px + env(safe-area-inset-bottom));box-shadow:var(--luz),0 -24px 60px -24px rgba(0,0,0,.6);animation:sobe .42s cubic-bezier(.2,.9,.25,1)}
+/* ── Ingressos: cada conteúdo é um ticket com canhoto ────────────────── */
+/* o post troca os tokens localmente: dentro do ingresso, papel e tinta */
+.post{--text:var(--tinta);--muted:color-mix(in oklab,var(--tinta) 62%,var(--papel));--card:var(--papel2);--card2:color-mix(in oklab,var(--tinta) 8%,var(--papel));
+  --line:color-mix(in oklab,var(--tinta) 16%,transparent);--line-forte:color-mix(in oklab,var(--tinta) 30%,transparent);--a1-claro:var(--a1);
+  background:var(--papel);color:var(--tinta);border:0;border-radius:var(--r);box-shadow:none;overflow:hidden;position:relative}
+.feed{gap:16px}
+.post .cab{padding:12px 14px 10px}
+.post .cab b{font-weight:800}
+.post .midia,.post .foto-wrap{margin:0;border-radius:0}
+.post-texto img.foto-post{border-radius:0;width:100%;margin:0}
+.legenda{padding:2px 14px 12px}
+.post-texto .corpo{padding:0 14px 14px;font-size:15.5px}
+/* canhoto: picote tracejado com os dois furos nas bordas */
+.post .rodape{position:relative;padding:14px 14px 14px;border-top:2px dashed color-mix(in oklab,var(--tinta) 32%,transparent);align-items:center}
+.post .rodape::before,.post .rodape::after{content:"";position:absolute;top:-10px;width:18px;height:18px;border-radius:50%;background:var(--bg)}
+.post .rodape::before{left:-9px}.post .rodape::after{right:-9px}
+.post .rodape b{font:900 23px/1 var(--f-titulo);font-stretch:62%;text-transform:uppercase;letter-spacing:.005em}
+.post .rodape small{font-size:13px;font-weight:600}
+.preco-tag{background:var(--a1);color:#fff;border-radius:var(--r-xs);font:900 21px/1 var(--f-titulo);font-stretch:75%;padding:10px 13px 9px;box-shadow:0 3px 0 var(--a1-fundo);transition:transform var(--t-rapido) var(--e-sai),box-shadow var(--t-rapido) var(--e-sai)}
+.preco-tag:active{transform:translateY(3px) !important;box-shadow:none}
+.preco-tag.promo s{font:700 13px/1 var(--f-corpo);opacity:.75}
+.preco-tag.ok{background:transparent;color:var(--tinta);border:2px solid var(--tinta);box-shadow:none;font-size:18px}
+.btn-cart{background:transparent;border:2px solid var(--line-forte);border-radius:var(--r-xs);color:var(--tinta)}
+.btn-cart.on{background:var(--tinta);color:var(--papel);border-color:var(--tinta)}
+.midia{background:var(--tinta)}
+.midia .veu{background:linear-gradient(180deg,rgba(10,4,8,0),rgba(10,4,8,.5));justify-content:flex-end;padding-bottom:58px}
+.cadeado{animation:none;background:rgba(10,4,8,.45);border:1.5px solid rgba(255,255,255,.35);width:54px;height:54px;color:#fff}
+.desbloq{background:var(--a1);color:#fff;border-radius:var(--r-xs);font:900 19px/1 var(--f-titulo);font-stretch:72%;text-transform:uppercase;padding:13px 16px 12px;box-shadow:0 4px 0 var(--a1-fundo)}
+.desbloq:active{transform:translateY(4px);box-shadow:none}
+.comprado-selo{background:var(--ok);color:#03190C;border-radius:var(--r-xs);font-weight:800;transform:rotate(-3deg)}
+/* selo de promoção vira carimbo torto */
+.tag-relampago{border-radius:var(--r-xs) !important;transform:rotate(-4deg);background:var(--papel) !important;color:var(--a1) !important;border:2.5px solid var(--a1);font:900 16px/1 var(--f-titulo) !important;font-stretch:72% !important;text-transform:uppercase;box-shadow:none !important}
+.pill,.tag-combo{background:rgba(10,4,8,.62);border-radius:var(--r-xs)}
+.interacoes{padding:0 6px 10px}
+.interacao{border-radius:var(--r-xs);color:var(--tinta)}
+.interacao.on{color:var(--a1)}
+.interacao:active{background:color-mix(in oklab,var(--tinta) 10%,transparent)}
+.enquete .opc{border-color:var(--line-forte);border-radius:var(--r-xs)}
+.enquete .opc.meu{border-color:var(--a1)}
+/* grade (miniaturas): ingresso pequeno */
+.grade{gap:8px}
+.grade .card{border-radius:var(--r);box-shadow:none;background:var(--papel)}
+.grade .card .veu{background:linear-gradient(180deg,transparent 40%,rgba(10,4,8,.82))}
+.grade .card .veu b{font:900 17px/1 var(--f-titulo);font-stretch:62%;text-transform:uppercase}
+.carrinho-bar{background:var(--papel);color:var(--tinta);border:0;border-radius:var(--r);box-shadow:var(--sombra-alta)}
+.carrinho-bar .btn{box-shadow:0 3px 0 var(--a1-fundo)}
+
+/* ── Pulseira VIP: holograma ─────────────────────────────────────────── */
+.cta-vip{margin:22px -6px 0;padding:15px 30px 15px 28px;border-radius:0;transform:rotate(-1.8deg);color:var(--tinta);
+  background:radial-gradient(circle,var(--bg) 3px,transparent 3.5px) 4px 0/10px 12px repeat-y,radial-gradient(circle,var(--bg) 3px,transparent 3.5px) calc(100% - 4px) 0/10px 12px repeat-y,var(--holo) !important;
+  box-shadow:0 12px 30px -14px rgba(255,190,235,.55)}
+.cta-vip b{font:900 26px/.9 var(--f-titulo);font-stretch:58%;text-transform:uppercase}
+.cta-vip small{display:block;margin-top:4px;opacity:.78;font-size:13px;font-weight:600}
+.cta-vip .seta{background:var(--tinta);color:var(--papel2);border-radius:var(--r-xs);width:40px;height:40px}
+.cta-vip::before{display:none}
+.cta-vip:active{transform:rotate(-1.8deg) scale(.98)}
+.cta-vip.brilho::after{background:linear-gradient(110deg,transparent 38%,rgba(255,255,255,.7) 50%,transparent 62%);animation-duration:4.5s}
+.hero-vip{background:var(--holo) !important;color:var(--tinta);border-radius:0;padding:24px 20px 22px;transform:rotate(-1.2deg);margin:18px 10px 6px;box-shadow:0 14px 34px -16px rgba(255,190,235,.6)}
+.hero-vip h2{color:var(--tinta);font-size:40px}
+.hero-vip p{opacity:.8;color:var(--tinta)}
+.hero-vip::after{background:var(--tinta);opacity:.08}
+.hero-vip.mimos-hero{background:var(--a1) !important;color:#fff;transform:rotate(1deg)}
+.hero-vip.mimos-hero h2,.hero-vip.mimos-hero p{color:#fff}
+.hero-vip.mimos-hero::after{background:#fff;opacity:.14}
+.plano{border:1.5px solid var(--line-forte)}
+.plano b{font-weight:800}
+.plano .valor b{font:900 24px/1 var(--f-titulo);font-stretch:72%;font-variant-numeric:tabular-nums}
+.plano.on{border:0;background:var(--holo);color:var(--tinta);--muted:color-mix(in oklab,var(--tinta) 65%,#fff)}
+.plano.on .radio{border-color:var(--tinta);background:var(--tinta)}
+.plano.on .radio::after{background:#fff}
+.popular{background:var(--tinta);color:var(--papel2);border-radius:var(--r-xs);font-weight:800;letter-spacing:0}
+.beneficio .ico,.bloq-lista .li-ico{background:var(--card2);color:var(--ouro-txt)}
+.vip-ativo .ico,.bloqueio-vip.tela .ico{background:var(--holo);color:var(--tinta);border-radius:var(--r-xs)}
+.vip-ativo .barra-prog i,.renovar .barra-prog i{background:var(--holo)}
+.barra-prog{border-radius:2px;height:6px}
+.barra-prog i{border-radius:2px}
+.bloqueio-vip{border:2px dashed var(--line-forte)}
+.selo-story{background:var(--a1);border-radius:var(--r-xs)}
+.ranking .pos.medalha{color:var(--ouro-txt)}
+.eco{border-radius:var(--r-xs)}
+
+/* ── Painel da criadora: bilheteria ──────────────────────────────────── */
+.ola{background:var(--papel) !important;color:var(--tinta);border-radius:var(--r);padding:18px 18px 16px;box-shadow:none;position:relative}
+.ola::before,.ola::after{content:"";position:absolute;top:50%;margin-top:-9px;width:18px;height:18px;border-radius:50%;background:var(--bg)}
+.ola::before{left:-9px}.ola::after{right:-9px}
+.ola small{font-weight:700;opacity:.75}
+.ola b{font:900 52px/.95 var(--f-titulo);font-stretch:66%;letter-spacing:0;margin:6px 0 4px}
+.ola span{opacity:.8}
+.ola .deco{animation:none;opacity:.18;color:var(--tinta)}
+.kpi{border-radius:var(--r)}
+.kpi b{font:900 28px/1.05 var(--f-titulo);font-stretch:68%;margin-top:4px}
+.kpi.destaque{background:var(--a1);border:0;box-shadow:none}
+.grafico .col{background:color-mix(in oklab,var(--text) 18%,transparent);border-radius:2px 2px 0 0}
+.grafico .col.hoje{background:var(--a1)}
+.grupo{border-radius:var(--r)}
+.fab{background:var(--a1);border-radius:var(--r);box-shadow:0 5px 0 var(--a1-fundo)}
+.fab:active{transform:translateY(5px) !important;box-shadow:none}
+.contador-fila{background:var(--a1);border-radius:var(--r-xs)}
+.aj-topo{background:var(--bg)}
+
+/* ── Dock: barra de backstage ────────────────────────────────────────── */
+.barra{padding:0}
+.barra nav{max-width:none;height:calc(var(--nav-h) + env(safe-area-inset-bottom));padding:6px 8px env(safe-area-inset-bottom);border-radius:0;border:0;border-top:1px solid var(--line-forte);
+  background:color-mix(in oklab,var(--bg) 96%,#000);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none}
+:root[data-tema-modo="claro"] .barra nav{background:var(--tinta);--muted:color-mix(in oklab,var(--papel) 60%,transparent);--text:var(--papel2)}
+.barra nav .pilula{top:8px;bottom:calc(8px + env(safe-area-inset-bottom));left:8px;border-radius:var(--r-xs);background:var(--papel);box-shadow:none}
+.barra nav button{font-weight:700;font-size:11.5px;border-radius:var(--r-xs)}
+.barra nav button.on{color:var(--tinta)}
+.barra nav button.on .ico{color:var(--tinta)}
+.barra nav .bolinha{background:var(--a1);border-radius:var(--r-xs)}
+.topo-fixo{background:var(--bg);border-bottom:1px solid var(--line-forte);box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+.topo-fixo b{font:900 22px/1 var(--f-titulo);font-stretch:58%;text-transform:uppercase}
+.topo-fixo .av{border-radius:50%}
+main{padding-bottom:calc(var(--nav-h) + 28px + env(safe-area-inset-bottom))}
+
+/* ── Folhas e comprovante ────────────────────────────────────────────── */
+.fundo{background:rgba(8,3,6,.72);backdrop-filter:none;-webkit-backdrop-filter:none}
+.folha{background:var(--bg2);border-radius:14px 14px 0 0;padding:12px 18px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -1px 0 var(--line-forte);animation:sobe .36s var(--e-sai)}
 @keyframes sobe{from{transform:translateY(100%)}}
-.alca{background:var(--line-forte)}
-.fechar{background:var(--card2);box-shadow:var(--luz);color:var(--text)}
-.linha-preco .v{font:italic 700 34px/1 var(--f-titulo);letter-spacing:-.02em;background:none;-webkit-background-clip:initial;background-clip:initial;color:var(--text)}
-.valor-pix .v{font:italic 700 42px/1.05 var(--f-titulo);letter-spacing:-.025em}
-.qr-card{border-radius:22px;box-shadow:0 22px 44px -18px rgba(0,0,0,.6)}
-.check{background:var(--grad);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 18px 44px -12px color-mix(in oklab,var(--a1) 75%,transparent)}
-.toast{background:var(--card2);color:var(--text);border:1px solid var(--line-forte);border-radius:16px;padding:11px 16px;box-shadow:var(--sombra-alta);max-width:calc(100% - 32px);width:max-content;text-align:center;animation:toast-in .42s var(--e-mola)}
-.toast svg.i{color:var(--a1-claro)}
-@keyframes toast-in{from{opacity:0;transform:translate(-50%,22px) scale(.92)}}
-.sk{background:linear-gradient(100deg,var(--card) 30%,var(--card2) 50%,var(--card) 70%);background-size:220% 100%;animation:sk 1.5s ease-in-out infinite}
+.alca{background:var(--line-forte);border-radius:2px}
+.fechar{background:var(--card2);border-radius:var(--r-xs);color:var(--text)}
+.previa-wrap{border-radius:var(--r)}
+.previa-wrap .veu{display:flex;align-items:flex-end;justify-content:flex-end;padding:14px;background:rgba(10,4,8,.18)}
+.previa-wrap .cadeado{width:46px;height:46px;position:static;transform:none;margin:0}
+.midia-chips span{border-radius:var(--r-xs);background:transparent;border:1.5px solid var(--line-forte);color:var(--text);font-weight:600}
+.linha-preco{align-items:center;padding:12px 0;border-top:2px dashed var(--line-forte);border-bottom:2px dashed var(--line-forte)}
+.linha-preco .v{font:900 40px/1 var(--f-titulo);font-stretch:72%;letter-spacing:0;background:none;-webkit-background-clip:initial;background-clip:initial;color:var(--text)}
+.aviso.ok{color:var(--ok)}
+/* comprovante do PIX: papel térmico com borda serrilhada */
+.valor-pix{background:var(--papel2);color:var(--tinta);margin:6px 0 0;padding:16px 16px 22px;border-radius:var(--r-xs) var(--r-xs) 0 0;--muted:color-mix(in oklab,var(--tinta) 60%,#fff)}
+.valor-pix .v{font:900 54px/1 var(--f-titulo);font-stretch:68%;letter-spacing:0}
+.qr-card{border-radius:0;box-shadow:none;width:100%;margin:0 0 16px;padding:0 calc(50% - min(125px,35vw)) 26px;background:
+  linear-gradient(135deg,var(--bg2) 50%,transparent 50%) 0 100%/14px 10px repeat-x,
+  linear-gradient(225deg,var(--bg2) 50%,transparent 50%) 0 100%/14px 10px repeat-x,var(--papel2)}
+.qr-card img{background:#fff;padding:8px;border-radius:var(--r-xs)}
+.codigo{border-radius:var(--r-xs)}
+.passos i{border-radius:var(--r-xs);background:var(--papel);color:var(--tinta);border:0;font-weight:800}
+.check{background:var(--a1);border-radius:var(--r);box-shadow:0 6px 0 var(--a1-fundo)}
+.toast{background:var(--papel);color:var(--tinta);border:0;border-radius:var(--r-xs);padding:12px 16px;box-shadow:0 5px 0 color-mix(in oklab,var(--tinta) 55%,transparent),0 16px 30px -10px rgba(0,0,0,.6);font-weight:700;max-width:calc(100% - 32px);width:max-content;text-align:center;animation:toast-in .36s var(--e-mola)}
+.toast svg.i{color:var(--a1)}
+@keyframes toast-in{from{opacity:0;transform:translate(-50%,18px) rotate(-2deg) scale(.94)}}
+.sk{background:linear-gradient(100deg,var(--card) 30%,var(--card2) 50%,var(--card) 70%);background-size:220% 100%;animation:sk 1.4s ease-in-out infinite;border-radius:var(--r-xs)}
 .aviso{color:var(--warn)}
 .st.ok,.status-rec.on{background:color-mix(in oklab,var(--ok) 15%,transparent)}
+.st,.status-rec{border-radius:var(--r-xs)}
 
-/* ── Movimento: rápido, por transform/opacity, e só onde explica algo ── */
+.btn-filtros{border-radius:var(--rs);border-color:var(--line-forte)}
+.btn-filtros .n{border-radius:var(--r-xs)}
+.fixo-cta{padding:24px 16px 10px;margin-bottom:-10px;background:linear-gradient(180deg,transparent,var(--bg) 38%)}
+.valor-pix + .aviso{background:var(--papel2);margin:0;padding:0 16px 12px;text-align:center !important;color:color-mix(in oklab,var(--ok) 55%,var(--tinta))}
+.vip-ativo.urgente{border-color:color-mix(in oklab,var(--warn) 50%,transparent);background:color-mix(in oklab,var(--warn) 7%,var(--card))}
+/* ── Movimento: curto, por transform/opacity, e só onde explica algo ── */
 .vivo{animation:none}
 .brilho:not(.cta-vip)::after{display:none}
-.cta-vip.brilho::after{background:linear-gradient(110deg,transparent 38%,rgba(255,255,255,.45) 50%,transparent 62%);animation-duration:5.5s}
 .anel:not(.story){animation:none}
-.anima .entra,.anima.entra-raiz .entra{animation:entra .46s var(--e-sai) backwards;animation-delay:calc(var(--i,0) * 40ms)}
-@keyframes entra{from{opacity:0;transform:translateY(14px)}}
-.perfil>.nome{animation:masthead .7s var(--e-sai) backwards}
-@keyframes masthead{from{opacity:0;transform:translateY(10px);letter-spacing:.01em}}
-.acao:active,.kpi:active,.plano:active,.item:active,.card:active,.vip-ativo:active,.ranking .linha:active,.beneficio:active,.card-extra:active{transform:scale(.975)}
-.chip:active,.preco-tag:active,.desbloq:active,.btn-cart:active{transform:scale(.94)}
-@media (prefers-reduced-motion: reduce){.perfil>.nome{animation:none}.ripple{display:none}}
-/* ── Ajustes de leitura e camadas ────────────────────────────────────── */
-/* preços e valores: Onest em peso alto, com algarismos de mesma largura (a Didone fica para nomes) */
-.linha-preco .v{font:750 30px/1 var(--f-corpo);letter-spacing:-.03em}
-.valor-pix .v{font:750 40px/1.05 var(--f-corpo);letter-spacing:-.035em}
-/* prévia na folha: o selo queimado na imagem fica livre, o cadeado vai para o canto */
-.previa-wrap .veu{display:flex;align-items:flex-end;justify-content:flex-end;padding:14px}
-.previa-wrap .cadeado{width:46px;height:46px;position:static;transform:none;margin:0}
-/* a dock e o botão fixo precisam de fundo próprio: nada vaza por baixo */
-.barra nav{background:color-mix(in oklab,var(--bg2) 92%,transparent);backdrop-filter:blur(22px) saturate(1.4);-webkit-backdrop-filter:blur(22px) saturate(1.4)}
-.fixo-cta{padding:22px 16px 10px;margin-bottom:-10px;background:linear-gradient(180deg,transparent,var(--bg) 42%)}
-/* capa no claro: o veludo continua com cor, só mais luminoso */
-:root[data-tema-modo="claro"] .capa{background:
-  radial-gradient(80% 90% at 85% 0%, color-mix(in oklab,var(--ouro) 45%,transparent), transparent 62%),
-  radial-gradient(100% 110% at 0% 10%, color-mix(in oklab,var(--a1) 70%,transparent), transparent 72%),
-  color-mix(in oklab,var(--a1) 22%,var(--bg2))}
-:root[data-tema-modo="claro"] .capa::before{opacity:.6}
-/* barra do topo ao rolar: sólida o bastante para não brigar com os filtros */
-.topo-fixo{background:color-mix(in oklab,var(--bg) 94%,transparent);box-shadow:0 10px 24px -18px rgba(0,0,0,.5)}
-/* capa termina em degradê de máscara: funde com o veludo do fundo, sem emenda */
-.capa{-webkit-mask-image:linear-gradient(180deg,#000 50%,transparent 100%);mask-image:linear-gradient(180deg,#000 50%,transparent 100%)}
-.capa::after{background:none}
-/* no post, o cadeado e o botão descem para perto do polegar e deixam o selo da prévia livre */
-.post .midia .veu{justify-content:flex-end;padding-bottom:64px}
-.barra nav{background:color-mix(in oklab,var(--bg2) 97%,transparent)}
+.anima .entra,.anima.entra-raiz .entra{animation:entra .38s var(--e-sai) backwards;animation-delay:calc(var(--i,0) * 35ms)}
+@keyframes entra{from{opacity:0;transform:translateY(12px)}}
+/* o cartaz "imprime": o nome sobe de baixo de uma máscara e a pulseira cai no pulso */
+.perfil>.nome{animation:cartaz .55s var(--e-sai) backwards;clip-path:inset(0 0 -10% 0)}
+@keyframes cartaz{from{transform:translateY(40%);opacity:0}}
+header .cta-vip{animation:pulseira .6s var(--e-mola) .18s backwards}
+@keyframes pulseira{from{transform:rotate(-7deg) translateX(-30px);opacity:0}}
+.acao:active,.kpi:active,.plano:active,.item:active,.card:active,.vip-ativo:active,.ranking .linha:active,.beneficio:active,.card-extra:active,.mimo:active{transform:scale(.975)}
+.chip:active,.btn-cart:active{transform:scale(.94)}
+@media (prefers-reduced-motion: reduce){.perfil>.nome,header .cta-vip{animation:none}.ripple{display:none}.cta-vip.brilho::after{animation:none}}
 </style>
 </head>
 <body>
@@ -1063,8 +1109,8 @@ input:focus,textarea:focus,input[type=datetime-local]:focus{border-color:var(--a
 </defs></svg>
 <main id="app">
   <div class="capa"><span class="bolha b1"></span><span class="bolha b2"></span><span class="bolha b3"></span></div>
-  <div class="perfil"><div class="sk" style="grid-column:1;grid-row:1;width:72%;height:40px;align-self:end"></div><div class="sk" style="grid-column:2;grid-row:1;width:86px;height:86px;border-radius:50%"></div>
-    <div class="sk" style="width:240px;height:14px;margin-top:14px"></div><div class="sk" style="width:180px;height:14px;margin-top:8px"></div></div>
+  <div class="perfil"><div class="sk" style="grid-row:1;width:78%;height:84px;margin-bottom:14px"></div><div class="sk" style="grid-column:1;grid-row:2;width:64px;height:64px;border-radius:50%"></div>
+    <div style="grid-column:2;grid-row:2"><div class="sk" style="width:85%;height:14px"></div><div class="sk" style="width:55%;height:14px;margin-top:8px"></div></div></div>
   <div class="feed" style="margin-top:22px"><div class="sk" style="height:380px"></div><div class="sk" style="height:380px"></div></div>
 </main>
 <div class="barra" id="barra"></div>
@@ -1073,7 +1119,7 @@ input:focus,textarea:focus,input[type=datetime-local]:focus{border-color:var(--a
 const tg = window.Telegram?.WebApp;
 // initData assinado pelo Telegram (o simulador passa no #tgWebAppData, igual ao Telegram de verdade)
 const INIT = tg?.initData || new URLSearchParams(location.hash.slice(1)).get("tgWebAppData") || "";
-// O Camarim tem paleta própria: no modo "igual ao Telegram" só segue se o Telegram está claro ou escuro
+// O Backstage tem paleta própria: no modo "igual ao Telegram" só segue se o Telegram está claro ou escuro
 function modoAuto(){ return tg?.colorScheme === "light" ? "claro" : "escuro" }
 // Pinta o topo e o fundo do Telegram com a cor real do fundo (resolvida pelo navegador, já tingida pela cor da loja)
 function pintarMoldura(){
@@ -1354,7 +1400,7 @@ function render(){
           <div class="anel ${anel.cls}">${c.tem_foto ? `<img class="avatar" src="${avatarSrc()}" alt="">` : `<div class="avatar">${ic("brilho")}</div>`}</div>
           ${criadora() ? `<span class="lapis">${ic("lapis")}</span>` : ""}${anel.selo}
         </div>
-        <div class="nome">${esc(c.nome)} <span class="verif" title="Perfil oficial">${ic("check")}</span></div>
+        <div class="nome" style="--n:${Math.max(5,[...c.nome].length)}">${esc(c.nome)}<span class="verif" title="Perfil oficial">${ic("check")}</span></div>
         <p class="bio">${esc(c.bio)}</p>
         ${criadora() ? `<span class="selo-criadora">${ic("coroa")} Modo criadora</span>` : ""}
         <div class="stats">
@@ -3306,7 +3352,7 @@ async function copiar(texto, msg){
 
 /* ── Recursos: tela gerada a partir do esquema do servidor ─────────────── */
 let RECURSOS = null;
-// Cada cor vira o "batom" da loja; os fundos do Camarim se tingem dela (ver --bg no CSS)
+// Cada cor vira o "batom" da loja; o papel dos ingressos e o grafite do fundo se tingem dela (ver --bg no CSS)
 const TEMAS = {rosa:["#D92D5A","#F07A8E"], roxo:["#8A4FE0","#B58CF5"], azul:["#2C6FD6","#6FA3F0"], verde:["#178F5A","#4FC08A"],
                laranja:["#D9601C","#F2955A"], vermelho:["#C81E32","#E85C68"], dourado:["#A8782A","#D9AE62"]};
 async function carregarRecursos(){
